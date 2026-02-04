@@ -1,0 +1,618 @@
+<x-app-layout>
+    <div class="py-24">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+
+                    <div class="flex items-center justify-between mb-8">
+                        <h1 class="text-3xl font-bold">{{ __('Edit Section') }}</h1>
+                        <a href="{{ route('surveyform.index', ['ward_id' => $ward_id]) }}"
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            ← {{ __('Back to Sections') }}
+                        </a>
+                    </div>
+
+                    <form x-data="surveyBuilder()" action="{{ route('surveyform.update', $section->id) }}"
+                        class="space-y-4" method="POST">
+                        @csrf
+                        @method('PUT')
+
+                        {{-- Toast Messages --}}
+                        <div class="fixed top-20 right-4 flex flex-col gap-2 z-50">
+                            @if (session('success'))
+                                <div class="max-w-xs w-full p-4 bg-layer border border-layer-line rounded-xl shadow-lg"
+                                    role="alert">
+                                    <div class="flex gap-x-3">
+                                        <svg class="shrink-0 size-4 text-teal-500 mt-0.5"
+                                            xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" viewBox="0 0 16 16">
+                                            <path
+                                                d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                                        </svg>
+                                        <p class="text-sm text-layer-foreground">{{ session('success') }}</p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if (session('error'))
+                                <div class="max-w-xs w-full p-4 bg-layer border border-layer-line rounded-xl shadow-lg"
+                                    role="alert">
+                                    <div class="flex gap-x-3">
+                                        <svg class="shrink-0 size-4 text-red-500 mt-0.5"
+                                            xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" viewBox="0 0 16 16">
+                                            <path
+                                                d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z" />
+                                        </svg>
+                                        <p class="text-sm text-layer-foreground">{{ session('error') }}</p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if ($errors->any())
+                                <div class="max-w-xs w-full p-4 bg-layer border border-layer-line rounded-xl shadow-lg"
+                                    role="alert">
+                                    <div class="flex gap-x-3">
+                                        <svg class="shrink-0 size-4 text-red-500 mt-0.5"
+                                            xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" viewBox="0 0 16 16">
+                                            <path
+                                                d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z" />
+                                        </svg>
+                                        <ul class="text-sm text-layer-foreground list-disc pl-5">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Ward (Read-only) --}}
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                {{ __('Ward') }}
+                            </label>
+                            <div
+                                class="block w-64 rounded-md border-gray-300 bg-gray-100 shadow-sm px-3 py-2 text-gray-900">
+                                Ward {{ $wards->firstWhere('id', $ward_id)->ward_no }}
+                            </div>
+                            <input type="hidden" name="ward_id" value="{{ $ward_id }}">
+                        </div>
+
+                        {{-- Single Section Editor --}}
+                        <div id="sections-container">
+                            <template x-for="(section, sectionIndex) in sections" :key="section.id">
+                                <div :data-section-id="section.id" class="bg-white rounded-lg shadow mb-4">
+                                    <!-- Section Header -->
+                                    <div class="p-4 border-b">
+                                        <div class="flex items-center gap-2">
+                                            <!-- Section Title Input -->
+                                            <div class="flex-1 min-w-0">
+                                                <label class="text-sm font-medium text-gray-700 mb-1 block">Section
+                                                    Title</label>
+                                                <input type="text" :name="'sections[' + sectionIndex + '][title]'"
+                                                    :value="section.title"
+                                                    @input="updateSection(section.id, 'title', $event.target.value)"
+                                                    class="w-full font-semibold border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="{{ __('Section title') }}" required />
+                                                <input type="hidden" :name="'sections[' + sectionIndex + '][id]'"
+                                                    :value="section.id" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Section Content -->
+                                    <div class="p-4">
+                                        <!-- Section Description -->
+                                        <div class="mb-4">
+                                            <label
+                                                class="text-sm font-medium text-gray-700 block mb-1">{{ __('Section description') }}</label>
+                                            <textarea :name="'sections[' + sectionIndex + '][description]'" :value="section.description || ''"
+                                                @input="updateSection(section.id, 'description', $event.target.value)"
+                                                placeholder="{{ __('Optional description for this section') }}" rows="2"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                        </div>
+
+                                        <!-- Questions -->
+                                        <div class="space-y-3">
+                                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Questions</h3>
+
+                                            <div :id="'questions-' + section.id" class="questions-container space-y-3">
+                                                <template x-for="(question, questionIndex) in getQuestions(section.id)"
+                                                    :key="question.id">
+                                                    <div :data-question-id="question.id"
+                                                        class="border border-gray-200 rounded-lg p-4 bg-gray-50 question-item">
+                                                        <div class="flex items-start gap-2">
+                                                            <!-- Question Drag Handle -->
+                                                            <button
+                                                                class="cursor-grab hover:bg-gray-200 p-1 rounded mt-1 question-handle"
+                                                                type="button">
+                                                                <svg class="h-4 w-4 text-gray-400" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2" d="M4 8h16M4 16h16" />
+                                                                </svg>
+                                                            </button>
+
+                                                            <!-- Question Content -->
+                                                            <div class="flex-1 min-w-0">
+                                                                <div class="flex items-center gap-2 mb-2">
+                                                                    <span
+                                                                        class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                                                                        x-text="getTypeLabel(question.type)">
+                                                                    </span>
+                                                                    <div x-show="question.type !== 'text'" x-cloak>
+                                                                        <input type="hidden"
+                                                                            :name="'questions[' + question.id + '][required]'"
+                                                                            value="0" />
+                                                                        <input type="checkbox"
+                                                                            :name="'questions[' + question.id + '][required]'"
+                                                                            :checked="question.required"
+                                                                            @change="updateQuestion(question.id, 'required', $event.target.checked)"
+                                                                            class="rounded"
+                                                                            :id="'required-' + question.id"
+                                                                            value="1" />
+                                                                        <label :for="'required-' + question.id"
+                                                                            class="text-sm text-gray-600">{{ __('Required') }}</label>
+                                                                    </div>
+
+                                                                    <!-- Hidden inputs for question data -->
+                                                                    <input type="hidden"
+                                                                        :name="'questions[' + question.id + '][id]'"
+                                                                        :value="question.id" />
+                                                                    <input type="hidden"
+                                                                        :name="'questions[' + question.id + '][section_id]'"
+                                                                        :value="question.sectionId" />
+                                                                    <input type="hidden"
+                                                                        :name="'questions[' + question.id + '][type]'"
+                                                                        :value="question.type" />
+                                                                </div>
+
+                                                                <input type="text"
+                                                                    :name="'questions[' + question.id + '][label]'"
+                                                                    :value="question.label"
+                                                                    @input="updateQuestion(question.id, 'label', $event.target.value)"
+                                                                    placeholder="Question text"
+                                                                    class="w-full mb-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                                    required />
+
+                                                                <textarea :name="'questions[' + question.id + '][description]'" :value="question.description || ''"
+                                                                    @input="updateQuestion(question.id, 'description', $event.target.value)" placeholder="Optional description"
+                                                                    rows="2"
+                                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+
+                                                                <!-- Options for select-type questions -->
+                                                                <div x-show="['radio', 'checkbox', 'dropdown', 'multiple_choice'].includes(question.type)"
+                                                                    class="mt-3">
+                                                                    <div class="text-sm font-medium mb-2">Options</div>
+                                                                    <div class="space-y-2">
+                                                                        <template
+                                                                            x-for="(option, optionIndex) in (question.options || [])"
+                                                                            :key="option.id">
+                                                                            <div class="flex gap-2">
+                                                                                <input type="text"
+                                                                                    :name="'questions[' + question.id +
+                                                                                        '][options][' + optionIndex +
+                                                                                        '][label]'"
+                                                                                    :value="option.label"
+                                                                                    @input="updateQuestionOption(question.id, option.id, 'label', $event.target.value)"
+                                                                                    placeholder="Option label"
+                                                                                    class="flex-1 px-3 py-1 border border-gray-300 rounded-md text-sm"
+                                                                                    required />
+                                                                                <input type="hidden"
+                                                                                    :name="'questions[' + question.id +
+                                                                                        '][options][' + optionIndex +
+                                                                                        '][id]'"
+                                                                                    :value="option.id" />
+                                                                                <input type="hidden"
+                                                                                    :name="'questions[' + question.id +
+                                                                                        '][options][' + optionIndex +
+                                                                                        '][value]'"
+                                                                                    :value="option.value" />
+                                                                                <button
+                                                                                    @click="removeQuestionOption(question.id, option.id)"
+                                                                                    class="text-red-600 hover:text-red-700"
+                                                                                    type="button">
+                                                                                    <svg class="h-4 w-4"
+                                                                                        fill="none"
+                                                                                        viewBox="0 0 24 24"
+                                                                                        stroke="currentColor">
+                                                                                        <path stroke-linecap="round"
+                                                                                            stroke-linejoin="round"
+                                                                                            stroke-width="2"
+                                                                                            d="M6 18L18 6M6 6l12 12" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </div>
+                                                                        </template>
+                                                                        <button @click="addQuestionOption(question.id)"
+                                                                            class="text-sm text-blue-600 hover:text-blue-700"
+                                                                            type="button">
+                                                                            + Add option
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div x-show="question.type === 'linear_scale'"
+                                                                    class="mt-3 space-y-3" x-cloak>
+                                                                    <div class="text-sm font-medium mb-2">Scale
+                                                                        Settings</div>
+
+                                                                    <div class="grid grid-cols-2 gap-3">
+                                                                        <div>
+                                                                            <label
+                                                                                class="text-sm text-gray-600 block mb-1">Scale
+                                                                                From</label>
+                                                                            <select
+                                                                                :name="'questions[' + question.id +
+                                                                                    '][scale_from]'"
+                                                                                @change="updateQuestion(question.id, 'scale_from', parseInt($event.target.value))"
+                                                                                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                                                                <template x-for="num in [0, 1]"
+                                                                                    :key="num">
+                                                                                    <option :value="num"
+                                                                                        :selected="(question.scale_from ||
+                                                                                            1) === num"
+                                                                                        x-text="num"></option>
+                                                                                </template>
+                                                                            </select>
+                                                                        </div>
+
+                                                                        <div>
+                                                                            <label
+                                                                                class="text-sm text-gray-600 block mb-1">Scale
+                                                                                To</label>
+                                                                            <select
+                                                                                :name="'questions[' + question.id +
+                                                                                    '][scale_to]'"
+                                                                                @change="updateQuestion(question.id, 'scale_to', parseInt($event.target.value))"
+                                                                                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                                                                <template
+                                                                                    x-for="num in [2,3,4,5,6,7,8,9,10]"
+                                                                                    :key="num">
+                                                                                    <option :value="num"
+                                                                                        :selected="(question.scale_to || 5) ===
+                                                                                        num"
+                                                                                        x-text="num"></option>
+                                                                                </template>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <label
+                                                                            class="text-sm text-gray-600 block mb-1">Label
+                                                                            for lowest value (optional)</label>
+                                                                        <input type="text"
+                                                                            :name="'questions[' + question.id +
+                                                                                '][scale_label_low]'"
+                                                                            :value="question.scale_label_low || ''"
+                                                                            @input="updateQuestion(question.id, 'scale_label_low', $event.target.value)"
+                                                                            placeholder=""
+                                                                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <label
+                                                                            class="text-sm text-gray-600 block mb-1">Label
+                                                                            for highest value (optional)</label>
+                                                                        <input type="text"
+                                                                            :name="'questions[' + question.id +
+                                                                                '][scale_label_high]'"
+                                                                            :value="question.scale_label_high || ''"
+                                                                            @input="updateQuestion(question.id, 'scale_label_high', $event.target.value)"
+                                                                            placeholder=""
+                                                                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                                                                    </div>
+
+
+                                                                </div>
+                                                            </div>
+
+
+                                                            <button @click.prevent="deleteQuestion(question.id)"
+                                                                class="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 rounded"
+                                                                type="button" title="Delete question">
+                                                                <svg class="h-4 w-4" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+
+                                            <!-- Add Question Button -->
+                                            <button @click="openQuestionTypeDialog(section.id)"
+                                                class="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors"
+                                                type="button">
+                                                <svg class="h-4 w-4 inline mr-2" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                {{ __('Add Question') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <a href="{{ route('surveyform.index', ['ward_id' => $ward_id]) }}"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                                {{ __('Cancel') }}
+                            </a>
+                            <button type="submit"
+                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                {{ __('Update Section') }}
+                            </button>
+                        </div>
+
+                        <!-- Question Type Selector Modal -->
+                        <div x-show="showQuestionTypeDialog" x-cloak
+                            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                            @click.self="showQuestionTypeDialog = false">
+                            <div
+                                class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-auto">
+                                <div class="p-6 border-b">
+                                    <h2 class="text-xl font-bold">{{ __('Choose Question Type') }}</h2>
+                                </div>
+                                <div class="p-6 grid grid-cols-2 gap-3">
+                                    <template x-for="type in questionTypes" :key="type.value">
+                                        <button @click="addQuestion(type.value)"
+                                            class="p-4 border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                                            type="button">
+                                            <div class="font-medium" x-text="type.label"></div>
+                                            <div class="text-sm text-gray-600 mt-1" x-text="type.description"></div>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            window.t = @json(trans('messages'));
+
+            function surveyBuilder() {
+                const t = window.t;
+
+
+                const preloadedSections = @json($formattedSections);
+                const preloadedQuestions = @json($formattedQuestions);
+
+                return {
+                    sections: preloadedSections.map(s => ({
+                        ...s,
+                        isOpen: true
+                    })),
+                    questions: preloadedQuestions,
+                    showQuestionTypeDialog: false,
+                    currentSectionId: null,
+                    sectionSortable: null,
+                    questionSortables: {},
+                    nextSectionId: Math.max(...preloadedSections.map(s => parseInt(s.id.replace('s', ''))), 0) + 1,
+                    nextQuestionId: Math.max(...preloadedQuestions.map(q => parseInt(q.id.replace('q', ''))), 0) + 1,
+                    questionTypes: [{
+                            value: 'text',
+                            label: t.text || 'Text',
+                            description: t.text_description || 'Add heading or description'
+                        },
+                        {
+                            value: 'short_text',
+                            label: t.short_text || 'Short Text',
+                            description: t.single_line || 'Single line response'
+                        },
+                        {
+                            value: 'long_text',
+                            label: t.long_text || 'Long Text',
+                            description: t.multi_line || 'Multi-line response'
+                        },
+                        {
+                            value: 'email',
+                            label: t.email || 'Email',
+                            description: t.email_input || 'Email input'
+                        },
+                        {
+                            value: 'number',
+                            label: t.number || 'Number',
+                            description: t.numeric_input || 'Numeric input'
+                        },
+                        {
+                            value: 'date',
+                            label: t.date || 'Date',
+                            description: t.date_picker || 'Date picker'
+                        },
+                        {
+                            value: 'radio',
+                            label: t.radio || 'Multiple Choice',
+                            description: t.select_one || 'Select one option'
+                        },
+                        {
+                            value: 'checkbox',
+                            label: t.checkboxes || 'Checkboxes',
+                            description: t.select_multiple || 'Select multiple options'
+                        },
+                        {
+                            value: 'dropdown',
+                            label: t.dropdown || 'Dropdown',
+                            description: t.select_dropdown || 'Select from dropdown'
+                        },
+                        {
+                            value: 'file',
+                            label: t.file_upload || 'File Upload',
+                            description: t.file_upload || 'Upload a file'
+                        },
+                        {
+                            value: 'linear_scale',
+                            label: t.linear_scale || 'Linear Scale',
+                            description: t.linear_scale_description || 'Scale from 1 to a number'
+                        }
+                    ],
+
+
+                    init() {
+                        this.$nextTick(() => {
+                            this.initializeSortable();
+                        });
+                    },
+
+                    initializeSortable() {
+                        this.sections.forEach(section => {
+                            const questionsContainer = document.getElementById(`questions-${section.id}`);
+                            if (questionsContainer && !this.questionSortables[section.id]) {
+                                this.questionSortables[section.id] = new Sortable(questionsContainer, {
+                                    animation: 150,
+                                    handle: '.question-handle',
+                                    ghostClass: 'sortable-ghost',
+                                    dragClass: 'sortable-drag',
+                                    onEnd: (evt) => {
+                                        const newOrder = Array.from(questionsContainer.children)
+                                            .map((el) => {
+                                                const questionId = el.getAttribute('data-question-id');
+                                                return this.questions.find(q => q.id === questionId);
+                                            });
+
+                                        const otherQuestions = this.questions.filter(q => q.sectionId !==
+                                            section.id);
+                                        this.questions = [...otherQuestions, ...newOrder.filter(Boolean)];
+                                    }
+                                });
+                            }
+                        });
+                    },
+
+                    getQuestions(sectionId) {
+                        return this.questions.filter(q => q.sectionId === sectionId);
+                    },
+
+                    updateSection(sectionId, field, value) {
+                        const section = this.sections.find(s => s.id === sectionId);
+                        if (section) {
+                            section[field] = value;
+                        }
+                    },
+
+                    openQuestionTypeDialog(sectionId) {
+                        this.currentSectionId = sectionId;
+                        this.showQuestionTypeDialog = true;
+                    },
+
+                    addQuestion(type) {
+                        const newId = 'q' + this.nextQuestionId++;
+
+                        const newQuestion = {
+                            id: newId,
+                            sectionId: this.currentSectionId,
+                            type: type,
+                            label: t.new_question,
+                            description: '',
+                            required: false
+                        };
+
+                        if (['radio', 'checkbox', 'dropdown', 'multiple_choice'].includes(type)) {
+                            newQuestion.options = [{
+                                    id: 'opt1',
+                                    value: '',
+                                    label: 'Option 1'
+                                },
+                                {
+                                    id: 'opt2',
+                                    value: '',
+                                    label: 'Option 2'
+                                }
+                            ];
+                        }
+
+                        if (type === 'linear_scale') {
+                            newQuestion.scale_from = 1;
+                            newQuestion.scale_to = 5;
+                            newQuestion.scale_label_low = '';
+                            newQuestion.scale_label_high = '';
+                        }
+
+                        this.questions.push(newQuestion);
+                        this.showQuestionTypeDialog = false;
+                        this.currentSectionId = null;
+
+                        this.$nextTick(() => {
+                            this.initializeSortable();
+                        });
+                    },
+
+                    updateQuestion(questionId, field, value) {
+                        const question = this.questions.find(q => q.id === questionId);
+                        if (question) {
+                            question[field] = value;
+                        }
+                    },
+
+                    deleteQuestion(questionId) {
+                        const question = this.questions.find(q => q.id === questionId);
+                        const sectionId = question?.sectionId;
+
+                        const newQuestions = this.questions.filter(q => q.id !== questionId);
+                        this.questions = newQuestions;
+
+                        if (sectionId && this.questionSortables[sectionId]) {
+                            this.$nextTick(() => {
+                                this.questionSortables[sectionId].destroy();
+                                delete this.questionSortables[sectionId];
+                                this.initializeSortable();
+                            });
+                        }
+                    },
+
+                    addQuestionOption(questionId) {
+                        const question = this.questions.find(q => q.id === questionId);
+                        if (question && question.options) {
+                            const newId = 'opt' + (question.options.length + 1);
+                            question.options.push({
+                                id: newId,
+                                value: 'option' + (question.options.length + 1),
+                                label: 'Option ' + (question.options.length + 1)
+                            });
+                        }
+                    },
+
+                    updateQuestionOption(questionId, optionId, field, value) {
+                        const question = this.questions.find(q => q.id === questionId);
+                        if (question && question.options) {
+                            const option = question.options.find(o => o.id === optionId);
+                            if (option) {
+                                option[field] = value;
+                                if (field === 'label') {
+                                    option.value = value.toLowerCase().replace(/\s+/g, '_');
+                                }
+                            }
+                        }
+                    },
+
+                    removeQuestionOption(questionId, optionId) {
+                        const question = this.questions.find(q => q.id === questionId);
+                        if (question && question.options) {
+                            question.options = question.options.filter(o => o.id !== optionId);
+                        }
+                    },
+
+                    getTypeLabel(type) {
+                        return t[type] || type;
+                    }
+                }
+            }
+        </script>
+    @endpush
+</x-app-layout>

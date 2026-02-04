@@ -1,0 +1,44 @@
+<?php
+
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SurveyBuilderController;
+use App\Http\Controllers\HouseDescriptionController;
+use App\Http\Controllers\HouseMemberController;
+
+
+
+Route::get('/', function () {
+    return view('auth.login');
+});
+
+Route::get('language/{locale}', function ($locale) {
+    if (in_array($locale, array_values(config('app.available_locales')))) {
+        app()->setLocale($locale);
+        session()->put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('lang');
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::resource('surveyform', SurveyBuilderController::class);
+    Route::resource('house-description', HouseDescriptionController::class);
+    Route::resource('house-member', HouseMemberController::class);
+    Route::post('/survey-sections/reorder', [SurveyBuilderController::class, 'reorder'])->name('survey.sections.reorder');
+
+    Route::get('/survey/ward/{ward}/sections', [HouseDescriptionController::class, 'getSectionsForWard'])
+        ->name('survey.sections');
+});
+
+
+require __DIR__.'/auth.php';
