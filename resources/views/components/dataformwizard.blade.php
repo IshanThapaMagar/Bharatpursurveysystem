@@ -135,7 +135,7 @@
                 class="block w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm  transition-all">
                 <option value="">-- Select a Ward --</option>
                 @foreach ($wards as $ward)
-                    <option value="{{ $ward->id }} {{ old('ward_id') == $ward->id ? 'selected' : '' }}">Ward
+                    <option value="{{ $ward->id }}" {{ old('ward_id') == $ward->id ? 'selected' : '' }}>Ward
                         {{ $ward->ward_no }}</option>
                 @endforeach
             </select>
@@ -345,6 +345,7 @@
                                                                 </template>
                                                             </div>
                                                         </template>
+                                                        
                                                         <!-- Linear Scale (Google Form style) -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'linear_scale'">
@@ -366,6 +367,7 @@
                                                                                     :value="question.scale_from + n - 1"
                                                                                     x-model.number="formData.answers[question.id].answer_numeric"
                                                                                     @change="clearError(question.id)"
+                                                                                    :required="question.answer_required"
                                                                                     class="mb-1">
 
                                                                                 <!-- Number below radio -->
@@ -381,6 +383,7 @@
                                                                 </div>
                                                             </div>
                                                         </template>
+                                                        
                                                         <!-- Checkboxes -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'checkbox'">
@@ -616,7 +619,7 @@
                 },
 
                 init() {
-
+                    // Initialization code if needed
                 },
 
                 async loadWardData() {
@@ -645,37 +648,44 @@
                             this.totalSteps = this.sections.length;
                             this.formData.ward_id = this.selectedWardId;
 
-
+                            // Build steps for stepper
                             this.steps = this.sections.map((section, index) => ({
                                 id: index + 1,
                                 title: section.title,
                                 description: section.description || ''
                             }));
 
-
+                            // Initialize form data for all questions
                             this.formData.answers = {};
                             this.sections.forEach(section => {
                                 section.questions.forEach(question => {
                                     const inputType = question.input_type?.input_type_name;
 
+                                    // Initialize based on input type
                                     if (inputType === 'checkbox') {
                                         this.formData.answers[question.id] = {
                                             question_option_id: []
                                         };
                                     } else if (['radio', 'dropdown'].includes(inputType)) {
+                                        // Use empty string instead of null
                                         this.formData.answers[question.id] = {
-                                            question_option_id: null
+                                            question_option_id: ''
                                         };
                                     } else if (inputType === 'number') {
                                         this.formData.answers[question.id] = {
-                                            answer_numeric: null,
-                                            unit_of_measure_id: null
+                                            answer_numeric: '',
+                                            unit_of_measure_id: ''
+                                        };
+                                    } else if (inputType === 'linear_scale') {
+                                        this.formData.answers[question.id] = {
+                                            answer_numeric: ''
                                         };
                                     } else if (inputType === 'file') {
                                         this.formData.answers[question.id] = {
                                             files: []
                                         };
                                     } else {
+                                        // Text-based inputs
                                         this.formData.answers[question.id] = {
                                             answer_text: ''
                                         };
@@ -755,11 +765,9 @@
                             if (inputType === 'checkbox') {
                                 isEmpty = !answer.question_option_id || answer.question_option_id.length === 0;
                             } else if (['radio', 'dropdown'].includes(inputType)) {
-                                isEmpty = !answer.question_option_id;
+                                isEmpty = !answer.question_option_id || answer.question_option_id === '';
                             } else if (['number', 'linear_scale'].includes(inputType)) {
-                                this.formData.answers[question.id] = {
-                                    answer_numeric: null
-                                };
+                                isEmpty = answer.answer_numeric === '' || answer.answer_numeric === null || answer.answer_numeric === undefined;
                             } else if (inputType === 'file') {
                                 isEmpty = !answer.files || answer.files.length === 0;
                             } else {
@@ -840,29 +848,40 @@
                         Object.keys(this.formData.answers).forEach(questionId => {
                             const answer = this.formData.answers[questionId];
 
+                            // Handle file uploads
                             if (answer.files && answer.files.length > 0) {
                                 answer.files.forEach((file, index) => {
                                     formData.append(`answers[${questionId}][files][${index}]`, file);
                                 });
-                            } else if (answer.question_option_id !== undefined) {
-                                if (Array.isArray(answer.question_option_id)) {
-                                    answer.question_option_id.forEach((optionId, index) => {
-                                        formData.append(
-                                            `answers[${questionId}][question_option_id][${index}]`,
-                                            optionId);
-                                    });
-                                } else {
-                                    formData.append(`answers[${questionId}][question_option_id]`, answer
-                                        .question_option_id);
+                            } 
+                            // Handle option-based answers (radio, checkbox, dropdown)
+                            else if (answer.question_option_id !== undefined) {
+                                // Skip if empty
+                                if (answer.question_option_id === '' || answer.question_option_id === null) {
+                                    return;
                                 }
-                            } else if (answer.answer_text !== undefined) {
+                                
+                                if (Array.isArray(answer.question_option_id)) {
+                                    // Checkbox - multiple options
+                                    if (answer.question_option_id.length > 0) {
+                                        answer.question_option_id.forEach((optionId, index) => {
+                                            formData.append(`answers[${questionId}][question_option_id][${index}]`, optionId);
+                                        });
+                                    }
+                                } else {
+                                    // Radio or dropdown - single option
+                                    formData.append(`answers[${questionId}][question_option_id]`, answer.question_option_id);
+                                }
+                            } 
+                            // Handle text answers
+                            else if (answer.answer_text !== undefined && answer.answer_text !== '') {
                                 formData.append(`answers[${questionId}][answer_text]`, answer.answer_text);
-                            } else if (answer.answer_numeric !== undefined) {
-                                formData.append(`answers[${questionId}][answer_numeric]`, answer
-                                    .answer_numeric);
-                                if (answer.unit_of_measure_id) {
-                                    formData.append(`answers[${questionId}][unit_of_measure_id]`, answer
-                                        .unit_of_measure_id);
+                            } 
+                            // Handle numeric answers
+                            else if (answer.answer_numeric !== undefined && answer.answer_numeric !== '' && answer.answer_numeric !== null) {
+                                formData.append(`answers[${questionId}][answer_numeric]`, answer.answer_numeric);
+                                if (answer.unit_of_measure_id && answer.unit_of_measure_id !== '') {
+                                    formData.append(`answers[${questionId}][unit_of_measure_id]`, answer.unit_of_measure_id);
                                 }
                             }
                         });

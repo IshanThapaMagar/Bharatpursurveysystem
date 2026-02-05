@@ -70,47 +70,66 @@ class HouseDescriptionController extends Controller
 
             DB::beginTransaction();
 
+            // Create the response record
             $response = Response::create([
                 'user_id' => auth()->id(),
                 'ward_id' => $validated['ward_id'],
                 'submitted_at' => now(),
             ]);
 
-
+            // Process each answer
             foreach ($request->input('answers', []) as $questionId => $answerData) {
-      
+                
+                // Handle option-based answers (radio, checkbox, dropdown)
                 if (isset($answerData['question_option_id'])) {
                     $optionIds = $answerData['question_option_id'];
                     
+                    // Skip if empty or null
+                    if (empty($optionIds)) {
+                        continue;
+                    }
+                    
+                    // Handle checkbox (array of options)
                     if (is_array($optionIds)) {
                         foreach ($optionIds as $optionId) {
-                            Answer::create([
-                                'response_id' => $response->id,
-                                'question_option_id' => $optionId,
-                            ]);
+                            if (!empty($optionId)) {
+                                Answer::create([
+                                    'response_id' => $response->id,
+                                    'question_option_id' => $optionId,
+                                ]);
+                            }
                         }
-                    } else {
+                    } 
+                    // Handle radio or dropdown (single option)
+                    else {
                         Answer::create([
                             'response_id' => $response->id,
                             'question_option_id' => $optionIds,
                         ]);
                     }
                 }
-                elseif (isset($answerData['answer_text'])) {
+                // Handle text-based answers
+                elseif (isset($answerData['answer_text']) && !empty($answerData['answer_text'])) {
                     Answer::create([
                         'response_id' => $response->id,
                         'answer_text' => $answerData['answer_text'],
                     ]);
                 }
-
-                elseif (isset($answerData['answer_numeric'])) {
-                    Answer::create([
+                // Handle numeric answers
+                elseif (isset($answerData['answer_numeric']) && $answerData['answer_numeric'] !== null && $answerData['answer_numeric'] !== '') {
+                    $answerRecord = [
                         'response_id' => $response->id,
                         'answer_numeric' => $answerData['answer_numeric'],
-                        'unit_of_measure_id' => $answerData['unit_of_measure_id'] ?? null,
-                    ]);
+                    ];
+                    
+                    // Add unit of measure if provided
+                    if (isset($answerData['unit_of_measure_id']) && !empty($answerData['unit_of_measure_id'])) {
+                        $answerRecord['unit_of_measure_id'] = $answerData['unit_of_measure_id'];
+                    }
+                    
+                    Answer::create($answerRecord);
                 }
-    
+                // Handle file uploads
                 elseif (isset($answerData['files']) && count($answerData['files']) > 0) {
                     foreach ($answerData['files'] as $file) {
                         $filePath = $file->store('survey-responses', 'public');

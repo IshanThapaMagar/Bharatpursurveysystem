@@ -294,7 +294,7 @@ class SurveyBuilderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        dd($request->all());
+       
         
         $validator = Validator::make($request->all(), [
             'ward_id' => 'required|exists:wards,id',
