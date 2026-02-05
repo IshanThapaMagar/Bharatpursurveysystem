@@ -501,7 +501,7 @@
                             value: 'checkbox',
                             label: t.checkboxes || 'Checkboxes',
                             description: t.select_multiple || 'Select multiple options'
-                        },  
+                        },
                         {
                             value: 'dropdown',
                             label: t.dropdown || 'Dropdown',

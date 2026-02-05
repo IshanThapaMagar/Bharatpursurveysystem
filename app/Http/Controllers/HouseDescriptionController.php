@@ -41,8 +41,14 @@ class HouseDescriptionController extends Controller
                 $query->ordered()
                     ->with([
                         'inputType',
-                        'optionGroup.optionChoices',
-                        'questionOptions.optionChoice'
+                        'optionGroup.optionChoices' => function ($query) {
+                            
+                            $query->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder');
+                        },
+                        'questionOptions.optionChoice' => function ($query) {
+                            
+                            $query->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder');
+                        }
                     ]);
             }
         ])

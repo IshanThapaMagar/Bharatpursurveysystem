@@ -12,6 +12,7 @@ class Answer extends Model
         'question_option_id',
         'answer_numeric',
         'answer_text',
+        'custom_input_value',
         'unit_of_measure_id',
     ];
 

@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('option_group_id')->constrained('option_groups')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('choice_text')->nullable();
+            $table->string('custom_input_type')->nullable();
+            $table->string('custom_input_placeholder')->nullable();
+            
             $table->timestamps();
         });
     }

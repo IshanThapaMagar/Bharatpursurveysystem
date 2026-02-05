@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OptionChoice extends Model
 {
-    protected $fillable = ['option_group_id', 'choice_text'];
+    protected $fillable = [
+        'option_group_id', 
+        'choice_text',
+        'custom_input_type',
+        'custom_input_placeholder'
+    ];
 
     public function optionGroup(): BelongsTo
     {

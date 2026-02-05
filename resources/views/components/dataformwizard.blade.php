@@ -122,6 +122,11 @@
         .file-item:hover {
             background-color: #f9fafb;
         }
+
+        .option-custom-input {
+            margin-top: 0.5rem;
+            padding-left: 2rem;
+        }
     </style>
 @endpush
 
@@ -322,30 +327,56 @@
                                                                 class="input-field mt-1 block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                                         </template>
 
-                                                        <!-- Radio Buttons -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'radio'">
-                                                            <div class="mt-3 space-y-2">
+                                                            <div class="mt-3 space-y-3">
+
                                                                 <template x-for="qOption in question.question_options"
                                                                     :key="qOption.id">
+
                                                                     <label
-                                                                        class="radio-card flex cursor-pointer items-center gap-3 rounded-lg border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300"
+                                                                        class="radio-card flex items-center gap-3 rounded-xl border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300"
                                                                         :class="formData.answers[question.id]
                                                                             .question_option_id == qOption.id ?
-                                                                            'border-indigo-600 bg-indigo-50' : ''">
+                                                                            'border-indigo-600 bg-indigo-50 shadow-sm' :
+                                                                            ''">
+
+                                                                        <!-- radio -->
                                                                         <input type="radio"
                                                                             x-model="formData.answers[question.id].question_option_id"
                                                                             @change="clearError(question.id)"
                                                                             :value="qOption.id"
                                                                             :required="question.answer_required"
-                                                                            class="h-5 w-5 border-gray-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500">
-                                                                        <span class="flex-1 font-medium text-gray-900"
-                                                                            x-text="qOption.option_choice?.choice_text"></span>
+                                                                            class="h-5 w-5 text-indigo-600 border-gray-300 focus:ring-2 focus:ring-indigo-500">
+
+                                                                        <!-- label text -->
+                                                                        <span
+                                                                            class="whitespace-nowrap font-medium text-gray-900"
+                                                                            x-text="qOption.option_choice?.choice_text">
+                                                                        </span>
+
+                                                                        <!-- INLINE custom input -->
+                                                                        <input
+                                                                            x-show="qOption.option_choice?.custom_input_type 
+                                                                            && qOption.option_choice.custom_input_type !== 'none'
+                                                                            && formData.answers[question.id].question_option_id == qOption.id"
+                                                                            x-transition.opacity.duration.200ms
+                                                                            :type="qOption.option_choice
+                                                                                .custom_input_type === 'number' ?
+                                                                                'number' : 'text'"
+                                                                            x-model="formData.answers[question.id].custom_inputs[qOption.id]"
+                                                                            :placeholder="qOption.option_choice
+                                                                                .custom_input_placeholder || 'Specify'"
+                                                                            class="ml-3 flex-1 min-w-[180px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+
                                                                     </label>
+
                                                                 </template>
+
                                                             </div>
                                                         </template>
-                                                        
+
+
                                                         <!-- Linear Scale (Google Form style) -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'linear_scale'">
@@ -383,29 +414,53 @@
                                                                 </div>
                                                             </div>
                                                         </template>
-                                                        
-                                                        <!-- Checkboxes -->
+
+                                                        <!-- Checkboxes with Custom Input -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'checkbox'">
-                                                            <div class="mt-3 space-y-2">
+                                                            <div class="mt-3 space-y-3">
                                                                 <template x-for="qOption in question.question_options"
                                                                     :key="qOption.id">
+
                                                                     <label
-                                                                        class="checkbox-card flex cursor-pointer items-center gap-3 rounded-lg border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300"
+                                                                        class="checkbox-card flex items-center gap-3 rounded-xl border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300"
                                                                         :class="formData.answers[question.id].question_option_id
-                                                                            ?.includes(qOption.id) ?
-                                                                            'border-indigo-600 bg-indigo-50' : ''">
+                                                                            ?.includes(String(qOption.id)) ?
+                                                                            'border-indigo-600 bg-indigo-50 shadow-sm' :
+                                                                            ''">
+
+                                                                        <!-- Checkbox -->
                                                                         <input type="checkbox"
                                                                             x-model="formData.answers[question.id].question_option_id"
                                                                             @change="clearError(question.id)"
                                                                             :value="qOption.id"
-                                                                            class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500">
-                                                                        <span class="flex-1 font-medium text-gray-900"
+                                                                            class="h-5 w-5 text-indigo-600 border-gray-300 focus:ring-2 focus:ring-indigo-500">
+
+                                                                        <!-- Label text -->
+                                                                        <span
+                                                                            class="whitespace-nowrap font-medium text-gray-900"
                                                                             x-text="qOption.option_choice?.choice_text"></span>
+
+                                                                        <!-- Inline custom input -->
+                                                                        <input
+                                                                            x-show="qOption.option_choice?.custom_input_type
+                                                                            && qOption.option_choice.custom_input_type !== 'none'
+                                                                            && formData.answers[question.id].question_option_id?.includes(String(qOption.id))"
+                                                                            x-transition.opacity.duration.200ms
+                                                                            :type="qOption.option_choice
+                                                                                .custom_input_type === 'number' ?
+                                                                                'number' : 'text'"
+                                                                            x-model="formData.answers[question.id].custom_inputs[qOption.id]"
+                                                                            :placeholder="qOption.option_choice
+                                                                                .custom_input_placeholder || 'Specify'"
+                                                                            class="ml-3 flex-1 min-w-[180px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+
                                                                     </label>
+
                                                                 </template>
                                                             </div>
                                                         </template>
+
 
                                                         <!-- Dropdown / Select -->
                                                         <template
@@ -664,12 +719,14 @@
                                     // Initialize based on input type
                                     if (inputType === 'checkbox') {
                                         this.formData.answers[question.id] = {
-                                            question_option_id: []
+                                            question_option_id: [],
+                                            custom_inputs: {}
                                         };
                                     } else if (['radio', 'dropdown'].includes(inputType)) {
                                         // Use empty string instead of null
                                         this.formData.answers[question.id] = {
-                                            question_option_id: ''
+                                            question_option_id: '',
+                                            custom_inputs: {}
                                         };
                                     } else if (inputType === 'number') {
                                         this.formData.answers[question.id] = {
@@ -767,7 +824,8 @@
                             } else if (['radio', 'dropdown'].includes(inputType)) {
                                 isEmpty = !answer.question_option_id || answer.question_option_id === '';
                             } else if (['number', 'linear_scale'].includes(inputType)) {
-                                isEmpty = answer.answer_numeric === '' || answer.answer_numeric === null || answer.answer_numeric === undefined;
+                                isEmpty = answer.answer_numeric === '' || answer.answer_numeric === null || answer
+                                    .answer_numeric === undefined;
                             } else if (inputType === 'file') {
                                 isEmpty = !answer.files || answer.files.length === 0;
                             } else {
@@ -853,35 +911,56 @@
                                 answer.files.forEach((file, index) => {
                                     formData.append(`answers[${questionId}][files][${index}]`, file);
                                 });
-                            } 
+                            }
                             // Handle option-based answers (radio, checkbox, dropdown)
                             else if (answer.question_option_id !== undefined) {
                                 // Skip if empty
                                 if (answer.question_option_id === '' || answer.question_option_id === null) {
                                     return;
                                 }
-                                
+
                                 if (Array.isArray(answer.question_option_id)) {
                                     // Checkbox - multiple options
                                     if (answer.question_option_id.length > 0) {
                                         answer.question_option_id.forEach((optionId, index) => {
-                                            formData.append(`answers[${questionId}][question_option_id][${index}]`, optionId);
+                                            formData.append(
+                                                `answers[${questionId}][question_option_id][${index}]`,
+                                                optionId);
+
+                                            // Add custom input for this option if exists
+                                            if (answer.custom_inputs && answer.custom_inputs[
+                                                    optionId]) {
+                                                formData.append(
+                                                    `answers[${questionId}][custom_inputs][${optionId}]`,
+                                                    answer.custom_inputs[optionId]);
+                                            }
                                         });
                                     }
                                 } else {
                                     // Radio or dropdown - single option
-                                    formData.append(`answers[${questionId}][question_option_id]`, answer.question_option_id);
+                                    formData.append(`answers[${questionId}][question_option_id]`, answer
+                                        .question_option_id);
+
+                                    // Add custom input for this option if exists
+                                    if (answer.custom_inputs && answer.custom_inputs[answer
+                                            .question_option_id]) {
+                                        formData.append(`answers[${questionId}][custom_input]`, answer
+                                            .custom_inputs[answer.question_option_id]);
+                                    }
                                 }
-                            } 
+                            }
                             // Handle text answers
                             else if (answer.answer_text !== undefined && answer.answer_text !== '') {
                                 formData.append(`answers[${questionId}][answer_text]`, answer.answer_text);
-                            } 
+                            }
                             // Handle numeric answers
-                            else if (answer.answer_numeric !== undefined && answer.answer_numeric !== '' && answer.answer_numeric !== null) {
-                                formData.append(`answers[${questionId}][answer_numeric]`, answer.answer_numeric);
+                            else if (answer.answer_numeric !== undefined && answer.answer_numeric !== '' &&
+                                answer.answer_numeric !== null) {
+                                formData.append(`answers[${questionId}][answer_numeric]`, answer
+                                    .answer_numeric);
                                 if (answer.unit_of_measure_id && answer.unit_of_measure_id !== '') {
-                                    formData.append(`answers[${questionId}][unit_of_measure_id]`, answer.unit_of_measure_id);
+                                    formData.append(`answers[${questionId}][unit_of_measure_id]`, answer
+                                        .unit_of_measure_id);
                                 }
                             }
                         });
