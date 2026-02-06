@@ -75,18 +75,35 @@ class SurveyBuilderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'ward_id' => 'required',
+            'survey_data' => 'required|json',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()    
+                            ->withErrors($validator) 
+                            ->withInput();          
+        }
+
+        $surveyData = json_decode($request->input('survey_data'), true);
+
+        if (!isset($surveyData['sections']) || !isset($surveyData['questions'])) {
+            return redirect()->back()
+                ->with('error', 'Invalid survey data format')
+                ->withInput();
+        }
+
+        $dataValidator = Validator::make($surveyData, [
             'sections' => 'required|array|min:1',
             'sections.*.title' => 'required|string|max:255',
             'sections.*.description' => 'nullable|string',
             'questions' => 'required|array|min:1',
             'questions.*.label' => 'required|string',
             'questions.*.type' => 'required|string',
-            'questions.*.section_id' => 'required|string',
+            'questions.*.sectionId' => 'required|string',
             'questions.*.required' => 'nullable|boolean',
             'questions.*.description' => 'nullable|string',
             'questions.*.options' => 'array',
             'questions.*.options.*.label' => 'required_with:questions.*.options|string',
-            'questions.*.options.*.value' => 'required_with:questions.*.options|string',
             'questions.*.options.*.input_type' => 'nullable|string|in:none,text,number',
             'questions.*.options.*.input_placeholder' => 'nullable|string|max:255',
             'questions.*.scale_from' => 'nullable|integer',
@@ -94,24 +111,22 @@ class SurveyBuilderController extends Controller
             'questions.*.scale_label_low' => 'nullable|string|max:255',
             'questions.*.scale_label_high' => 'nullable|string|max:255',
         ], [], [
-            'ward_id' => 'Ward',
             'sections.*.title' => 'Section title',
             'sections.*.description' => 'Section description',
             'questions.*.label' => 'Question text',
             'questions.*.type' => 'Question type',
-            'questions.*.section_id' => 'Section',
+            'questions.*.sectionId' => 'Section',
             'questions.*.required' => 'Required field',
             'questions.*.description' => 'Question description',
             'questions.*.options.*.label' => 'Option label',
-            'questions.*.options.*.value' => 'Option value',
             'questions.*.options.*.input_type' => 'Option input type',
             'questions.*.options.*.input_placeholder' => 'Option input placeholder',
         ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()    
-                            ->withErrors($validator) 
-                            ->withInput();          
+        if ($dataValidator->fails()) {
+            return redirect()->back()
+                ->withErrors($dataValidator)
+                ->withInput();
         }
 
         try {
@@ -128,7 +143,7 @@ class SurveyBuilderController extends Controller
                 $sectionMap = [];
                 $questionMap = [];
 
-                foreach ($request->sections as $index => $sectionData) {
+                foreach ($surveyData['sections'] as $index => $sectionData) {
                     $section = SurveySection::create([
                         'title' => $sectionData['title'],
                         'description' => $sectionData['description'] ?? null,
@@ -140,7 +155,7 @@ class SurveyBuilderController extends Controller
                 }
 
                 $questionIndex = 0;
-                foreach ($request->questions as $questionKey => $questionData) {
+                foreach ($surveyData['questions'] as $questionKey => $questionData) {
                     $questionIndex++;
 
                     $inputType = InputType::firstOrCreate(
@@ -167,10 +182,10 @@ class SurveyBuilderController extends Controller
                     }
 
                     $question = Question::create([
-                        'survey_section_id' => $sectionMap[$questionData['section_id']],
+                        'survey_section_id' => $sectionMap[$questionData['sectionId']],
                         'question_text' => $questionData['label'],
                         'question_subtext' => $questionData['description'] ?? null,
-                        'answer_required' => $questionData['required'] == '1',
+                        'answer_required' => ($questionData['required'] ?? false) === true || ($questionData['required'] ?? false) == '1',
                         'input_type_id' => $inputType->id,
                         'option_group_id' => $optionGroupId,
                         'allow_multiple_option_answers' => in_array($questionData['type'], ['checkbox']),
