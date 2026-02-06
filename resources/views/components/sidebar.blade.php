@@ -17,7 +17,7 @@
 
         <ul class="space-y-2 font-medium">
             <li>
-                <a href=""
+                <a href="{{ route('dashboard') }}"
                     class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-blue-900 dark:hover:bg-gray-700 group"
                     :class="miniSidebar ? 'justify-center' : ''">
                     <svg class="shrink-0 w-5 h-5 text-gray-400 transition duration-75 dark:text-gray-400 group-hover:text-white dark:group-hover:text-white"

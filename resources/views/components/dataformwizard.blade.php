@@ -1,5 +1,7 @@
 @props(['wards' => null])
 @push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
 
@@ -126,6 +128,173 @@
         .option-custom-input {
             margin-top: 0.5rem;
             padding-left: 2rem;
+        }
+
+        /* Map Styles */
+        .location-map-container {
+            height: 500px;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 2px solid #e5e7eb;
+            margin-top: 0.75rem;
+            position: relative;
+        }
+
+        .location-coordinates {
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .leaflet-container {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* Enhanced Geocoder Control Styles */
+        .leaflet-control-geocoder {
+            border-radius: 0.5rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            border: 2px solid #e5e7eb !important;
+        }
+
+        .leaflet-control-geocoder-form input {
+            border-radius: 0.375rem !important;
+            border: 1px solid #d1d5db !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            width: 280px !important;
+        }
+
+        .leaflet-control-geocoder-form input:focus {
+            outline: none !important;
+            border-color: #6366f1 !important;
+            ring: 2px !important;
+            ring-color: #6366f1 !important;
+        }
+
+        .leaflet-control-geocoder-alternatives {
+            border-radius: 0.375rem !important;
+            margin-top: 0.25rem !important;
+            max-height: 250px !important;
+            overflow-y: auto !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .leaflet-control-geocoder-alternatives a {
+            padding: 0.625rem !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            font-size: 0.875rem !important;
+        }
+
+        .leaflet-control-geocoder-alternatives a:hover {
+            background-color: #f3f4f6 !important;
+        }
+
+        .leaflet-control-geocoder-icon {
+            background-color: #6366f1 !important;
+            border-radius: 0.375rem !important;
+        }
+
+        /* Custom marker popup */
+        .leaflet-popup-content-wrapper {
+            border-radius: 0.5rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 0.75rem !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* Location info badge */
+        .location-info-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            font-size: 0.75rem;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .location-info-badge svg {
+            width: 1rem;
+            height: 1rem;
+            color: #6366f1;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 1rem;
+            max-width: 90vw;
+            max-height: 90vh;
+            width: 1200px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            z-index: 9999;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-map-container {
+            height: 500px;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 2px solid #e5e7eb;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .modal-container {
+                max-width: 95vw;
+                max-height: 95vh;
+            }
+
+            .modal-map-container {
+                height: 400px;
+            }
         }
     </style>
 @endpush
@@ -327,35 +496,28 @@
                                                                 class="input-field mt-1 block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                                         </template>
 
+                                                        <!-- Radio Buttons -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'radio'">
                                                             <div class="mt-3 space-y-3">
-
                                                                 <template x-for="qOption in question.question_options"
                                                                     :key="qOption.id">
-
                                                                     <label
                                                                         class="radio-card flex items-center gap-3 rounded-xl border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300"
                                                                         :class="formData.answers[question.id]
                                                                             .question_option_id == qOption.id ?
                                                                             'border-indigo-600 bg-indigo-50 shadow-sm' :
                                                                             ''">
-
-                                                                        <!-- radio -->
                                                                         <input type="radio"
                                                                             x-model="formData.answers[question.id].question_option_id"
                                                                             @change="clearError(question.id)"
                                                                             :value="qOption.id"
                                                                             :required="question.answer_required"
                                                                             class="h-5 w-5 text-indigo-600 border-gray-300 focus:ring-2 focus:ring-indigo-500">
-
-                                                                        <!-- label text -->
                                                                         <span
                                                                             class="whitespace-nowrap font-medium text-gray-900"
                                                                             x-text="qOption.option_choice?.choice_text">
                                                                         </span>
-
-                                                                        <!-- INLINE custom input -->
                                                                         <input
                                                                             x-show="qOption.option_choice?.custom_input_type 
                                                                             && qOption.option_choice.custom_input_type !== 'none'
@@ -368,25 +530,18 @@
                                                                             :placeholder="qOption.option_choice
                                                                                 .custom_input_placeholder || 'Specify'"
                                                                             class="ml-3 flex-1 min-w-[180px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-
                                                                     </label>
-
                                                                 </template>
-
                                                             </div>
                                                         </template>
 
-
-                                                        <!-- Linear Scale (Google Form style) -->
+                                                        <!-- Linear Scale -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'linear_scale'">
                                                             <div class="mt-6" @click.stop>
                                                                 <div class="flex justify-between items-center mt-2">
-                                                                    <!-- Low label -->
                                                                     <span class="text-xs text-gray-500 mr-2"
                                                                         x-text="question.scale_label_low || question.scale_from"></span>
-
-                                                                    <!-- Radio buttons for scale -->
                                                                     <template
                                                                         x-for="n in (question.scale_to - question.scale_from + 1)"
                                                                         :key="n">
@@ -400,48 +555,37 @@
                                                                                     @change="clearError(question.id)"
                                                                                     :required="question.answer_required"
                                                                                     class="mb-1">
-
-                                                                                <!-- Number below radio -->
                                                                                 <span class="text-xs text-gray-600"
                                                                                     x-text="question.scale_from + n - 1"></span>
                                                                             </label>
                                                                         </div>
                                                                     </template>
-
-                                                                    <!-- High label -->
                                                                     <span class="text-xs text-gray-500 ml-2"
                                                                         x-text="question.scale_label_high || question.scale_to"></span>
                                                                 </div>
                                                             </div>
                                                         </template>
 
-                                                        <!-- Checkboxes with Custom Input -->
+                                                        <!-- Checkboxes -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'checkbox'">
                                                             <div class="mt-3 space-y-3">
                                                                 <template x-for="qOption in question.question_options"
                                                                     :key="qOption.id">
-
                                                                     <label
                                                                         class="checkbox-card flex items-center gap-3 rounded-xl border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300"
                                                                         :class="formData.answers[question.id].question_option_id
                                                                             ?.includes(String(qOption.id)) ?
                                                                             'border-indigo-600 bg-indigo-50 shadow-sm' :
                                                                             ''">
-
-                                                                        <!-- Checkbox -->
                                                                         <input type="checkbox"
                                                                             x-model="formData.answers[question.id].question_option_id"
                                                                             @change="clearError(question.id)"
                                                                             :value="qOption.id"
                                                                             class="h-5 w-5 text-indigo-600 border-gray-300 focus:ring-2 focus:ring-indigo-500">
-
-                                                                        <!-- Label text -->
                                                                         <span
                                                                             class="whitespace-nowrap font-medium text-gray-900"
                                                                             x-text="qOption.option_choice?.choice_text"></span>
-
-                                                                        <!-- Inline custom input -->
                                                                         <input
                                                                             x-show="qOption.option_choice?.custom_input_type
                                                                             && qOption.option_choice.custom_input_type !== 'none'
@@ -454,15 +598,12 @@
                                                                             :placeholder="qOption.option_choice
                                                                                 .custom_input_placeholder || 'Specify'"
                                                                             class="ml-3 flex-1 min-w-[180px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-
                                                                     </label>
-
                                                                 </template>
                                                             </div>
                                                         </template>
 
-
-                                                        <!-- Dropdown / Select -->
+                                                        <!-- Dropdown -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'dropdown'">
                                                             <select
@@ -478,6 +619,254 @@
                                                                     </option>
                                                                 </template>
                                                             </select>
+                                                        </template>
+
+                                                        <!-- Location/GPS Input with Modal Map -->
+                                                        <template
+                                                            x-if="question.input_type?.input_type_name === 'location'">
+                                                            <div>
+                                                                <!-- Location Selection Button -->
+                                                                <button type="button"
+                                                                    @click="openMapModal(question.id)"
+                                                                    class="w-full mt-2 flex items-center justify-center gap-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-all hover:border-indigo-500 hover:bg-indigo-50">
+                                                                    <svg class="h-10 w-10 text-gray-400"
+                                                                        fill="none" stroke="currentColor"
+                                                                        viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    </svg>
+                                                                    <div class="text-left">
+                                                                        <p
+                                                                            class="text-base font-semibold text-gray-900">
+                                                                            <span
+                                                                                x-show="!formData.answers[question.id].latitude">Select
+                                                                                Location on Map</span>
+                                                                            <span
+                                                                                x-show="formData.answers[question.id].latitude">Change
+                                                                                Location</span>
+                                                                        </p>
+                                                                        <p class="text-sm text-gray-500">Click to open
+                                                                            interactive map</p>
+                                                                    </div>
+                                                                </button>
+
+                                                                <!-- Coordinates Display (Read-only) -->
+                                                                <div x-show="formData.answers[question.id].latitude"
+                                                                    class="location-coordinates mt-3">
+                                                                    <div
+                                                                        class="flex items-center justify-between mb-2">
+                                                                        <span
+                                                                            class="text-xs font-semibold text-gray-700 flex items-center gap-1">
+                                                                            <svg class="h-4 w-4 text-green-600"
+                                                                                fill="currentColor"
+                                                                                viewBox="0 0 20 20">
+                                                                                <path fill-rule="evenodd"
+                                                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                                                    clip-rule="evenodd" />
+                                                                            </svg>
+                                                                            Location Selected
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="grid grid-cols-2 gap-3">
+                                                                        <div>
+                                                                            <label
+                                                                                class="text-xs font-medium text-gray-600 mb-1 block">Latitude</label>
+                                                                            <div
+                                                                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
+                                                                                <svg class="h-4 w-4 text-gray-400"
+                                                                                    fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        stroke-width="2"
+                                                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                                </svg>
+                                                                                <input type="text"
+                                                                                    :value="formData.answers[question.id]
+                                                                                        .latitude"
+                                                                                    readonly
+                                                                                    class="flex-1 bg-transparent border-0 p-0 text-sm text-gray-700 focus:ring-0 cursor-default">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label
+                                                                                class="text-xs font-medium text-gray-600 mb-1 block">Longitude</label>
+                                                                            <div
+                                                                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
+                                                                                <svg class="h-4 w-4 text-gray-400"
+                                                                                    fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        stroke-width="2"
+                                                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                                </svg>
+                                                                                <input type="text"
+                                                                                    :value="formData.answers[question.id]
+                                                                                        .longitude"
+                                                                                    readonly
+                                                                                    class="flex-1 bg-transparent border-0 p-0 text-sm text-gray-700 focus:ring-0 cursor-default">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Hidden inputs for validation -->
+                                                                <input type="hidden"
+                                                                    x-model="formData.answers[question.id].latitude"
+                                                                    :required="question.answer_required">
+                                                                <input type="hidden"
+                                                                    x-model="formData.answers[question.id].longitude"
+                                                                    :required="question.answer_required">
+
+                                                                <!-- Map Modal -->
+                                                                <div x-show="mapModal.isOpen && mapModal.questionId === question.id"
+                                                                    x-cloak class="modal-overlay"
+                                                                    @click.self="closeMapModal()"
+                                                                    x-transition:enter="transition ease-out duration-300"
+                                                                    x-transition:enter-start="opacity-0"
+                                                                    x-transition:enter-end="opacity-100"
+                                                                    x-transition:leave="transition ease-in duration-200"
+                                                                    x-transition:leave-start="opacity-100"
+                                                                    x-transition:leave-end="opacity-0">
+
+                                                                    <div class="modal-container"
+                                                                        x-transition:enter="transition ease-out duration-300"
+                                                                        x-transition:enter-start="opacity-0 transform scale-95"
+                                                                        x-transition:enter-end="opacity-100 transform scale-100"
+                                                                        x-transition:leave="transition ease-in duration-200"
+                                                                        x-transition:leave-start="opacity-100 transform scale-100"
+                                                                        x-transition:leave-end="opacity-0 transform scale-95">
+
+                                                                        <!-- Modal Header -->
+                                                                        <div class="modal-header">
+                                                                            <div class="flex items-center gap-3">
+                                                                                <div
+                                                                                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+                                                                                    <svg class="h-6 w-6 text-indigo-600"
+                                                                                        fill="none"
+                                                                                        stroke="currentColor"
+                                                                                        viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round"
+                                                                                            stroke-linejoin="round"
+                                                                                            stroke-width="2"
+                                                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                                        <path stroke-linecap="round"
+                                                                                            stroke-linejoin="round"
+                                                                                            stroke-width="2"
+                                                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                    </svg>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <h3
+                                                                                        class="text-lg font-bold text-gray-900">
+                                                                                        Select Location</h3>
+                                                                                    <p class="text-sm text-gray-500">
+                                                                                        Search, click, or drag the
+                                                                                        marker</p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <button type="button"
+                                                                                @click="closeMapModal()"
+                                                                                class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                                                                                <svg class="h-6 w-6" fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        stroke-width="2"
+                                                                                        d="M6 18L18 6M6 6l12 12" />
+                                                                                </svg>
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <!-- Modal Body -->
+                                                                        <div class="modal-body">
+                                                                            <!-- Map Container -->
+                                                                            <div class="modal-map-container"
+                                                                                :id="'map-' + question.id">
+                                                                                <!-- Info Badge -->
+                                                                                <div class="location-info-badge">
+                                                                                    <svg fill="none"
+                                                                                        stroke="currentColor"
+                                                                                        viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round"
+                                                                                            stroke-linejoin="round"
+                                                                                            stroke-width="2"
+                                                                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                    </svg>
+                                                                                    <span>Search or click to set
+                                                                                        location</span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <!-- Current Coordinates in Modal -->
+                                                                            <div class="mt-4 grid grid-cols-2 gap-3">
+                                                                                <div>
+                                                                                    <label
+                                                                                        class="text-xs font-medium text-gray-600 mb-1 block">Latitude</label>
+                                                                                    <div
+                                                                                        class="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-md px-3 py-2">
+                                                                                        <span
+                                                                                            class="text-sm font-mono text-indigo-900"
+                                                                                            x-text="formData.answers[question.id].latitude || 'Not set'"></span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <label
+                                                                                        class="text-xs font-medium text-gray-600 mb-1 block">Longitude</label>
+                                                                                    <div
+                                                                                        class="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-md px-3 py-2">
+                                                                                        <span
+                                                                                            class="text-sm font-mono text-indigo-900"
+                                                                                            x-text="formData.answers[question.id].longitude || 'Not set'"></span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <!-- Modal Footer -->
+                                                                        <div class="modal-footer">
+                                                                            <button type="button"
+                                                                                @click="getCurrentLocation(question.id)"
+                                                                                class="flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:bg-indigo-50 rounded-lg transition-colors">
+                                                                                <svg class="h-4 w-4" fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        stroke-width="2"
+                                                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                                    <path stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        stroke-width="2"
+                                                                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                </svg>
+                                                                                Use My Location
+                                                                            </button>
+
+                                                                            <div class="flex gap-3">
+                                                                                <button type="button"
+                                                                                    @click="closeMapModal()"
+                                                                                    class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                                                                                    Cancel
+                                                                                </button>
+                                                                                <button type="button"
+                                                                                    @click="confirmLocation(question.id)"
+                                                                                    class="px-6 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg transition-all shadow-sm hover:shadow-md">
+                                                                                    Confirm Location
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </template>
 
                                                         <!-- File Upload -->
@@ -515,7 +904,6 @@
                                                                         up to 10MB</p>
                                                                 </div>
 
-                                                                <!-- File List -->
                                                                 <div x-show="formData.answers[question.id].files?.length"
                                                                     class="mt-3 space-y-2">
                                                                     <template
@@ -655,6 +1043,8 @@
 </div>
 
 @push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script>
         function surveyWizard() {
             return {
@@ -668,13 +1058,63 @@
                 wardInfo: {},
                 sections: [],
                 steps: [],
+                maps: {},
+                markers: {},
+                geocoders: {},
+                mapModal: {
+                    isOpen: false,
+                    questionId: null
+                },
                 formData: {
                     ward_id: null,
                     answers: {}
                 },
 
                 init() {
-                    // Initialization code if needed
+                    // Initialization
+                },
+
+                openMapModal(questionId) {
+                    this.mapModal.isOpen = true;
+                    this.mapModal.questionId = questionId;
+
+
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            if (!this.maps[questionId]) {
+                                this.initMap(questionId);
+                            } else {
+
+                                this.maps[questionId].invalidateSize();
+
+
+                                const lat = this.formData.answers[questionId].latitude;
+                                const lng = this.formData.answers[questionId].longitude;
+                                if (lat && lng) {
+                                    const marker = this.markers[questionId];
+                                    const map = this.maps[questionId];
+                                    marker.setLatLng([parseFloat(lat), parseFloat(lng)]);
+                                    map.setView([parseFloat(lat), parseFloat(lng)], 15);
+                                }
+                            }
+                        }, 100);
+                    });
+                },
+
+                closeMapModal() {
+                    this.mapModal.isOpen = false;
+                    this.mapModal.questionId = null;
+                },
+
+                confirmLocation(questionId) {
+
+                    if (!this.formData.answers[questionId].latitude || !this.formData.answers[questionId].longitude) {
+                        alert('Please select a location on the map first.');
+                        return;
+                    }
+
+                    this.clearError(questionId);
+                    this.closeMapModal();
                 },
 
                 async loadWardData() {
@@ -703,27 +1143,23 @@
                             this.totalSteps = this.sections.length;
                             this.formData.ward_id = this.selectedWardId;
 
-                            // Build steps for stepper
                             this.steps = this.sections.map((section, index) => ({
                                 id: index + 1,
                                 title: section.title,
                                 description: section.description || ''
                             }));
 
-                            // Initialize form data for all questions
                             this.formData.answers = {};
                             this.sections.forEach(section => {
                                 section.questions.forEach(question => {
                                     const inputType = question.input_type?.input_type_name;
 
-                                    // Initialize based on input type
                                     if (inputType === 'checkbox') {
                                         this.formData.answers[question.id] = {
                                             question_option_id: [],
                                             custom_inputs: {}
                                         };
                                     } else if (['radio', 'dropdown'].includes(inputType)) {
-                                        // Use empty string instead of null
                                         this.formData.answers[question.id] = {
                                             question_option_id: '',
                                             custom_inputs: {}
@@ -741,13 +1177,21 @@
                                         this.formData.answers[question.id] = {
                                             files: []
                                         };
+                                    } else if (inputType === 'location') {
+                                        this.formData.answers[question.id] = {
+                                            latitude: '',
+                                            longitude: ''
+                                        };
                                     } else {
-                                        // Text-based inputs
                                         this.formData.answers[question.id] = {
                                             answer_text: ''
                                         };
                                     }
                                 });
+                            });
+
+                            this.$nextTick(() => {
+
                             });
 
                         } else {
@@ -761,6 +1205,129 @@
                     }
                 },
 
+                initMap(questionId) {
+                    const mapId = 'map-' + questionId;
+                    const mapElement = document.getElementById(mapId);
+
+                    if (!mapElement || this.maps[questionId]) {
+                        return;
+                    }
+
+
+                    const existingLat = this.formData.answers[questionId].latitude;
+                    const existingLng = this.formData.answers[questionId].longitude;
+
+                    const defaultLat = existingLat ? parseFloat(existingLat) : 27.7172;
+                    const defaultLng = existingLng ? parseFloat(existingLng) : 85.3240;
+                    const defaultZoom = existingLat ? 15 : 13;
+
+
+                    const map = L.map(mapId).setView([defaultLat, defaultLng], defaultZoom);
+
+
+                    L.tileLayer(
+                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics',
+                            maxZoom: 19
+                        }).addTo(map);
+
+
+                    const marker = L.marker([defaultLat, defaultLng], {
+                        draggable: true
+                    }).addTo(map);
+
+
+                    const popupText = existingLat ? '<b>Selected Location</b><br>Drag to adjust' :
+                        '<b>Drag me!</b><br>Or search for a location';
+                    marker.bindPopup(popupText).openPopup();
+
+
+                    const geocoder = L.Control.geocoder({
+                            defaultMarkGeocode: false,
+                            placeholder: 'Search for a place...',
+                            errorMessage: 'Nothing found.',
+                            collapsed: false,
+                            position: 'topleft',
+                            geocoder: L.Control.Geocoder.nominatim({
+                                geocodingQueryParams: {
+                                    countrycodes: 'np',
+                                    limit: 5
+                                }
+                            })
+                        })
+                        .on('markgeocode', (e) => {
+                            const latlng = e.geocode.center;
+                            map.setView(latlng, 15);
+                            marker.setLatLng(latlng);
+                            this.formData.answers[questionId].latitude = latlng.lat.toFixed(6);
+                            this.formData.answers[questionId].longitude = latlng.lng.toFixed(6);
+                            marker.bindPopup(e.geocode.name).openPopup();
+                            this.clearError(questionId);
+                        })
+                        .addTo(map);
+
+
+                    marker.on('dragend', (e) => {
+                        const position = e.target.getLatLng();
+                        this.formData.answers[questionId].latitude = position.lat.toFixed(6);
+                        this.formData.answers[questionId].longitude = position.lng.toFixed(6);
+                        this.clearError(questionId);
+                    });
+
+
+                    map.on('click', (e) => {
+                        const {
+                            lat,
+                            lng
+                        } = e.latlng;
+                        marker.setLatLng([lat, lng]);
+                        this.formData.answers[questionId].latitude = lat.toFixed(6);
+                        this.formData.answers[questionId].longitude = lng.toFixed(6);
+                        this.clearError(questionId);
+                    });
+
+
+                    this.maps[questionId] = map;
+                    this.markers[questionId] = marker;
+                    this.geocoders[questionId] = geocoder;
+
+
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 100);
+                },
+
+                getCurrentLocation(questionId) {
+                    if (!navigator.geolocation) {
+                        alert('Geolocation is not supported by your browser');
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+
+                            this.formData.answers[questionId].latitude = lat.toFixed(6);
+                            this.formData.answers[questionId].longitude = lng.toFixed(6);
+
+                            const marker = this.markers[questionId];
+                            const map = this.maps[questionId];
+
+                            if (marker && map) {
+                                marker.setLatLng([lat, lng]);
+                                map.setView([lat, lng], 15);
+                                marker.bindPopup('Your current location').openPopup();
+                            }
+
+                            this.clearError(questionId);
+                        },
+                        (error) => {
+                            alert('Unable to retrieve your location: ' + error.message);
+                        }
+                    );
+                },
+
                 resetForm() {
                     this.sections = [];
                     this.steps = [];
@@ -771,6 +1338,9 @@
                         answers: {}
                     };
                     this.wardInfo = {};
+                    this.maps = {};
+                    this.markers = {};
+                    this.geocoders = {};
                 },
 
                 handleFileSelect(event, questionId) {
@@ -824,10 +1394,13 @@
                             } else if (['radio', 'dropdown'].includes(inputType)) {
                                 isEmpty = !answer.question_option_id || answer.question_option_id === '';
                             } else if (['number', 'linear_scale'].includes(inputType)) {
-                                isEmpty = answer.answer_numeric === '' || answer.answer_numeric === null || answer
-                                    .answer_numeric === undefined;
+                                isEmpty = answer.answer_numeric === '' || answer.answer_numeric === null ||
+                                    answer.answer_numeric === undefined;
                             } else if (inputType === 'file') {
                                 isEmpty = !answer.files || answer.files.length === 0;
+                            } else if (inputType === 'location') {
+                                isEmpty = !answer.latitude || !answer.longitude ||
+                                    answer.latitude === '' || answer.longitude === '';
                             } else {
                                 isEmpty = !answer.answer_text || answer.answer_text.trim() === '';
                             }
@@ -854,6 +1427,12 @@
                                 top: 0,
                                 behavior: 'smooth'
                             });
+
+                            this.$nextTick(() => {
+                                Object.values(this.maps).forEach(map => {
+                                    map.invalidateSize();
+                                });
+                            });
                         }
                     } else {
                         const firstErrorElement = document.querySelector('.error-message');
@@ -873,6 +1452,12 @@
                             top: 0,
                             behavior: 'smooth'
                         });
+
+                        this.$nextTick(() => {
+                            Object.values(this.maps).forEach(map => {
+                                map.invalidateSize();
+                            });
+                        });
                     }
                 },
 
@@ -890,6 +1475,12 @@
                         top: 0,
                         behavior: 'smooth'
                     });
+
+                    this.$nextTick(() => {
+                        Object.values(this.maps).forEach(map => {
+                            map.invalidateSize();
+                        });
+                    });
                 },
 
                 async handleSubmit() {
@@ -906,28 +1497,27 @@
                         Object.keys(this.formData.answers).forEach(questionId => {
                             const answer = this.formData.answers[questionId];
 
-                            // Handle file uploads
                             if (answer.files && answer.files.length > 0) {
                                 answer.files.forEach((file, index) => {
                                     formData.append(`answers[${questionId}][files][${index}]`, file);
                                 });
-                            }
-                            // Handle option-based answers (radio, checkbox, dropdown)
-                            else if (answer.question_option_id !== undefined) {
-                                // Skip if empty
+                            } else if (answer.latitude !== undefined && answer.longitude !== undefined) {
+                                if (answer.latitude !== '' && answer.longitude !== '') {
+                                    formData.append(`answers[${questionId}][latitude]`, answer.latitude);
+                                    formData.append(`answers[${questionId}][longitude]`, answer.longitude);
+                                }
+                            } else if (answer.question_option_id !== undefined) {
                                 if (answer.question_option_id === '' || answer.question_option_id === null) {
                                     return;
                                 }
 
                                 if (Array.isArray(answer.question_option_id)) {
-                                    // Checkbox - multiple options
                                     if (answer.question_option_id.length > 0) {
                                         answer.question_option_id.forEach((optionId, index) => {
                                             formData.append(
                                                 `answers[${questionId}][question_option_id][${index}]`,
                                                 optionId);
 
-                                            // Add custom input for this option if exists
                                             if (answer.custom_inputs && answer.custom_inputs[
                                                     optionId]) {
                                                 formData.append(
@@ -937,24 +1527,18 @@
                                         });
                                     }
                                 } else {
-                                    // Radio or dropdown - single option
                                     formData.append(`answers[${questionId}][question_option_id]`, answer
                                         .question_option_id);
 
-                                    // Add custom input for this option if exists
                                     if (answer.custom_inputs && answer.custom_inputs[answer
                                             .question_option_id]) {
                                         formData.append(`answers[${questionId}][custom_input]`, answer
                                             .custom_inputs[answer.question_option_id]);
                                     }
                                 }
-                            }
-                            // Handle text answers
-                            else if (answer.answer_text !== undefined && answer.answer_text !== '') {
+                            } else if (answer.answer_text !== undefined && answer.answer_text !== '') {
                                 formData.append(`answers[${questionId}][answer_text]`, answer.answer_text);
-                            }
-                            // Handle numeric answers
-                            else if (answer.answer_numeric !== undefined && answer.answer_numeric !== '' &&
+                            } else if (answer.answer_numeric !== undefined && answer.answer_numeric !== '' &&
                                 answer.answer_numeric !== null) {
                                 formData.append(`answers[${questionId}][answer_numeric]`, answer
                                     .answer_numeric);

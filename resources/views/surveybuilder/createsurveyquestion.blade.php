@@ -6,7 +6,8 @@
 
                     <h1 class="text-3xl font-bold mb-8">{{ __('Survey Section Editor') }}</h1>
 
-                    <form x-data="surveyBuilder()" @submit.prevent="submitForm" action="{{ route('surveyform.store') }}" class="space-y-4" method="POST">
+                    <form x-data="surveyBuilder()" @submit.prevent="submitForm" action="{{ route('surveyform.store') }}"
+                        class="space-y-4" method="POST">
                         @csrf
 
                         {{-- Hidden inputs for JSON submission --}}
@@ -155,8 +156,7 @@
                                             <div class="mb-4">
                                                 <label
                                                     class="text-sm text-gray-600 block mb-1">{{ __('Section description') }}</label>
-                                                <textarea :value="section.description || ''"
-                                                    @input="updateSection(section.id, 'description', $event.target.value)"
+                                                <textarea :value="section.description || ''" @input="updateSection(section.id, 'description', $event.target.value)"
                                                     placeholder="{{ __('Optional description for this section') }}" rows="2"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                                             </div>
@@ -201,8 +201,7 @@
                                                                         </div>
                                                                     </div>
 
-                                                                    <input type="text"
-                                                                        :value="question.label"
+                                                                    <input type="text" :value="question.label"
                                                                         @input="updateQuestion(question.id, 'label', $event.target.value)"
                                                                         :placeholder="question.type === 'text' ?
                                                                             '{{ __('Title') }}' :
@@ -210,8 +209,7 @@
                                                                         class="w-full mb-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                                         required />
 
-                                                                    <textarea :value="question.description || ''"
-                                                                        @input="updateQuestion(question.id, 'description', $event.target.value)"
+                                                                    <textarea :value="question.description || ''" @input="updateQuestion(question.id, 'description', $event.target.value)"
                                                                         :placeholder="question.type === 'text' ?
                                                                             '{{ __('Description') }}' :
                                                                             '{{ __('Optional description') }}'"
@@ -243,17 +241,20 @@
                                                                                             :value="option.input_type || 'none'"
                                                                                             @change="updateQuestionOption(question.id, option.id, 'input_type', $event.target.value)"
                                                                                             class="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white">
-                                                                                            <option value="none">No Input
+                                                                                            <option value="none">No
+                                                                                                Input
                                                                                             </option>
                                                                                             <option value="text">Text
                                                                                                 Input</option>
-                                                                                            <option value="number">Number
+                                                                                            <option value="number">
+                                                                                                Number
                                                                                                 Input</option>
                                                                                         </select>
 
                                                                                         <input type="text"
                                                                                             x-show="option.input_type && option.input_type !== 'none'"
-                                                                                            :value="option.input_placeholder || ''"
+                                                                                            :value="option.input_placeholder ||
+                                                                                                ''"
                                                                                             @input="updateQuestionOption(question.id, option.id, 'input_placeholder', $event.target.value)"
                                                                                             placeholder="Input placeholder"
                                                                                             class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm" />
@@ -350,8 +351,6 @@
                                                                                 placeholder=""
                                                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                                                                         </div>
-
-
                                                                     </div>
                                                                 </div>
 
@@ -505,6 +504,11 @@
                             value: 'linear_scale',
                             label: t.linear_scale || 'Linear Scale',
                             description: t.linear_scale_description || 'Scale from 1 to a number'
+                        },
+                        {
+                            value: 'location',
+                            label: t.location || 'Location/GPS',
+                            description: t.location_description || 'Interactive map with coordinates'
                         }
                     ],
 
@@ -823,10 +827,10 @@
                             questions: this.questions
                         };
                         this.$refs.surveyDataInput.value = JSON.stringify(surveyData);
-                        
+
                         const wardSelect = document.getElementById('ward_id');
                         this.$refs.wardIdInput.value = wardSelect ? wardSelect.value : '';
-                        
+
                         event.target.submit();
                     }
                 }

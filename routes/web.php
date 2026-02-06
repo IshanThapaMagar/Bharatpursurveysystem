@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SurveyBuilderController;
 use App\Http\Controllers\HouseDescriptionController;
 use App\Http\Controllers\HouseMemberController;
+use App\Http\Controllers\DashboardController;
 
 
 
@@ -20,9 +21,8 @@ Route::get('language/{locale}', function ($locale) {
     return redirect()->back();
 })->name('lang');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
