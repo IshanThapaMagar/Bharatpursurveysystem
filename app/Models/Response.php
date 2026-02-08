@@ -11,6 +11,7 @@ class Response extends Model
     protected $fillable = [
         'user_id',
         'ward_id',
+        'householder_id',
         'submitted_at',
     ];
 
@@ -26,6 +27,11 @@ class Response extends Model
     public function ward(): BelongsTo
     {
         return $this->belongsTo(Ward::class);
+    }
+
+    public function householder(): BelongsTo
+    {
+        return $this->belongsTo(Householder::class);
     }
 
     public function answers(): HasMany

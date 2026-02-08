@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             RelationshipSeeder::class,
             SpecialSkillSeeder::class,
             PoolingPlaceSeeder::class,
+            LookupTablesSeeder::class,
         ]);
     }
 }

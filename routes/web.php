@@ -34,6 +34,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('surveyform', SurveyBuilderController::class);
     Route::resource('house-description', HouseDescriptionController::class);
     Route::resource('house-member', HouseMemberController::class);
+    Route::get('/survey/ward/{ward}/lookup-data', [HouseDescriptionController::class, 'getLookupData']);
+
+    
     Route::post('/survey-sections/reorder', [SurveyBuilderController::class, 'reorder'])->name('survey.sections.reorder');
 
     Route::get('/survey/ward/{ward}/sections', [HouseDescriptionController::class, 'getSectionsForWard'])

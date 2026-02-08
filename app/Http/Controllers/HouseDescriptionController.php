@@ -6,6 +6,10 @@ use App\Models\SurveySection;
 use App\Models\Ward;
 use App\Models\Response;
 use App\Models\Answer;
+use App\Models\Householder;
+use App\Models\MotherTongue;
+use App\Models\Caste;
+use App\Models\Tole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,9 +23,7 @@ class HouseDescriptionController extends Controller
         //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+
     public function create()
     {
         $wards = Ward::orderBy('ward_no')->get();
@@ -29,9 +31,6 @@ class HouseDescriptionController extends Controller
         return view('housedescription.createdataform', compact('wards'));
     }
 
-    /**
-     * Get survey sections for a specific ward (AJAX)
-     */
     public function getSectionsForWard($wardId)
     {
         $ward = Ward::findOrFail($wardId);
@@ -63,36 +62,89 @@ class HouseDescriptionController extends Controller
         ]);
     }
 
+    public function getLookupData($wardId)
+    {
+        try {
+            $motherTongues = MotherTongue::all();
+            $castes = Caste::all();
+            $toles = Tole::where('ward_id', $wardId)->get();
+
+            return response()->json([
+                'success' => true,
+                'mother_tongues' => $motherTongues,
+                'castes' => $castes,
+                'toles' => $toles,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch lookup data',
+            ], 500);
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
+        {
         try {
             $validated = $request->validate([
                 'ward_id' => 'required|exists:wards,id',
+                'householder_name' => 'required|string|max:255',
+                'father_name' => 'required|string|max:255',
+                'mother_name' => 'required|string|max:255',
+                'mother_tongue_id' => 'required|exists:mother_tongues,id',
+                'caste_id' => 'required|exists:castes,id',
+                'tole_id' => 'required|exists:toles,id',
+                'ward_no' => 'required|integer',
+                'house_number' => 'required|string|max:255',
+                'phone_number' => 'required|string|size:10',
+                'citizenship_permanent_address' => 'required|string|max:255',
+                'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'answers' => 'required|array',
             ]);
 
             DB::beginTransaction();
 
+            
+            $profilePhotoPath = null;
+            if ($request->hasFile('profile_photo')) {
+                $profilePhotoPath = $request->file('profile_photo')->store('householder-photos', 'public');
+            }
+
+            
+            $householder = Householder::create([
+                'householder_name' => $validated['householder_name'],
+                'father_name' => $validated['father_name'],
+                'mother_name' => $validated['mother_name'],
+                'mother_tongue_id' => $validated['mother_tongue_id'],
+                'caste_id' => $validated['caste_id'],
+                'tole_id' => $validated['tole_id'],
+                'ward_no' => $validated['ward_no'],
+                'house_number' => $validated['house_number'],
+                'phone_number' => $validated['phone_number'],
+                'citizenship_permanent_address' => $validated['citizenship_permanent_address'],
+                'profile_photo' => $profilePhotoPath,
+            ]);
+
+            // Create response linked to householder
             $response = Response::create([
                 'user_id' => auth()->id(),
                 'ward_id' => $validated['ward_id'],
+                'householder_id' => $householder->id,
                 'submitted_at' => now(),
             ]);
 
+            // Process answers (your existing logic)
             foreach ($request->input('answers', []) as $questionId => $answerData) {
-                
                 
                 if (isset($answerData['question_option_id'])) {
                     $optionIds = $answerData['question_option_id'];
                     
-                    
                     if (empty($optionIds)) {
                         continue;
                     }
-                    
                     
                     if (is_array($optionIds)) {
                         foreach ($optionIds as $optionId) {
@@ -103,7 +155,6 @@ class HouseDescriptionController extends Controller
                                     'question_option_id' => $optionId,
                                 ];
                                 
-                                
                                 if (isset($answerData['custom_inputs'][$optionId]) && !empty($answerData['custom_inputs'][$optionId])) {
                                     $answerRecord['answer_text'] = $answerData['custom_inputs'][$optionId];
                                 }
@@ -111,16 +162,13 @@ class HouseDescriptionController extends Controller
                                 Answer::create($answerRecord);
                             }
                         }
-                    } 
-                    
-                    else {
+                    } else {
                         $answerRecord = [
                             'response_id' => $response->id,
                             'question_id' => $questionId,
                             'question_option_id' => $optionIds,
                         ];
                         
-                        // Handle custom input if exists
                         if (isset($answerData['custom_input']) && !empty($answerData['custom_input'])) {
                             $answerRecord['answer_text'] = $answerData['custom_input'];
                         }
@@ -129,7 +177,6 @@ class HouseDescriptionController extends Controller
                     }
                 }
                 
-    
                 elseif (isset($answerData['answer_text']) && !empty($answerData['answer_text'])) {
                     Answer::create([
                         'response_id' => $response->id,
@@ -138,7 +185,6 @@ class HouseDescriptionController extends Controller
                     ]);
                 }
 
-
                 elseif (isset($answerData['answer_numeric']) && $answerData['answer_numeric'] !== null && $answerData['answer_numeric'] !== '') {
                     $answerRecord = [
                         'response_id' => $response->id,
@@ -146,7 +192,6 @@ class HouseDescriptionController extends Controller
                         'answer_numeric' => $answerData['answer_numeric'],
                     ];
                     
-
                     if (isset($answerData['unit_of_measure_id']) && !empty($answerData['unit_of_measure_id'])) {
                         $answerRecord['unit_of_measure_id'] = $answerData['unit_of_measure_id'];
                     }
@@ -154,7 +199,6 @@ class HouseDescriptionController extends Controller
                     Answer::create($answerRecord);
                 }
         
-     
                 elseif (isset($answerData['files']) && count($answerData['files']) > 0) {
                     foreach ($answerData['files'] as $file) {
                         $filePath = $file->store('survey-responses', 'public');
@@ -167,10 +211,8 @@ class HouseDescriptionController extends Controller
                     }
                 }
                 
- 
                 elseif (isset($answerData['latitude']) && isset($answerData['longitude'])) {
                     if (!empty($answerData['latitude']) && !empty($answerData['longitude'])) {
-     
                         Answer::create([
                             'response_id' => $response->id,
                             'question_id' => $questionId,
@@ -190,6 +232,7 @@ class HouseDescriptionController extends Controller
                 'success' => true,
                 'message' => 'Survey submitted successfully!',
                 'response_id' => $response->id,
+                'householder_id' => $householder->id,
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
