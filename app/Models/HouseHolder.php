@@ -16,9 +16,10 @@ class HouseHolder extends Model
         'caste_id',
         'tole_id',
         'ward_no',
+        'lot_number',
         'house_number',
         'phone_number',
-        'citizenship_permanent_address',
+        'citizenship_permanent_address_id',
         'profile_photo',
     ];
 
@@ -35,6 +36,16 @@ class HouseHolder extends Model
     public function tole(): BelongsTo
     {
         return $this->belongsTo(Tole::class);
+    }
+
+    public function citizenshipPermanentAddress(): BelongsTo
+    {
+        return $this->belongsTo(CitizenshipPermanentAddress::class, 'citizenship_permanent_address_id');
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(HouseMember::class, 'house_holder_id');
     }
 
     public function responses(): HasMany

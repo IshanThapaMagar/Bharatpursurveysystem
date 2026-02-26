@@ -30,6 +30,18 @@
             </li>
 
             <li>
+                <a href="{{ route('dashboard.survey-report') }}"
+                    class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-blue-900 dark:hover:bg-gray-700 group"
+                    :class="miniSidebar ? 'justify-center' : ''">
+                    <svg class="shrink-0 w-5 h-5 text-gray-400 transition duration-75 dark:text-gray-400 group-hover:text-white dark:group-hover:text-white"
+                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span class="flex-1 ms-3 whitespace-nowrap" x-show="!miniSidebar">{{ __('Survey Report') }}</span>
+                </a>
+            </li>
+
+            <li>
                 <button type="button" @click="homedescription = !homedescription"
                     class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
                     :class="miniSidebar ? 'justify-center' : ''" aria-controls="dropdown-example">
@@ -50,7 +62,7 @@
                 </button>
                 <ul x-show="homedescription && !miniSidebar" x-transition class="py-2 space-y-2">
                     <li>
-                        <a href=""
+                        <a href="{{ route('survey-responses.index') }}"
                             class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Data details') }}</a>
                     </li>
                     <li>
@@ -58,12 +70,13 @@
                             class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Data form') }}</a>
                     </li>
                     <li>
-                        <a href="{{ route('house-member.create') }}"
+                        <a href=""
                             class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Member details') }}</a>
                     </li>
                 </ul>
             </li>
 
+            @if(Auth::user()->isSuperAdmin() || Auth::user()->isWardAdmin())
             <li>
                 <button type="button" @click="surveyform = !surveyform"
                     class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
@@ -94,7 +107,18 @@
                     </li>
                 </ul>
             </li>
-
+            @endif            @if(Auth::user()->isSuperAdmin() || Auth::user()->isWardAdmin())
+            <li>
+                <a href="{{ route('users.index') }}"
+                    class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-blue-900 dark:hover:bg-gray-700 group"
+                    :class="miniSidebar ? 'justify-center' : ''">
+                    <svg class="shrink-0 w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h6a3.987 3.987 0 0 1 1.951 6.512A8.949 8.949 0 0 1 12 21Zm3-11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                    </svg>
+                    <span class="flex-1 ms-3 whitespace-nowrap" x-show="!miniSidebar">{{ __('User Management') }}</span>
+                </a>
+            </li>
+            @endif
         </ul>
     </div>
 </aside>

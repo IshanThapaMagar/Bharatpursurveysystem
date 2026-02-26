@@ -19,8 +19,12 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
+        'phone_number',
+        'ward_id',
+        'role_id',
     ];
 
     /**
@@ -44,5 +48,30 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function ward()
+    {
+        return $this->belongsTo(Ward::class);
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->role && $this->role->slug === 'superadmin';
+    }
+
+    public function isWardAdmin()
+    {
+        return $this->role && $this->role->slug === 'ward_admin';
+    }
+
+    public function isDataCollector()
+    {
+        return $this->role && $this->role->slug === 'data_collector';
     }
 }

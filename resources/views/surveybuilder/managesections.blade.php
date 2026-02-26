@@ -19,11 +19,13 @@
                                 class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 shadow-sm
                                focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600 focus:outline-none
                                transition">
-                                <option value="">-- Select Ward --</option>
+                                @if(auth()->user()->isSuperAdmin())
+                                    <option value="">-- Select Ward --</option>
+                                @endif
 
                                 @foreach ($wards as $ward)
                                     <option value="{{ $ward->id }}"
-                                        {{ request('ward_id') == $ward->id ? 'selected' : '' }}>
+                                        {{ $selectedWardId == $ward->id ? 'selected' : '' }}>
                                         Ward {{ $ward->ward_no }}
                                     </option>
                                 @endforeach
@@ -45,7 +47,7 @@
                                 </thead>
 
                                 <tbody id="sortable" class="divide-y divide-gray-100 bg-white cursor-move">
-                                    @if (!request('ward_id'))
+                                    @if (!$selectedWardId)
                                         <tr>
                                             <td colspan="2" class="px-6 py-12 text-center text-gray-400 font-medium">
                                                 Please select the ward first

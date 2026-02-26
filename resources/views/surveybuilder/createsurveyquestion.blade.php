@@ -89,8 +89,10 @@
                             </label>
                             <select name="ward_id" id="ward_id"
                                 class="block w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-gray-900">
-                                <option value="all" {{ old('ward_id', 'all') == 'all' ? 'selected' : '' }}>
-                                    {{ __('All Wards') }}</option>
+                                @if(auth()->user()->isSuperAdmin())
+                                    <option value="all" {{ old('ward_id', 'all') == 'all' ? 'selected' : '' }}>
+                                        {{ __('All Wards') }}</option>
+                                @endif
                                 @foreach ($wards as $ward)
                                     <option value="{{ $ward->id }}"
                                         {{ old('ward_id') == $ward->id ? 'selected' : '' }}>

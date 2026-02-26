@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignId('caste_id')->constrained('castes')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreignId('tole_id')->constrained('toles')->cascadeOnDelete()->cascadeOnUpdate();
             $table->integer('ward_no');
+            $table->string('lot_number');
             $table->string('house_number');
             $table->string('phone_number', 10);
             $table->string('citizenship_permanent_address');

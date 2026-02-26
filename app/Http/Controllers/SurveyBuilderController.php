@@ -21,24 +21,39 @@ class SurveyBuilderController extends Controller
      */
     public function index(Request $request)
     {
+        $authUser = auth()->user();
+        if ($authUser->isDataCollector()) {
+            abort(403);
+        }
+
         try {
-        
-            $wards = Ward::select('id', 'ward_no')->get();
+            if ($authUser->isSuperAdmin()) {
+                $wards = Ward::select('id', 'ward_no')->get();
+            } else {
+                $wards = Ward::where('id', $authUser->ward_id)->select('id', 'ward_no')->get();
+            }
+
             $sections = collect();
         
             $validated = $request->validate([
                 'ward_id' => 'nullable|integer|exists:wards,id',
             ]);
 
+            $selectedWardId = $validated['ward_id'] ?? null;
 
-            if (!empty($validated['ward_id'])) {
-                $sections = SurveySection::where('ward_id', $validated['ward_id'])
+            // If Ward Admin, force their ward_id
+            if (!$authUser->isSuperAdmin()) {
+                $selectedWardId = $authUser->ward_id;
+            }
+
+            if (!empty($selectedWardId)) {
+                $sections = SurveySection::where('ward_id', $selectedWardId)
                     ->select('id', 'title', 'order_index') 
                     ->orderBy('order_index', 'asc')       
                     ->get();
             }
 
-            return view('surveybuilder.managesections', compact('sections', 'wards'));
+            return view('surveybuilder.managesections', compact('sections', 'wards', 'selectedWardId'));
 
         } catch (\Illuminate\Validation\ValidationException $ve) {
 
@@ -52,8 +67,20 @@ class SurveyBuilderController extends Controller
 
     public function reorder(Request $request)
     {
+        $authUser = auth()->user();
+        if ($authUser->isDataCollector()) {
+            abort(403);
+        }
+
         foreach ($request->order as $item) {
-            SurveySection::where('id', $item['id'])->update(['order_index' => $item['order_index']]);
+            $section = SurveySection::findOrFail($item['id']);
+            
+            // Security check
+            if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
+                continue; // Skip or abort
+            }
+
+            $section->update(['order_index' => $item['order_index']]);
         }
 
         return response()->json(['success' => true]);
@@ -64,15 +91,30 @@ class SurveyBuilderController extends Controller
      */
     public function create()
     {
-        $wards = Ward::select('id','ward_no')->get();
+        $authUser = auth()->user();
+        if ($authUser->isDataCollector()) {
+            abort(403);
+        }
+
+        if ($authUser->isSuperAdmin()) {
+            $wards = Ward::select('id','ward_no')->get();
+        } else {
+            $wards = Ward::where('id', $authUser->ward_id)->select('id','ward_no')->get();
+        }
+
         return view('surveybuilder.createsurveyquestion',compact('wards'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-   public function store(Request $request)
+    public function store(Request $request)
     {
+        $authUser = auth()->user();
+        if ($authUser->isDataCollector()) {
+            abort(403);
+        }
+
         $validator = Validator::make($request->all(), [
             'ward_id' => 'required',
             'survey_data' => 'required|json',
@@ -82,6 +124,13 @@ class SurveyBuilderController extends Controller
             return redirect()->back()    
                             ->withErrors($validator) 
                             ->withInput();          
+        }
+
+        // Ward Admin restriction
+        if (!$authUser->isSuperAdmin()) {
+            if ($request->ward_id === 'all' || $request->ward_id != $authUser->ward_id) {
+                return redirect()->back()->with('error', 'Unauthorized ward selection.')->withInput();
+            }
         }
 
         $surveyData = json_decode($request->input('survey_data'), true);
@@ -247,14 +296,28 @@ class SurveyBuilderController extends Controller
 public function edit($id)
 {
     try {
+        $authUser = auth()->user();
+        if ($authUser->isDataCollector()) {
+            abort(403);
+        }
+
         $section = SurveySection::with([
             'questions.inputType',
             'questions.optionGroup.optionChoices',
             'questions.questionOptions.optionChoice'
         ])->findOrFail($id);
 
+        if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
+            abort(403);
+        }
+
         $ward_id = $section->ward_id;
-        $wards = Ward::select('id', 'ward_no')->get();
+        
+        if ($authUser->isSuperAdmin()) {
+            $wards = Ward::select('id', 'ward_no')->get();
+        } else {
+            $wards = Ward::where('id', $authUser->ward_id)->select('id', 'ward_no')->get();
+        }
 
         $formattedSections = collect([
             [
@@ -310,7 +373,16 @@ public function edit($id)
      */
     public function update(Request $request, $id)
     {
-       
+        $authUser = auth()->user();
+        if ($authUser->isDataCollector()) {
+            abort(403);
+        }
+
+        $section = SurveySection::findOrFail($id);
+        if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
+            abort(403);
+        }
+
         $validator = Validator::make($request->all(), [
             'ward_id' => 'required|exists:wards,id',
             'survey_data' => 'required|json',

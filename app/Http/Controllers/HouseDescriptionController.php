@@ -10,6 +10,7 @@ use App\Models\Householder;
 use App\Models\MotherTongue;
 use App\Models\Caste;
 use App\Models\Tole;
+use App\Models\CitizenshipPermanentAddress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,13 +27,26 @@ class HouseDescriptionController extends Controller
 
     public function create()
     {
-        $wards = Ward::orderBy('ward_no')->get();
+        $authUser = auth()->user();
+        if ($authUser->isSuperAdmin()) {
+            $wards = Ward::orderBy('ward_no')->get();
+        } else {
+            $wards = Ward::where('id', $authUser->ward_id)->get();
+        }
         
         return view('housedescription.createdataform', compact('wards'));
     }
 
     public function getSectionsForWard($wardId)
     {
+        $authUser = auth()->user();
+        if (!$authUser->isSuperAdmin() && $authUser->ward_id != $wardId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access to this ward.',
+            ], 403);
+        }
+
         $ward = Ward::findOrFail($wardId);
         
         $sections = SurveySection::with([
@@ -64,16 +78,26 @@ class HouseDescriptionController extends Controller
 
     public function getLookupData($wardId)
     {
+        $authUser = auth()->user();
+        if (!$authUser->isSuperAdmin() && $authUser->ward_id != $wardId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access to this ward.',
+            ], 403);
+        }
+
         try {
             $motherTongues = MotherTongue::all();
             $castes = Caste::all();
             $toles = Tole::where('ward_id', $wardId)->get();
+            $citizenshipAddresses = CitizenshipPermanentAddress::all();
 
             return response()->json([
                 'success' => true,
                 'mother_tongues' => $motherTongues,
                 'castes' => $castes,
                 'toles' => $toles,
+                'citizenship_permanent_addresses' => $citizenshipAddresses,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -98,12 +122,18 @@ class HouseDescriptionController extends Controller
                 'caste_id' => 'required|exists:castes,id',
                 'tole_id' => 'required|exists:toles,id',
                 'ward_no' => 'required|integer',
+                'lot_number' => 'required|string|max:50',
                 'house_number' => 'required|string|max:255',
                 'phone_number' => 'required|string|size:10',
-                'citizenship_permanent_address' => 'required|string|max:255',
+                'citizenship_permanent_address_id' => 'required|exists:citizenship_permanent_addresses,id',
                 'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'answers' => 'required|array',
             ]);
+
+            $authUser = auth()->user();
+            if (!$authUser->isSuperAdmin() && $authUser->ward_id != $validated['ward_id']) {
+                abort(403, 'You do not have permission to submit data for this ward.');
+            }
 
             DB::beginTransaction();
 
@@ -122,13 +152,14 @@ class HouseDescriptionController extends Controller
                 'caste_id' => $validated['caste_id'],
                 'tole_id' => $validated['tole_id'],
                 'ward_no' => $validated['ward_no'],
+                'lot_number' => $validated['lot_number'],
                 'house_number' => $validated['house_number'],
                 'phone_number' => $validated['phone_number'],
-                'citizenship_permanent_address' => $validated['citizenship_permanent_address'],
+                'citizenship_permanent_address_id' => $validated['citizenship_permanent_address_id'],
                 'profile_photo' => $profilePhotoPath,
             ]);
 
-            // Create response linked to householder
+
             $response = Response::create([
                 'user_id' => auth()->id(),
                 'ward_id' => $validated['ward_id'],
@@ -136,7 +167,7 @@ class HouseDescriptionController extends Controller
                 'submitted_at' => now(),
             ]);
 
-            // Process answers (your existing logic)
+            // Process answers
             foreach ($request->input('answers', []) as $questionId => $answerData) {
                 
                 if (isset($answerData['question_option_id'])) {
@@ -156,7 +187,7 @@ class HouseDescriptionController extends Controller
                                 ];
                                 
                                 if (isset($answerData['custom_inputs'][$optionId]) && !empty($answerData['custom_inputs'][$optionId])) {
-                                    $answerRecord['answer_text'] = $answerData['custom_inputs'][$optionId];
+                                    $answerRecord['custom_input_value'] = $answerData['custom_inputs'][$optionId];
                                 }
                                 
                                 Answer::create($answerRecord);
@@ -170,7 +201,7 @@ class HouseDescriptionController extends Controller
                         ];
                         
                         if (isset($answerData['custom_input']) && !empty($answerData['custom_input'])) {
-                            $answerRecord['answer_text'] = $answerData['custom_input'];
+                            $answerRecord['custom_input_value'] = $answerData['custom_input'];
                         }
                         
                         Answer::create($answerRecord);
@@ -199,17 +230,6 @@ class HouseDescriptionController extends Controller
                     Answer::create($answerRecord);
                 }
         
-                elseif (isset($answerData['files']) && count($answerData['files']) > 0) {
-                    foreach ($answerData['files'] as $file) {
-                        $filePath = $file->store('survey-responses', 'public');
-                        
-                        Answer::create([
-                            'response_id' => $response->id,
-                            'question_id' => $questionId,
-                            'answer_text' => $filePath,
-                        ]);
-                    }
-                }
                 
                 elseif (isset($answerData['latitude']) && isset($answerData['longitude'])) {
                     if (!empty($answerData['latitude']) && !empty($answerData['longitude'])) {
@@ -226,13 +246,26 @@ class HouseDescriptionController extends Controller
                 }
             }
 
+            // Handle files separately as they are in $request->file()
+            $allFiles = $request->file('answers', []);
+            foreach ($allFiles as $questionId => $fileData) {
+                if (isset($fileData['files']) && is_array($fileData['files'])) {
+                    foreach ($fileData['files'] as $file) {
+                        $filePath = $file->store('survey-responses', 'public');
+                        Answer::create([
+                            'response_id' => $response->id,
+                            'question_id' => $questionId,
+                            'answer_text' => $filePath,
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Survey submitted successfully!',
-                'response_id' => $response->id,
-                'householder_id' => $householder->id,
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
