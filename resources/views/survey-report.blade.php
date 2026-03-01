@@ -1,14 +1,7 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Survey Detailed Report') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-24">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-24 px-4 sm:px-6 lg:px-8">
+        <div class="bg-white overflow-hidden shadow-sm rounded-lg p-6">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <!-- Title & Filter block -->
                 <form method="GET" class="mb-8 flex flex-col md:flex-row md:items-end gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Select Ward') }}</label>
@@ -35,7 +28,7 @@
                         @endphp
                         <div class="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
                             
-                            <!-- Pinned Checkbox & Custom Title Form -->
+                   
                             @if(!Auth::user()->isDataCollector())
                             <div class="mb-6 bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3 z-10 relative">
                                 <label class="flex items-center gap-2 cursor-pointer">
@@ -70,15 +63,11 @@
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <!-- SweetAlert2 for notifications -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // CSRF Token for AJAX requests
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                
-                // Handle Checkbox Toggle
                 document.querySelectorAll('.pin-chart-checkbox').forEach(checkbox => {
                     checkbox.addEventListener('change', function() {
                         const qId = this.dataset.questionId;
@@ -148,27 +137,63 @@
                     const ctx = document.getElementById(`chart-${questionId}`);
                     if (!ctx) return;
                     
-                    const labels = data.labels;
+                    const labels = data.labels.map((label, index) => {
+                        if (data.chart_type === 'bar') {
+                            if (index === 0 && data.scale_label_low) {
+                                return `${label} (${data.scale_label_low})`;
+                            }
+                            if (index === data.labels.length - 1 && data.scale_label_high) {
+                                return `${label} (${data.scale_label_high})`;
+                            }
+                        }
+                        return label;
+                    });
                     const totals = data.totals;
                     const bgColors = labels.map((_, i) => colors[i % colors.length]);
 
                     new Chart(ctx, {
-                        type: 'pie',
+                        type: data.chart_type || 'pie',
                         data: {
                             labels: labels,
                             datasets: [{
+                                label: 'Responses',
                                 data: totals,
-                                backgroundColor: bgColors,
-                                borderWidth: 2,
-                                borderColor: '#ffffff',
-                                hoverOffset: 6
+                                backgroundColor: data.chart_type === 'bar' ? 'rgba(79, 70, 229, 0.8)' : bgColors,
+                                borderWidth: data.chart_type === 'bar' ? 0 : 2,
+                                borderColor: data.chart_type === 'bar' ? '#4f46e5' : '#ffffff',
+                                hoverBackgroundColor: data.chart_type === 'bar' ? '#4f46e5' : bgColors,
+                                borderRadius: data.chart_type === 'bar' ? 4 : 0,
+                                barThickness: data.chart_type === 'bar' ? 40 : 'flex',
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            scales: data.chart_type === 'bar' ? {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1,
+                                        font: { family: "'Inter', sans-serif", size: 11 },
+                                        color: '#64748b'
+                                    },
+                                    grid: {
+                                        display: true,
+                                        drawBorder: false,
+                                        color: 'rgba(226, 232, 240, 0.6)'
+                                    }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: {
+                                        font: { family: "'Inter', sans-serif", size: 12, weight: '500' },
+                                        color: '#334155'
+                                    }
+                                }
+                            } : {},
                             plugins: {
                                 legend: {
+                                    display: data.chart_type !== 'bar',
                                     position: 'bottom',
                                     labels: {
                                         padding: 24,
@@ -187,14 +212,14 @@
                                     bodyFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
                                     padding: 12,
                                     cornerRadius: 8,
+                                    displayColors: data.chart_type !== 'bar',
                                     callbacks: {
                                         label: function(context) {
-                                            let label = context.label || '';
-                                            if (label) {
-                                                label += ': ';
-                                            }
-                                            if (context.parsed !== null) {
-                                                label += context.parsed + ' ' + 'responses';
+                                            let label = '';
+                                            if (data.chart_type === 'bar') {
+                                                label = context.parsed.y + ' responses';
+                                            } else {
+                                                label = context.label + ': ' + context.parsed + ' responses';
                                             }
                                             return label;
                                         }

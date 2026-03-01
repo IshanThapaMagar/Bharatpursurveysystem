@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="py-24">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="px-4 sm:px-6 lg:px-8 max-w-[100%]">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="p-8">
@@ -70,10 +70,13 @@
                                                         class="text-indigo-600 hover:text-indigo-800 font-medium">
                                                         Edit
                                                     </a>
-                                                    <a href=""
-                                                        class="text-red-600 hover:text-red-800 font-medium">
-                                                        Delete
-                                                    </a>
+                                                    <form action="{{ route('surveyform.destroy', $section->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this section and all its questions? This action cannot be undone.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-800 font-medium bg-transparent border-0 p-0 cursor-pointer">
+                                                            Delete
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         @endforeach

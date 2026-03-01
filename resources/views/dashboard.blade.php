@@ -1,13 +1,18 @@
 <x-app-layout>
     <div class="py-24">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="px-4 sm:px-6 lg:px-8 max-w-[100%]">
+            <div class="bg-white overflow-hidden shadow-sm rounded-sm">
                 <div class="p-6 text-gray-900">
 
                     <!-- Ward Dropdown -->
                     <form method="GET" class="mb-8">
                         <select name="ward" onchange="this.form.submit()"
                             class="border rounded-lg p-3 w-48 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            @if(auth()->user()->isSuperAdmin())
+                                <option value="all" {{ $selectedWard == 'all' ? 'selected' : '' }}>
+                                    {{ __('All Wards') }}
+                                </option>
+                            @endif
                             @foreach ($wards as $ward)
                                 <option value="{{ $ward->id }}" {{ $selectedWard == $ward->id ? 'selected' : '' }}>
                                     {{ __('Ward') }} {{ $ward->ward_no }}
@@ -18,9 +23,20 @@
 
                     <!-- Age Group Info Boxes -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                        @foreach ($ageGroups as $group)
-                            <a href="#"
-                                class="block p-5 rounded-xl border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300">
+                        @php
+                            $ageRanges = [
+                                [0, 5],
+                                [6, 16],
+                                [17, 32],
+                                [33, 54],
+                                [55, 65],
+                                [66, 200], // 65+ group uses 200 as sentinel
+                            ];
+                        @endphp
+                        @foreach ($ageGroups as $gi => $group)
+                            @php [$rMin, $rMax] = $ageRanges[$gi]; @endphp
+                            <a href="{{ route('dashboard.members', ['filter_type'=>'age_group','range_min'=>$rMin,'range_max'=>$rMax,'ward'=>$selectedWard,'label'=>$group['label']]) }}"
+                                class="block p-5 rounded-sm border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300">
                                 <div class="flex justify-between items-start mb-4">
                                     <div>
                                         <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
@@ -46,9 +62,12 @@
 
                     <!-- Gender Statistics Info Boxes -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                        @foreach ($genderGroups as $group)
-                            <a href="#"
-                                class="block p-5 rounded-xl border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300">
+                        @php
+                            $genderIds = [1, 2, 3]; // male, female, other
+                        @endphp
+                        @foreach ($genderGroups as $gi => $group)
+                            <a href="{{ route('dashboard.members', ['filter_type'=>'gender','gender_id'=>$genderIds[$gi],'ward'=>$selectedWard,'label'=>$group['label']]) }}"
+                                class="block p-5 rounded-sm border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300">
                                 <div class="flex justify-between items-start mb-4">
                                     <div>
                                         <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
@@ -75,7 +94,7 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <!-- Age Demographics Bar Chart -->
                             <div
-                                class="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
+                                class="bg-slate-50 border border-slate-100 rounded-sm p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
                                 <div class="w-full relative min-h-[380px] flex justify-center items-center">
                                     <canvas id="ageDemographicsChart"></canvas>
                                 </div>
@@ -83,7 +102,7 @@
 
                             <!-- Gender Demographics Pie Chart -->
                             <div
-                                class="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
+                                class="bg-slate-50 border border-slate-100 rounded-sm p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
                                 <h4 class="font-bold text-lg mb-6 text-center text-slate-800 leading-tight w-full">
                                     {{ __('Gender Distribution') }}</h4>
                                 <div class="w-full relative min-h-[380px] flex justify-center items-center">
@@ -101,7 +120,8 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         @foreach ($citizenshipGroups as $group)
-                            <div class="bg-white border border-gray-200 p-5 flex flex-col gap-3">
+                            <a href="{{ route('dashboard.members', ['filter_type'=>'citizenship', 'id'=>$group['id'], 'ward'=>$selectedWard, 'label'=>$group['label']]) }}"
+                                class="block bg-white border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow duration-300 rounded-sm">
                                 <h4 class="text-sm font-semibold text-gray-700">
                                     {{ $group['label'] }}
                                 </h4>
@@ -110,15 +130,15 @@
                                     {{ $group['count'] }}
                                 </span>
 
-                                <div class="w-full bg-gray-200 h-2">
-                                    <div class="bg-gray-600 h-2" style="width: {{ $group['percentage'] }}%">
+                                <div class="w-full bg-gray-200 h-2 rounded-sm overflow-hidden">
+                                    <div class="{{ $group['color'] }} h-2 rounded-sm" style="width: {{ $group['percentage'] }}%">
                                     </div>
                                 </div>
 
                                 <span class="text-xs text-gray-600 text-right">
                                     {{ number_format($group['percentage'], 2) }}%
                                 </span>
-                            </div>
+                            </a>
                         @endforeach
                     </div>
 
@@ -149,7 +169,7 @@
                                 @endphp
                                 @forelse ($motherTongueStats as $index => $row)
                                     @php $pct = $motherTongueTotal > 0 ? number_format(($row->total / $motherTongueTotal) * 100, 2) : 0; @endphp
-                                    <div
+                                    <a href="{{ route('dashboard.members', ['filter_type'=>'mother_tongue', 'id'=>$row->id, 'ward'=>$selectedWard, 'label'=>$row->name]) }}"
                                         class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                         <div class="flex items-center gap-3">
                                             <div
@@ -162,7 +182,7 @@
                                                 class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                             <span class="w-16 text-right">{{ $pct }}%</span>
                                         </div>
-                                    </div>
+                                    </a>
                                 @empty
                                     <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
                                 @endforelse
@@ -193,7 +213,7 @@
                                 @endphp
                                 @forelse ($casteStats as $index => $row)
                                     @php $pct = $casteTotal > 0 ? number_format(($row->total / $casteTotal) * 100, 2) : 0; @endphp
-                                    <div
+                                    <a href="{{ route('dashboard.members', ['filter_type'=>'caste', 'id'=>$row->id, 'ward'=>$selectedWard, 'label'=>$row->name]) }}"
                                         class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                         <div class="flex items-center gap-3">
                                             <div
@@ -206,7 +226,7 @@
                                                 class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                             <span class="w-16 text-right">{{ $pct }}%</span>
                                         </div>
-                                    </div>
+                                    </a>
                                 @empty
                                     <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
                                 @endforelse
@@ -235,7 +255,7 @@
                                 @endphp
                                 @forelse ($educationStats as $index => $row)
                                     @php $pct = $educationTotal > 0 ? number_format(($row->total / $educationTotal) * 100, 2) : 0; @endphp
-                                    <div
+                                    <a href="{{ route('dashboard.members', ['filter_type'=>'education', 'id'=>$row->id, 'ward'=>$selectedWard, 'label'=>$row->label]) }}"
                                         class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                         <div class="flex items-center gap-3">
                                             <div
@@ -248,7 +268,7 @@
                                                 class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                             <span class="w-16 text-right">{{ $pct }}%</span>
                                         </div>
-                                    </div>
+                                    </a>
                                 @empty
                                     <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
                                 @endforelse
@@ -279,7 +299,7 @@
                                 @endphp
                                 @forelse ($religionStats as $index => $row)
                                     @php $pct = $religionTotal > 0 ? number_format(($row->total / $religionTotal) * 100, 2) : 0; @endphp
-                                    <div
+                                    <a href="{{ route('dashboard.members', ['filter_type'=>'religion', 'id'=>$row->id, 'ward'=>$selectedWard, 'label'=>$row->label]) }}"
                                         class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                         <div class="flex items-center gap-3">
                                             <div
@@ -292,7 +312,7 @@
                                                 class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                             <span class="w-16 text-right">{{ $pct }}%</span>
                                         </div>
-                                    </div>
+                                    </a>
                                 @empty
                                     <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
                                 @endforelse

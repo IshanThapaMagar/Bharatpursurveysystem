@@ -69,10 +69,10 @@
                         <a href="{{ route('house-description.create') }}"
                             class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Data form') }}</a>
                     </li>
-                    <li>
+                    <!-- <li>
                         <a href=""
                             class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Member details') }}</a>
-                    </li>
+                    </li> -->
                 </ul>
             </li>
 

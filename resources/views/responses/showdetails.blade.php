@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="py-28">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <div class="px-4 sm:px-6 lg:px-8 max-w-[100%]">
             <div class="flex justify-end">
                 @if (auth()->user()->isSuperAdmin() || auth()->user()->ward_id == $response->ward_id)
                     <a href="{{ route('house-member.create', ['household_id' => $household->id]) }}"
@@ -245,7 +245,11 @@
                                                 <td
                                                     class="px-5 py-2.5 text-xs align-top
                                                     {{ $question->resolved_answer ? 'text-gray-800' : 'text-gray-300 italic' }}">
-                                                    {!! $question->resolved_answer ?? 'उत्तर दिइएको छैन' !!}
+                                                    @if ($question->inputType->input_type_name === 'linear_scale' && $question->resolved_answer)
+                                                        {{ $question->resolved_answer }} / {{ $question->scale_to }}
+                                                    @else
+                                                        {!! $question->resolved_answer ?? 'उत्तर दिइएको छैन' !!}
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach

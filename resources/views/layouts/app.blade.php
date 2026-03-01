@@ -26,11 +26,11 @@
 @stack('styles')
 
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-gray-100" x-data="{ miniSidebar: false }" @sidebar-toggled.window="miniSidebar = $event.detail.miniSidebar">
         @include('layouts.navigation')
         <x-sidebar />
 
-        <main>
+        <main class="transition-all duration-300" :class="miniSidebar ? 'ml-16' : 'ml-64'">
             {{ $slot }}
         </main>
     </div>

@@ -16,6 +16,7 @@
     'householder_id',
     'householder',
     'self_relationship_id',
+    'householderExists',
 ])
 @push('styles')
     <link href="{{ asset('nepali.datepicker.v5.0.6/nepali.datepicker.v5.0.6.min.css') }}" rel="stylesheet">
@@ -23,11 +24,13 @@
 
 <div class="min-h-screen bg-gray-50 py-10 px-4" x-data="{
     isHouseHolder: false,
+    householderExists: @json($householderExists),
     householderName: '{{ $householder?->householder_name ?? '' }}',
     selfRelationshipId: '{{ $self_relationship_id ?? '' }}',
     fullName: '',
     relationshipId: '',
     setHouseHolder(checked) {
+        if (this.householderExists) return;
         this.isHouseHolder = checked;
         if (checked) {
             this.fullName = this.householderName;
@@ -93,12 +96,21 @@
             </div>
 
 
-            <label
-                class="flex items-center gap-3 cursor-pointer select-none  rounded-xl px-4 py-2 hover:bg-blue-100 transition">
-                <input type="checkbox" class="w-5 h-5 rounded accent-blue-600 cursor-pointer"
-                    @change="setHouseHolder($event.target.checked)">
-                <span class="text-sm font-semibold text-blue-700">{{ __('HouseHolder') }}</span>
-            </label>
+            <div class="flex flex-col items-end gap-1">
+                <label
+                    class="flex items-center gap-3 cursor-pointer select-none rounded-xl px-4 py-2 hover:bg-blue-100 transition"
+                    :class="householderExists ? 'opacity-50 cursor-not-allowed' : ''">
+                    <input type="checkbox" class="w-5 h-5 rounded accent-blue-600 cursor-pointer"
+                        @change="setHouseHolder($event.target.checked)"
+                        :disabled="householderExists">
+                    <span class="text-sm font-semibold text-blue-700">{{ __('HouseHolder') }}</span>
+                </label>
+                <template x-if="householderExists">
+                    <span class="text-[10px] text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                        {{ __('Householder information already added') }}
+                    </span>
+                </template>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">

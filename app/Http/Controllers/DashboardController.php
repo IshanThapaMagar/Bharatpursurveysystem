@@ -12,7 +12,7 @@ class DashboardController extends Controller
         $authUser = auth()->user();
         if ($authUser->isSuperAdmin()) {
             $wards = DB::table('wards')->orderBy('ward_no')->get();
-            $selectedWard = request('ward') ?? $wards->first()?->id;
+            $selectedWard = request('ward', 'all');
         } else {
             $wards = DB::table('wards')->where('id', $authUser->ward_id)->get();
             $selectedWard = $authUser->ward_id;
@@ -23,7 +23,9 @@ class DashboardController extends Controller
             ->join('input_types as it', 'it.id', '=', 'q.input_type_id')
             ->join('question_options as qo', 'qo.question_id', '=', 'q.id')
             ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
-            ->where('ss.ward_id', $selectedWard)
+            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                $q->where('ss.ward_id', $selectedWard);
+            })
             ->whereIn('it.input_type_name', ['radio', 'checkbox', 'dropdown'])
             ->select(
                 'q.id as question_id',
@@ -35,7 +37,9 @@ class DashboardController extends Controller
 
         $answerCounts = DB::table('answers as a')
             ->join('responses as r', 'r.id', '=', 'a.response_id')
-            ->where('r.ward_id', $selectedWard)
+            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                $q->where('r.ward_id', $selectedWard);
+            })
             ->select(
                 'a.question_option_id',
                 DB::raw('COUNT(a.id) as total')
@@ -58,7 +62,9 @@ class DashboardController extends Controller
         $ageStats = DB::table('house_members as hm')
             ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
             ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->where('r.ward_id', $selectedWard)
+            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                $q->where('r.ward_id', $selectedWard);
+            })
             ->selectRaw("
                 COUNT(CASE WHEN hm.age BETWEEN 0 AND 5 THEN 1 END) as group1,
                 COUNT(CASE WHEN hm.age BETWEEN 6 AND 16 THEN 1 END) as group2,
@@ -130,7 +136,9 @@ class DashboardController extends Controller
         $genderStats = DB::table('house_members as hm')
             ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
             ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->where('r.ward_id', $selectedWard)
+            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                $q->where('r.ward_id', $selectedWard);
+            })
             ->selectRaw("
                 COUNT(CASE WHEN hm.gender_id = 1 THEN 1 END) as male,
                 COUNT(CASE WHEN hm.gender_id = 2 THEN 1 END) as female,
@@ -168,7 +176,9 @@ class DashboardController extends Controller
 
         $citStats = DB::table('house_holders as hh')
             ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->where('r.ward_id', $selectedWard)
+            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                $q->where('r.ward_id', $selectedWard);
+            })
             ->selectRaw("
                 COUNT(CASE WHEN hh.citizenship_permanent_address_id = 1 THEN 1 END) as stat1,
                 COUNT(CASE WHEN hh.citizenship_permanent_address_id = 2 THEN 1 END) as stat2,
@@ -180,6 +190,7 @@ class DashboardController extends Controller
 
         $citizenshipGroups = [
             [
+                'id' => 1,
                 'label' => 'स्थायी जन्म',
                 'count' => $citStats->stat1,
                 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat1 / $citStats->total_householders) * 100, 2) : 0,
@@ -188,6 +199,7 @@ class DashboardController extends Controller
                 'border_color' => 'border-teal-200'
             ],
             [
+                'id' => 2,
                 'label' => 'बसाईसराई',
                 'count' => $citStats->stat2,
                 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat2 / $citStats->total_householders) * 100, 2) : 0,
@@ -196,6 +208,7 @@ class DashboardController extends Controller
                 'border_color' => 'border-indigo-200'
             ],
             [
+                'id' => 3,
                 'label' => 'अस्थायी बसोबास',
                 'count' => $citStats->stat3,
                 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat3 / $citStats->total_householders) * 100, 2) : 0,
@@ -204,6 +217,7 @@ class DashboardController extends Controller
                 'border_color' => 'border-fuchsia-200'
             ],
             [
+                'id' => 4,
                 'label' => 'बसाईसराईको निसा नभएको',
                 'count' => $citStats->stat4,
                 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat4 / $citStats->total_householders) * 100, 2) : 0,
@@ -220,10 +234,13 @@ class DashboardController extends Controller
                     ->whereIn('hh.id', function($query) use ($selectedWard) {
                         $query->select('householder_id')
                             ->from('responses')
-                            ->where('ward_id', $selectedWard);
+                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                                $q->where('ward_id', $selectedWard);
+                            });
                     });
             })
-            ->select('mt.name', DB::raw('COUNT(hh.id) as total'))
+            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
+            ->select('mt.id', 'mt.name', DB::raw('COUNT(hm.id) as total'))
             ->groupBy('mt.id', 'mt.name')
             ->orderByDesc('total')
             ->get();
@@ -237,10 +254,13 @@ class DashboardController extends Controller
                     ->whereIn('hh.id', function($query) use ($selectedWard) {
                         $query->select('householder_id')
                             ->from('responses')
-                            ->where('ward_id', $selectedWard);
+                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                                $q->where('ward_id', $selectedWard);
+                            });
                     });
             })
-            ->select('c.name', DB::raw('COUNT(hh.id) as total'))
+            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
+            ->select('c.id', 'c.name', DB::raw('COUNT(hm.id) as total'))
             ->groupBy('c.id', 'c.name')
             ->orderByDesc('total')
             ->get();
@@ -258,10 +278,13 @@ class DashboardController extends Controller
                     ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
                         $query->select('householder_id')
                             ->from('responses')
-                            ->where('ward_id', $selectedWard);
+                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                                $q->where('ward_id', $selectedWard);
+                            });
                     });
             })
             ->select(
+                'el.id',
                 DB::raw('COALESCE(MAX(elt.name), MAX(CAST(el.id AS CHAR))) as label'),
                 DB::raw('COUNT(hm.id) as total')
             )
@@ -282,10 +305,13 @@ class DashboardController extends Controller
                     ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
                         $query->select('householder_id')
                             ->from('responses')
-                            ->where('ward_id', $selectedWard);
+                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                                $q->where('ward_id', $selectedWard);
+                            });
                     });
             })
             ->select(
+                'rel.id',
                 DB::raw('COALESCE(MAX(relt.name), MAX(CAST(rel.id AS CHAR))) as label'),
                 DB::raw('COUNT(hm.id) as total')
             )
@@ -310,7 +336,9 @@ class DashboardController extends Controller
                 $answers = DB::table('answers as a')
                     ->join('responses as r', 'r.id', '=', 'a.response_id')
                     ->leftJoin('question_options as qo', 'qo.id', '=', 'a.question_option_id')
-                    ->where('r.ward_id', $selectedWard)
+                    ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                        $q->where('r.ward_id', $selectedWard);
+                    })
                     ->where(function($query) use ($pinned) {
                         $query->where('a.question_id', $pinned->question_id)
                               ->orWhere('qo.question_id', $pinned->question_id);
@@ -357,6 +385,90 @@ class DashboardController extends Controller
         ));
     }
 
+    public function members(Request $request)
+    {
+        $authUser    = auth()->user();
+        $ward        = $request->input('ward', 'all');
+        $filterType  = $request->input('filter_type');
+        
+        if (!$authUser->isSuperAdmin()) {
+            $ward = $authUser->ward_id;
+        }
+
+        $query = DB::table('house_members as hm')
+            ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
+            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
+            ->when($ward !== 'all', function ($q) use ($ward) {
+                $q->where('r.ward_id', $ward);
+            })
+            
+            ->leftJoin('gender_translations as gt', function($j) {
+                $j->on('gt.gender_id', '=', 'hm.gender_id')->where('gt.locale', '=', 'np');
+            })
+            ->leftJoin('marital_status_translations as mst', function($j) {
+                $j->on('mst.marital_status_id', '=', 'hm.marital_status_id')->where('mst.locale', '=', 'np');
+            })
+            ->leftJoin('education_level_translations as elt', function($j) {
+                $j->on('elt.education_level_id', '=', 'hm.education_level_id')->where('elt.locale', '=', 'np');
+            })
+            ->leftJoin('health_status_translations as hst', function($j) {
+                $j->on('hst.health_status_id', '=', 'hm.health_status_id')->where('hst.locale', '=', 'np');
+            })
+            ->leftJoin('institution_type_translations as itt', function($j) {
+                $j->on('itt.institution_type_id', '=', 'hm.institution_type_id')->where('itt.locale', '=', 'np');
+            })
+            ->leftJoin('disability_translations as dt', function($j) {
+                $j->on('dt.disability_id', '=', 'hm.disability_id')->where('dt.locale', '=', 'np');
+            })
+            ->select(
+                'hm.full_name',
+                'hm.age',
+                'hm.dob_bs',
+                DB::raw('COALESCE(MAX(gt.name), "—") as gender'),
+                DB::raw('COALESCE(MAX(mst.name), "—") as marital_status'),
+                DB::raw('COALESCE(MAX(elt.name), "—") as education_level'),
+                DB::raw('COALESCE(MAX(hst.name), "—") as health_status'),
+                DB::raw('COALESCE(MAX(itt.name), "—") as institution_type'),
+                DB::raw('COALESCE(MAX(dt.name), "—") as disability')
+            )
+            ->groupBy(
+                'hm.id', 'hm.full_name', 'hm.age', 'hm.dob_bs'
+            );
+
+
+        if ($filterType === 'age_group') {
+            $min = (int) $request->input('range_min', 0);
+            $max = (int) $request->input('range_max', 200);
+            if ($max === 200) {
+                $query->where('hm.age', '>=', $min);
+            } else {
+                $query->whereBetween('hm.age', [$min, $max]);
+            }
+        } elseif ($filterType === 'gender') {
+            $genderId = (int) $request->input('gender_id', 0);
+            if ($genderId === 3) {
+                $query->whereNotIn('hm.gender_id', [1, 2]);
+            } else {
+                $query->where('hm.gender_id', $genderId);
+            }
+        } elseif ($filterType === 'mother_tongue') {
+            $query->where('hh.mother_tongue_id', (int) $request->input('id', 0));
+        } elseif ($filterType === 'caste') {
+            $query->where('hh.caste_id', (int) $request->input('id', 0));
+        } elseif ($filterType === 'education') {
+            $query->where('hm.education_level_id', (int) $request->input('id', 0));
+        } elseif ($filterType === 'religion') {
+            $query->where('hm.religion_id', (int) $request->input('id', 0));
+        }
+
+        $members = $query->orderBy('hm.full_name')->get();
+
+        return view('dashboard.members', [
+            'label'   => $request->input('label', 'सदस्यहरू'),
+            'members' => $members,
+        ]);
+    }
+
     public function surveyReport(Request $request)
     {
         $authUser = auth()->user();
@@ -373,64 +485,95 @@ class DashboardController extends Controller
             ->join('survey_sections as ss', 'ss.id', '=', 'q.survey_section_id')
             ->join('input_types as it', 'it.id', '=', 'q.input_type_id')
             ->where('ss.ward_id', $selectedWard)
-            ->whereIn('it.input_type_name', ['radio', 'checkbox', 'dropdown'])
-            ->select('q.id', 'q.question_text', 'q.order_index')
+            ->whereIn('it.input_type_name', ['radio', 'checkbox', 'dropdown', 'linear_scale'])
+            ->select('q.id', 'q.question_text', 'q.order_index', 'it.input_type_name', 'q.scale_from', 'q.scale_to', 'q.scale_label_low', 'q.scale_label_high')
             ->orderBy('q.order_index')
             ->get();
 
         $charts = [];
 
         foreach ($questions as $question) {
-            $options = DB::table('question_options as qo')
-                ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
-                ->where('qo.question_id', $question->id)
-                ->select('qo.id', 'oc.choice_text', 'oc.custom_input_type')
-                ->get()
-                ->keyBy('id');
-
-            
-            $answers = DB::table('answers as a')
-                ->join('responses as r', 'r.id', '=', 'a.response_id')
-                ->leftJoin('question_options as qo', 'qo.id', '=', 'a.question_option_id')
-                ->where('r.ward_id', $selectedWard)
-                ->where(function($query) use ($question) {
-                    $query->where('a.question_id', $question->id)
-                          ->orWhere('qo.question_id', $question->id);
-                })
-                ->select('a.question_option_id', 'a.custom_input_value')
-                ->get();
-
             $dataCounts = [];
+            $labels = [];
+            $totals = [];
+            $chartType = $question->input_type_name === 'linear_scale' ? 'bar' : 'pie';
 
-            foreach ($answers as $answer) {
-                $label = '';
+            if ($question->input_type_name === 'linear_scale') {
+                $from = $question->scale_from ?? 1;
+                $to = $question->scale_to ?? 5;
                 
-                if ($answer->question_option_id && $options->has($answer->question_option_id)) {
-                    $option = $options->get($answer->question_option_id);
-                    $label = $option->choice_text;
-                    
-                    if (!empty(trim((string)$answer->custom_input_value))) {
-                        $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
+                for ($i = $from; $i <= $to; $i++) {
+                    $dataCounts[$i] = 0;
+                }
+
+                $answers = DB::table('answers as a')
+                    ->join('responses as r', 'r.id', '=', 'a.response_id')
+                    ->where('r.ward_id', $selectedWard)
+                    ->where('a.question_id', $question->id)
+                    ->whereNotNull('a.answer_numeric')
+                    ->select('a.answer_numeric')
+                    ->get();
+
+                foreach ($answers as $answer) {
+                    $val = (int)$answer->answer_numeric;
+                    if (isset($dataCounts[$val])) {
+                        $dataCounts[$val]++;
                     }
-                } elseif (!empty(trim((string)$answer->custom_input_value))) {
-                    $label = trim((string)$answer->custom_input_value);
-                }
-                
-                if (empty($label)) {
-                    continue;
                 }
 
-                if (!isset($dataCounts[$label])) {
-                    $dataCounts[$label] = 0;
+                $labels = array_map('strval', array_keys($dataCounts));
+                $totals = array_values($dataCounts);
+            } else {
+                $options = DB::table('question_options as qo')
+                    ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
+                    ->where('qo.question_id', $question->id)
+                    ->select('qo.id', 'oc.choice_text', 'oc.custom_input_type')
+                    ->get()
+                    ->keyBy('id');
+
+                $answers = DB::table('answers as a')
+                    ->join('responses as r', 'r.id', '=', 'a.response_id')
+                    ->leftJoin('question_options as qo', 'qo.id', '=', 'a.question_option_id')
+                    ->where('r.ward_id', $selectedWard)
+                    ->where(function($query) use ($question) {
+                        $query->where('a.question_id', $question->id)
+                              ->orWhere('qo.question_id', $question->id);
+                    })
+                    ->select('a.question_option_id', 'a.custom_input_value')
+                    ->get();
+
+                foreach ($answers as $answer) {
+                    $label = '';
+                    if ($answer->question_option_id && $options->has($answer->question_option_id)) {
+                        $option = $options->get($answer->question_option_id);
+                        $label = $option->choice_text;
+                        if (!empty(trim((string)$answer->custom_input_value))) {
+                            $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
+                        }
+                    } elseif (!empty(trim((string)$answer->custom_input_value))) {
+                        $label = trim((string)$answer->custom_input_value);
+                    }
+                    
+                    if (empty($label)) continue;
+
+                    if (!isset($dataCounts[$label])) {
+                        $dataCounts[$label] = 0;
+                    }
+                    $dataCounts[$label]++;
                 }
-                $dataCounts[$label]++;
+
+                $labels = array_keys($dataCounts);
+                $totals = array_values($dataCounts);
             }
 
-            if (!empty($dataCounts)) {
+            if (!empty($labels)) {
                 $charts[$question->id] = [
                     'question_text' => $question->question_text,
-                    'labels' => array_keys($dataCounts),
-                    'totals' => array_values($dataCounts),
+                    'labels' => $labels,
+                    'totals' => $totals,
+                    'chart_type' => $chartType,
+                    'scale_label_low' => $question->scale_label_low ?? null,
+                    'scale_label_high' => $question->scale_label_high ?? null,
                 ];
             }
         }

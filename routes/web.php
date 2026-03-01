@@ -25,6 +25,7 @@ Route::get('language/{locale}', function ($locale) {
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/dashboard/survey-report', [DashboardController::class, 'surveyReport'])->middleware(['auth', 'verified'])->name('dashboard.survey-report');
 Route::post('/dashboard/survey-report/pin', [DashboardController::class, 'pinChart'])->middleware(['auth', 'verified'])->name('dashboard.survey-report.pin');
+Route::get('/dashboard/members', [DashboardController::class, 'members'])->middleware(['auth', 'verified'])->name('dashboard.members');
 
 
 Route::middleware('auth')->group(function () {

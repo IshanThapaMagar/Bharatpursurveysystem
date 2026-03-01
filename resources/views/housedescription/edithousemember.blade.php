@@ -14,10 +14,12 @@
     'relationships',
     'specialSkills',
     'poolingPlaces',
+    'self_relationship_id',
+    'householderExists',
 ])
 <x-app-layout>
     <div class="py-24">
-        <div class="ml-56 ">
+        <div class="px-4 sm:px-6 lg:px-8 max-w-[100%]">
             <div class="">
                 <div class="text-gray-900">
                     <x-housemember.edithousememberdetailform
@@ -35,7 +37,9 @@
                         :motherTongueProficiencies="$motherTongueProficiencies"
                         :relationships="$relationships"
                         :specialSkills="$specialSkills"
-                        :poolingPlaces="$poolingPlaces" />
+                        :poolingPlaces="$poolingPlaces"
+                        :self_relationship_id="$self_relationship_id"
+                        :householderExists="$householderExists" />
                 </div>
             </div>
         </div>

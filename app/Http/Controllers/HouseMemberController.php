@@ -46,12 +46,13 @@ class HouseMemberController extends Controller
         }
 
         // Find the "Self" relationship ID
-        $selfRelationship = Relationship::with(['translations' => function ($query) {
+        $self_relationship_id = Relationship::whereHas('translations', function ($query) {
             $query->where('locale', 'en')->where('name', 'Self');
-        }])->whereHas('translations', function ($query) {
-            $query->where('locale', 'en')->where('name', 'Self');
-        })->first();
-        $self_relationship_id = $selfRelationship ? $selfRelationship->id : null;
+        })->first()?->id;
+
+        $householderExists = HouseMember::where('house_holder_id', $householder_id)
+            ->where('relationship_id', $self_relationship_id)
+            ->exists();
         $locale = session('locale', app()->getLocale());
 
         $genders = Gender::with(['translations' => function ($query) use ($locale) {
@@ -127,7 +128,8 @@ class HouseMemberController extends Controller
             'poolingPlaces',
             'householder_id',
             'householder',
-            'self_relationship_id'
+            'self_relationship_id',
+            'householderExists'
         ));
     }
 
@@ -165,9 +167,21 @@ class HouseMemberController extends Controller
 
         $householder = HouseHolder::with('tole')->findOrFail($validated['house_holder_id']);
         $authUser = auth()->user();
-        
         if (!$authUser->isSuperAdmin() && $authUser->ward_id != $householder->tole->ward_id) {
             abort(403, 'Unauthorized access to this householder.');
+        }
+
+        $self_relationship_id = Relationship::whereHas('translations', function ($query) {
+            $query->where('locale', 'en')->where('name', 'Self');
+        })->first()?->id;
+
+        if (isset($validated['relationship_id']) && $validated['relationship_id'] == $self_relationship_id) {
+            $exists = HouseMember::where('house_holder_id', $validated['house_holder_id'])
+                ->where('relationship_id', $self_relationship_id)
+                ->exists();
+            if ($exists) {
+                return back()->withInput()->with('error', __('Householder information already exists for this house.'));
+            }
         }
 
         $dob_bs = $request->dob;
@@ -211,8 +225,8 @@ class HouseMemberController extends Controller
         $member = HouseMember::with('houseHolder.tole')->findOrFail($id);
         $authUser = auth()->user();
 
-        // Only Superadmin or Ward Admin of the specific ward can edit
-        if (!$authUser->isSuperAdmin() && !($authUser->isWardAdmin() && $authUser->ward_id == $member->houseHolder->tole->ward_id)) {
+        // Superadmin can edit anything; Others can only edit members in their assigned ward
+        if (!$authUser->isSuperAdmin() && $authUser->ward_id != $member->houseHolder->tole->ward_id) {
             abort(403, 'You do not have permission to edit this member.');
         }
 
@@ -266,6 +280,15 @@ class HouseMemberController extends Controller
             $query->where('locale', $locale)->select('id', 'relationship_id', 'name');
         }])->get(['id']);
 
+        $self_relationship_id = Relationship::whereHas('translations', function ($query) {
+            $query->where('locale', 'en')->where('name', 'Self');
+        })->first()?->id;
+
+        $householderExists = HouseMember::where('house_holder_id', $member->house_holder_id)
+            ->where('relationship_id', $self_relationship_id)
+            ->where('id', '!=', $member->id)
+            ->exists();
+
         $specialSkills = SpecialSkill::with(['translations' => function ($query) use ($locale) {
             $query->where('locale', $locale)->select('id', 'special_skill_id', 'name');
         }])->get(['id']);
@@ -289,7 +312,9 @@ class HouseMemberController extends Controller
             'motherTongueProficiencies',
             'relationships',
             'specialSkills',
-            'poolingPlaces'
+            'poolingPlaces',
+            'self_relationship_id',
+            'householderExists'
         ));
     }
 
@@ -301,8 +326,8 @@ class HouseMemberController extends Controller
         $member = HouseMember::with('houseHolder.tole')->findOrFail($id);
         $authUser = auth()->user();
 
-        // Only Superadmin or Ward Admin of the specific ward can update
-        if (!$authUser->isSuperAdmin() && !($authUser->isWardAdmin() && $authUser->ward_id == $member->houseHolder->tole->ward_id)) {
+        // Superadmin can update anything; Others can only update members in their assigned ward
+        if (!$authUser->isSuperAdmin() && $authUser->ward_id != $member->houseHolder->tole->ward_id) {
             abort(403, 'You do not have permission to update this member.');
         }
 
@@ -331,6 +356,19 @@ class HouseMemberController extends Controller
             'pooling_place_id'           => 'nullable|exists:pooling_places,id',
             'native_speaking_level'      => 'nullable|exists:mother_tongue_proficiencies,id',
         ]);
+        $self_relationship_id = Relationship::whereHas('translations', function ($query) {
+            $query->where('locale', 'en')->where('name', 'Self');
+        })->first()?->id;
+
+        if (isset($validated['relationship_id']) && $validated['relationship_id'] == $self_relationship_id) {
+            $exists = HouseMember::where('house_holder_id', $member->house_holder_id)
+                ->where('relationship_id', $self_relationship_id)
+                ->where('id', '!=', $member->id)
+                ->exists();
+            if ($exists) {
+                return back()->withInput()->with('error', __('Householder information already exists for this house.'));
+            }
+        }
 
         $dob_bs = $request->dob;
 

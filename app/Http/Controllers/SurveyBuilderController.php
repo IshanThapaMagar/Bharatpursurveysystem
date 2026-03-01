@@ -534,5 +534,46 @@ public function edit($id)
 
     public function destroy(string $id)
     {
+        $authUser = auth()->user();
+        if ($authUser->isDataCollector()) {
+            abort(403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $section = SurveySection::findOrFail($id);
+
+            // Security check: Ward Admins can only delete sections for their ward
+            if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
+                abort(403);
+            }
+
+            $ward_id = $section->ward_id;
+
+            // Cascading delete: questions and their options
+            $questions = Question::where('survey_section_id', $section->id)->get();
+            
+            foreach ($questions as $question) {
+                if ($question->option_group_id) {
+                    QuestionOption::where('question_id', $question->id)->delete();                 
+                    OptionChoice::where('option_group_id', $question->option_group_id)->delete();
+                    OptionGroup::where('id', $question->option_group_id)->delete();
+                }
+                $question->delete();
+            }
+
+            $section->delete();
+
+            DB::commit();
+
+            return redirect()->route('surveyform.index', ['ward_id' => $ward_id])
+                ->with('success', 'Section and its questions deleted successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Section deletion failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to delete section. Please try again.');
+        }
     }
 }

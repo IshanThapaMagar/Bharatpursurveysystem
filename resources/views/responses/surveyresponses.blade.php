@@ -57,29 +57,27 @@
         </style>
     @endpush
 
-    <div class="py-12 sm:py-24">
-        <div class="transition-all duration-300 ml-16 md:ml-64 px-4 sm:px-6 lg:px-8">
+    <div class="py-12 sm:py-24 px-4 sm:px-6 lg:px-8">
             <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
                 <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">कम्प्युटर प्रणालीमा नगरबासीको विवरण</h2>
-                    <p class="text-gray-500 text-sm mt-1">सबै दर्ता गरिएका घरधुरी सर्वेक्षण विवरणहरू</p>
+                    <h2 class="text-2xl font-bold text-gray-800">{{ __('Details of residents in the computer system') }}</h2>
+                    <p class="text-gray-500 text-sm mt-1">{{ __('All registered household survey details') }}</p>
                 </div>
 
-                {{-- Filter Bar (DataTables-powered, no page reload) --}}
                 <div class="mb-6 flex flex-wrap gap-4 items-end bg-gray-50 border border-gray-200 rounded-xl p-4">
 
                     {{-- Ward Filter --}}
                     <div class="flex flex-col gap-1 min-w-[160px]">
-                        <label for="filter-ward" class="text-xs font-semibold text-gray-600 uppercase tracking-wide">वडा</label>
+                        <label for="filter-ward" class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{__('Ward')}}</label>
                         <select id="filter-ward"
                             class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white"
                             {{ count($wards) === 1 ? 'disabled' : '' }}>
                             @if (count($wards) > 1)
-                                <option value="">— सबै वडा —</option>
+                                <option value="">— {{__('All Wards')}} —</option>
                             @endif
                             @foreach ($wards as $ward)
                                 <option value="{{ $ward->ward_no }}" data-id="{{ $ward->id }}" {{ count($wards) === 1 ? 'selected' : '' }}>
-                                    वडा {{ $ward->ward_no }}
+                                    {{__('Ward')}} {{ $ward->ward_no }}
                                 </option>
                             @endforeach
                         </select>
@@ -87,10 +85,10 @@
 
                     {{-- Tole Filter --}}
                     <div class="flex flex-col gap-1 min-w-[180px]">
-                        <label for="filter-tole" class="text-xs font-semibold text-gray-600 uppercase tracking-wide">टोल</label>
+                        <label for="filter-tole" class="text-xs font-semibold text-gray-600 uppercase tracking-wide">{{__('Tole')}}</label>
                         <select id="filter-tole"
                             class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white">
-                            <option value="">— सबै टोल —</option>
+                            <option value="">— {{__('All Toles')}} —</option>
                             @foreach ($toles as $tole)
                                 <option value="{{ $tole->name }}">{{ $tole->name }}</option>
                             @endforeach
@@ -101,7 +99,7 @@
                     <div class="flex gap-2">
                         <button id="btn-reset"
                             class="px-5 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg shadow hover:bg-gray-300 transition">
-                            रिसेट
+                                {{__('Reset')}}
                         </button>
                     </div>
                 </div>
@@ -154,16 +152,16 @@
                                         <div class="flex flex-wrap gap-2">
                                             <a href="{{ route('survey-responses.show', $response->id) }}"
                                                 class="px-4 py-2 bg-green-500 text-white font-semibold rounded-md shadow hover:bg-green-600 transition">
-                                                पूर्ण विवरण
+                                                {{__('Full details')}}
                                             </a>
                                             @if (auth()->user()->isSuperAdmin() || (auth()->user()->isWardAdmin() && auth()->user()->ward_id == $response->ward_id))
                                                 <a href="{{ route('survey-responses.edit', $response->id) }}"
                                                     class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-md shadow hover:bg-yellow-600 transition">
-                                                    सम्पादन
+                                                    {{__('Edit')}}
                                                 </a>
                                                 <button type="button" onclick="deleteResponse({{ $response->id }})"
                                                     class="px-4 py-2 bg-red-500 text-white font-semibold rounded-md shadow hover:bg-red-600 transition">
-                                                    हटाउनुहोस्
+                                                    {{__('Delete')}}
                                                 </button>
                                             @endif
                                         </div>
@@ -180,15 +178,13 @@
     @push('scripts')
         <script type="module">
             $(document).ready(function () {
-
-                // Initialise DataTable
                 const table = new DataTable('#responses-table', {
                     language: {
-                        search:     "खोज्नुहोस्:",
-                        lengthMenu: "देखाउनुहोस् _MENU_ रेकर्डहरू",
-                        info:       "देखाउँदै _START_ देखि _END_ सम्म _TOTAL_ रेकर्डहरू",
-                        zeroRecords:"कुनै विवरण फेला परेन",
-                        emptyTable: "तालिकामा कुनै डाटा उपलब्ध छैन",
+                        search:     "{{__('Search')}}:",
+                        lengthMenu: "{{__('Show')}} _MENU_ {{__('entries')}}",
+                        info:       "{{__('Showing')}} _START_ {{__('to')}} _END_ {{__('of')}} _TOTAL_ {{__('entries')}}",
+                        zeroRecords:"{{__('No matching records found')}}",
+                        emptyTable: "{{__('No data available in table')}}",
                     },
 
                     columnDefs: [
