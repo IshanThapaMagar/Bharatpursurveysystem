@@ -4,22 +4,32 @@
             <div class="bg-white overflow-hidden shadow-sm rounded-sm">
                 <div class="p-6 text-gray-900">
 
-                    <!-- Ward Dropdown -->
-                    <form method="GET" class="mb-8">
-                        <select name="ward" onchange="this.form.submit()"
-                            class="border rounded-lg p-3 w-48 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            @if(auth()->user()->isSuperAdmin())
-                                <option value="all" {{ $selectedWard == 'all' ? 'selected' : '' }}>
-                                    {{ __('All Wards') }}
-                                </option>
-                            @endif
-                            @foreach ($wards as $ward)
-                                <option value="{{ $ward->id }}" {{ $selectedWard == $ward->id ? 'selected' : '' }}>
-                                    {{ __('Ward') }} {{ $ward->ward_no }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </form>
+                    <!-- Ward Dropdown & Export -->
+                    <div class="flex flex-wrap items-center justify-between mb-8 gap-4">
+                        <form method="GET" class="flex items-center gap-4">
+                            <select name="ward" onchange="this.form.submit()"
+                                class="border rounded-lg p-3 w-48 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                @if(auth()->user()->isSuperAdmin())
+                                    <option value="all" {{ $selectedWard == 'all' ? 'selected' : '' }}>
+                                        {{ __('All Wards') }}
+                                    </option>
+                                @endif
+                                @foreach ($wards as $ward)
+                                    <option value="{{ $ward->id }}" {{ $selectedWard == $ward->id ? 'selected' : '' }}>
+                                        {{ __('Ward') }} {{ $ward->ward_no }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+
+                        <a href="{{ route('dashboard.export', ['ward' => $selectedWard]) }}"
+                            class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            {{ __('Export to CSV') }}
+                        </a>
+                    </div>
 
                     <!-- Age Group Info Boxes -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">

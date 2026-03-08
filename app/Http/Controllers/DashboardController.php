@@ -613,4 +613,222 @@ class DashboardController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function exportCsv(Request $request)
+    {
+        $authUser = auth()->user();
+        $selectedWard = $request->input('ward', 'all');
+
+        if (!$authUser->isSuperAdmin()) {
+            $selectedWard = $authUser->ward_id;
+        }
+
+        $wardNoDisplay = 'All Wards';
+        if ($selectedWard !== 'all') {
+            $wardNoDisplay = DB::table('wards')->where('id', $selectedWard)->value('ward_no') ?? $selectedWard;
+        }
+
+        // --- Data Fetching Logic (Simplified copy from index) ---
+        
+        // Age Stats
+        $ageStats = DB::table('house_members as hm')
+            ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
+            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
+            ->when($selectedWard !== 'all', fn($q) => $q->where('r.ward_id', $selectedWard))
+            ->selectRaw("
+                COUNT(CASE WHEN hm.age BETWEEN 0 AND 5 THEN 1 END) as group1,
+                COUNT(CASE WHEN hm.age BETWEEN 6 AND 16 THEN 1 END) as group2,
+                COUNT(CASE WHEN hm.age BETWEEN 17 AND 32 THEN 1 END) as group3,
+                COUNT(CASE WHEN hm.age BETWEEN 33 AND 54 THEN 1 END) as group4,
+                COUNT(CASE WHEN hm.age BETWEEN 55 AND 65 THEN 1 END) as group5,
+                COUNT(CASE WHEN hm.age > 65 THEN 1 END) as group6,
+                COUNT(hm.id) as total_members
+            ")
+            ->first();
+
+        // Gender Stats
+        $genderStats = DB::table('house_members as hm')
+            ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
+            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
+            ->when($selectedWard !== 'all', fn($q) => $q->where('r.ward_id', $selectedWard))
+            ->selectRaw("
+                COUNT(CASE WHEN hm.gender_id = 1 THEN 1 END) as male,
+                COUNT(CASE WHEN hm.gender_id = 2 THEN 1 END) as female,
+                COUNT(CASE WHEN hm.gender_id NOT IN (1, 2) THEN 1 END) as other,
+                COUNT(hm.id) as total_members
+            ")
+            ->first();
+
+        // Citizenship Stats
+        $citStats = DB::table('house_holders as hh')
+            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
+            ->when($selectedWard !== 'all', fn($q) => $q->where('r.ward_id', $selectedWard))
+            ->selectRaw("
+                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 1 THEN 1 END) as stat1,
+                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 2 THEN 1 END) as stat2,
+                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 3 THEN 1 END) as stat3,
+                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 4 THEN 1 END) as stat4,
+                COUNT(hh.id) as total_householders
+            ")
+            ->first();
+
+        // Mother Tongue Stats
+        $motherTongueStats = DB::table('mother_tongues as mt')
+            ->leftJoin('house_holders as hh', function($join) use ($selectedWard) {
+                $join->on('hh.mother_tongue_id', '=', 'mt.id')
+                    ->whereIn('hh.id', function($query) use ($selectedWard) {
+                        $query->select('householder_id')
+                            ->from('responses')
+                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
+                    });
+            })
+            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
+            ->select('mt.name', DB::raw('COUNT(hm.id) as total'))
+            ->groupBy('mt.id', 'mt.name')
+            ->orderByDesc('total')
+            ->get();
+
+        // Caste Stats
+        $casteStats = DB::table('castes as c')
+            ->leftJoin('house_holders as hh', function($join) use ($selectedWard) {
+                $join->on('hh.caste_id', '=', 'c.id')
+                    ->whereIn('hh.id', function($query) use ($selectedWard) {
+                        $query->select('householder_id')
+                            ->from('responses')
+                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
+                    });
+            })
+            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
+            ->select('c.name', DB::raw('COUNT(hm.id) as total'))
+            ->groupBy('c.id', 'c.name')
+            ->orderByDesc('total')
+            ->get();
+
+        // Education Stats
+        $educationStats = DB::table('education_levels as el')
+            ->leftJoin('education_level_translations as elt', function ($join) {
+                $join->on('elt.education_level_id', '=', 'el.id')
+                     ->where('elt.locale', '=', 'np');
+            })
+            ->leftJoin('house_members as hm', function($join) use ($selectedWard) {
+                $join->on('hm.education_level_id', '=', 'el.id')
+                    ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
+                        $query->select('householder_id')
+                            ->from('responses')
+                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
+                    });
+            })
+            ->select(
+                DB::raw('COALESCE(MAX(elt.name), MAX(CAST(el.id AS CHAR))) as label'),
+                DB::raw('COUNT(hm.id) as total')
+            )
+            ->groupBy('el.id')
+            ->orderByDesc('total')
+            ->get();
+
+        // Religion Stats
+        $religionStats = DB::table('religions as rel')
+            ->leftJoin('religion_translations as relt', function ($join) {
+                $join->on('relt.religion_id', '=', 'rel.id')
+                     ->where('relt.locale', '=', 'np');
+            })
+            ->leftJoin('house_members as hm', function($join) use ($selectedWard) {
+                $join->on('hm.religion_id', '=', 'rel.id')
+                    ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
+                        $query->select('householder_id')
+                            ->from('responses')
+                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
+                    });
+            })
+            ->select(
+                DB::raw('COALESCE(MAX(relt.name), MAX(CAST(rel.id AS CHAR))) as label'),
+                DB::raw('COUNT(hm.id) as total')
+            )
+            ->groupBy('rel.id')
+            ->orderByDesc('total')
+            ->get();
+
+        // --- Prepare CSV ---
+        $filename = "dashboard_data_ward_{$selectedWard}_" . date('Y-m-d') . ".csv";
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($ageStats, $genderStats, $citStats, $motherTongueStats, $casteStats, $educationStats, $religionStats, $wardNoDisplay) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Header section
+            fputcsv($file, ['BHARATPUR MAHANAGARPALIKA']);
+            $wardDisplay = ($wardNoDisplay === 'All Wards') ? 'All Wards' : 'Ward No: ' . $wardNoDisplay;
+            fputcsv($file, [$wardDisplay]);
+            fputcsv($file, ['Report generated on: ' . date('Y-m-d H:i')]);
+            fputcsv($file, []); // Empty row as separator
+
+            fputcsv($file, ['Category', 'Label', 'Count', 'Percentage (%)']);
+
+            // Age Groups
+            $totalAge = $ageStats->total_members ?: 1;
+            fputcsv($file, ['Age Group', 'Infant (0-5)', $ageStats->group1, round(($ageStats->group1 / $totalAge) * 100, 2)]);
+            fputcsv($file, ['Age Group', 'Children (6-16)', $ageStats->group2, round(($ageStats->group2 / $totalAge) * 100, 2)]);
+            fputcsv($file, ['Age Group', 'Youth (17-32)', $ageStats->group3, round(($ageStats->group3 / $totalAge) * 100, 2)]);
+            fputcsv($file, ['Age Group', 'Adult (33-54)', $ageStats->group4, round(($ageStats->group4 / $totalAge) * 100, 2)]);
+            fputcsv($file, ['Age Group', 'Elderly (55-65)', $ageStats->group5, round(($ageStats->group5 / $totalAge) * 100, 2)]);
+            fputcsv($file, ['Age Group', 'Senior Citizen (65+)', $ageStats->group6, round(($ageStats->group6 / $totalAge) * 100, 2)]);
+
+            fputcsv($file, []);
+
+            // Gender
+            $totalGender = $genderStats->total_members ?: 1;
+            fputcsv($file, ['Gender', 'Male', $genderStats->male, round(($genderStats->male / $totalGender) * 100, 2)]);
+            fputcsv($file, ['Gender', 'Female', $genderStats->female, round(($genderStats->female / $totalGender) * 100, 2)]);
+            fputcsv($file, ['Gender', 'Other', $genderStats->other, round(($genderStats->other / $totalGender) * 100, 2)]);
+
+            fputcsv($file, []);
+
+            // Citizenship
+            $totalCit = $citStats->total_householders ?: 1;
+            fputcsv($file, ['Residence (Household)', 'स्थायी जन्म', $citStats->stat1, round(($citStats->stat1 / $totalCit) * 100, 2)]);
+            fputcsv($file, ['Residence (Household)', 'बसाईसराई', $citStats->stat2, round(($citStats->stat2 / $totalCit) * 100, 2)]);
+            fputcsv($file, ['Residence (Household)', 'अस्थायी बसोबास', $citStats->stat3, round(($citStats->stat3 / $totalCit) * 100, 2)]);
+            fputcsv($file, ['Residence (Household)', 'बसाईसराईको निसा नभएको', $citStats->stat4, round(($citStats->stat4 / $totalCit) * 100, 2)]);
+
+            fputcsv($file, []);
+
+            // Mother Tongue
+            $totalMT = $motherTongueStats->sum('total') ?: 1;
+            foreach ($motherTongueStats as $row) {
+                fputcsv($file, ['Mother Tongue', $row->name, $row->total, round(($row->total / $totalMT) * 100, 2)]);
+            }
+
+            fputcsv($file, []);
+
+            // Caste
+            $totalCaste = $casteStats->sum('total') ?: 1;
+            foreach ($casteStats as $row) {
+                fputcsv($file, ['Caste', $row->name, $row->total, round(($row->total / $totalCaste) * 100, 2)]);
+            }
+
+            fputcsv($file, []);
+
+            // Education
+            $totalEdu = $educationStats->sum('total') ?: 1;
+            foreach ($educationStats as $row) {
+                fputcsv($file, ['Education', $row->label, $row->total, round(($row->total / $totalEdu) * 100, 2)]);
+            }
+
+            fputcsv($file, []);
+
+            // Religion
+            $totalRel = $religionStats->sum('total') ?: 1;
+            foreach ($religionStats as $row) {
+                fputcsv($file, ['Religion', $row->label, $row->total, round(($row->total / $totalRel) * 100, 2)]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

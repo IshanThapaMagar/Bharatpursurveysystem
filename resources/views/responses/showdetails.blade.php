@@ -271,6 +271,38 @@
                 </div>
             @endif
 
+            {{-- ===== Response Metadata Table ===== --}}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="bg-gray-100/70 border-b border-gray-200">
+                                <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">विवरण दिने</th>
+                                <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">मिति</th>
+                                <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">तथ्यांक संकलन वडा</th>
+                                <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">संकलन गर्ने</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white">
+                                <td class="px-5 py-1.5 text-gray-800 font-medium border-r border-gray-100">
+                                    {{ $household->householder_name ?? '—' }}
+                                </td>
+                                <td class="px-5 py-1.5 text-gray-700 border-r border-gray-100">
+                                    {{ $response->submitted_at?->format('Y-m-d') ?? '—' }}
+                                </td>
+                                <td class="px-5 py-1.5 text-gray-700 border-r border-gray-100">
+                                    {{ $response->ward ? 'वडा नं. ' . $response->ward->ward_no : '—' }}
+                                </td>
+                                <td class="px-5 py-1.5 text-gray-700">
+                                    {{ $response->user?->name ?? '—' }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 

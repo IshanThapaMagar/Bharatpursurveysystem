@@ -500,23 +500,26 @@
                             id: newId,
                             sectionId: this.currentSectionId,
                             type: type,
-                            label: t.new_question || 'New Question',
+                            label: '',
                             description: '',
                             required: false
+
                         };
 
                         if (['radio', 'checkbox', 'dropdown', 'multiple_choice'].includes(type)) {
                             newQuestion.options = [{
                                     id: 'opt1',
                                     value: '',
-                                    label: 'Option 1',
+                                    label: '',
+
                                     input_type: 'none',
                                     input_placeholder: ''
                                 },
                                 {
                                     id: 'opt2',
                                     value: '',
-                                    label: 'Option 2',
+                                    label: '',
+
                                     input_type: 'none',
                                     input_placeholder: ''
                                 }
@@ -569,7 +572,8 @@
                             question.options.push({
                                 id: newId,
                                 value: 'option' + (question.options.length + 1),
-                                label: 'Option ' + (question.options.length + 1),
+                                label: '',
+
                                 input_type: 'none',
                                 input_placeholder: ''
                             });

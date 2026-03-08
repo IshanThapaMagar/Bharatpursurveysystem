@@ -247,7 +247,7 @@
                 window.deleteResponse = function(id) {
                     if (!confirm('के तपाईं पक्का हुनुहुन्छ? यो रेकर्ड स्थायी रूपमा मेटिनेछ।')) return;
 
-                    fetch(`/survey-responses/${id}`, {
+                    fetch(`/admin/survey-responses/${id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',

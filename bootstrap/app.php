@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\Localization::class,
         ]);
+        $middleware->redirectTo(
+            guests: '/login',
+            users: '/admin/dashboard',
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

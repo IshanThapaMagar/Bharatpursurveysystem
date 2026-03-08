@@ -75,6 +75,8 @@ class ResponseController extends Controller
     {
 
         $response = Response::with([
+            'user',
+            'ward',
             'householder.caste',
             'householder.motherTongue',
             'householder.tole',

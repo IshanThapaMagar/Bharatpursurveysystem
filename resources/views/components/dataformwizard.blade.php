@@ -1172,13 +1172,13 @@
 
                     try {
                         const [sectionsResponse, lookupResponse] = await Promise.all([
-                            fetch(`/survey/ward/${this.selectedWardId}/sections`, {
+                            fetch(`/admin/survey/ward/${this.selectedWardId}/sections`, {
                                 headers: {
                                     'Accept': 'application/json',
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 }
                             }),
-                            fetch(`/survey/ward/${this.selectedWardId}/lookup-data`, {
+                            fetch(`/admin/survey/ward/${this.selectedWardId}/lookup-data`, {
                                 headers: {
                                     'Accept': 'application/json',
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
