@@ -85,7 +85,7 @@
                     });
                 });
 
-                // Handle Save Title Button
+                
                 document.querySelectorAll('.save-pin-title').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const qId = this.dataset.questionId;
@@ -124,7 +124,7 @@
                     .catch(err => console.error(err));
                 }
 
-                // Chart initialization
+              
                 const chartsData = @json($charts);
                 
                 const colors = [

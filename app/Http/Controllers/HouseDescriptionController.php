@@ -21,7 +21,7 @@ class HouseDescriptionController extends Controller
      */
     public function index()
     {
-        //
+    //
     }
 
 
@@ -30,11 +30,63 @@ class HouseDescriptionController extends Controller
         $authUser = auth()->user();
         if ($authUser->isSuperAdmin()) {
             $wards = Ward::orderBy('ward_no')->get();
-        } else {
+        }
+        else {
             $wards = Ward::where('id', $authUser->ward_id)->get();
         }
-        
+
         return view('housedescription.createdataform', compact('wards'));
+    }
+
+    /**
+     * Fetch sections with questions and all nested relations for a given ward.
+     */
+    public function getSectionsData($wardId): array
+    {
+        return SurveySection::with([
+            'questions' => function ($query) {
+                $query->ordered()->with([
+                    'inputType',
+                    'optionGroup.optionChoices' => fn($q) => $q->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder'),
+                    'questionOptions.optionChoice' => fn($q) => $q->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder'),
+                ]);
+            },
+        ])
+        ->forWard($wardId)
+        ->ordered()
+        ->get()
+        ->toArray();
+    }
+
+    /**
+     * Fetch all lookup data for a given ward.
+     */
+    public function getLookupDataArray($wardId): array
+    {
+        return [
+            'mother_tongues'                 => MotherTongue::all()->toArray(),
+            'castes'                         => Caste::all()->toArray(),
+            'toles'                          => Tole::where('ward_id', $wardId)->get()->toArray(),
+            'citizenship_permanent_addresses'=> CitizenshipPermanentAddress::all()->toArray(),
+        ];
+    }
+
+    /**
+     * Show the survey wizard pre-loaded for a specific ward (server-side, no AJAX).
+     */
+    public function createWithWard($wardId)
+    {
+        $authUser = auth()->user();
+        if (!$authUser->isSuperAdmin() && $authUser->ward_id != $wardId) {
+            abort(403, 'Unauthorized access to this ward.');
+        }
+
+        $wardInfo = Ward::findOrFail($wardId);
+        $sections  = $this->getSectionsData($wardId);
+        $lookupData = $this->getLookupDataArray($wardId);
+        $wards      = Ward::orderBy('ward_no')->get();
+
+        return view('housedescription.surveywizard', compact('wards', 'wardInfo', 'sections', 'lookupData'));
     }
 
     public function getSectionsForWard($wardId)
@@ -48,26 +100,27 @@ class HouseDescriptionController extends Controller
         }
 
         $ward = Ward::findOrFail($wardId);
-        
+
         $sections = SurveySection::with([
             'questions' => function ($query) {
-                $query->ordered()
-                    ->with([
-                        'inputType',
-                        'optionGroup.optionChoices' => function ($query) {
-                            
-                            $query->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder');
-                        },
-                        'questionOptions.optionChoice' => function ($query) {
-                            
-                            $query->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder');
-                        }
-                    ]);
+            $query->ordered()
+                ->with([
+                    'inputType',
+                    'optionGroup.optionChoices' => function ($query) {
+
+                $query->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder');
             }
+                    ,
+                    'questionOptions.optionChoice' => function ($query) {
+
+                $query->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder');
+            }
+                ]);
+        }
         ])
-        ->forWard($wardId)
-        ->ordered()
-        ->get();
+            ->forWard($wardId)
+            ->ordered()
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -99,7 +152,8 @@ class HouseDescriptionController extends Controller
                 'toles' => $toles,
                 'citizenship_permanent_addresses' => $citizenshipAddresses,
             ]);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch lookup data',
@@ -111,7 +165,7 @@ class HouseDescriptionController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-        {
+    {
         try {
             $validated = $request->validate([
                 'ward_id' => 'required|exists:wards,id',
@@ -137,13 +191,13 @@ class HouseDescriptionController extends Controller
 
             DB::beginTransaction();
 
-            
+
             $profilePhotoPath = null;
             if ($request->hasFile('profile_photo')) {
                 $profilePhotoPath = $request->file('profile_photo')->store('householder-photos', 'public');
             }
 
-            
+
             $householder = Householder::create([
                 'householder_name' => $validated['householder_name'],
                 'father_name' => $validated['father_name'],
@@ -169,14 +223,14 @@ class HouseDescriptionController extends Controller
 
             // Process answers
             foreach ($request->input('answers', []) as $questionId => $answerData) {
-                
+
                 if (isset($answerData['question_option_id'])) {
                     $optionIds = $answerData['question_option_id'];
-                    
+
                     if (empty($optionIds)) {
                         continue;
                     }
-                    
+
                     if (is_array($optionIds)) {
                         foreach ($optionIds as $optionId) {
                             if (!empty($optionId)) {
@@ -185,29 +239,30 @@ class HouseDescriptionController extends Controller
                                     'question_id' => $questionId,
                                     'question_option_id' => $optionId,
                                 ];
-                                
+
                                 if (isset($answerData['custom_inputs'][$optionId]) && !empty($answerData['custom_inputs'][$optionId])) {
                                     $answerRecord['custom_input_value'] = $answerData['custom_inputs'][$optionId];
                                 }
-                                
+
                                 Answer::create($answerRecord);
                             }
                         }
-                    } else {
+                    }
+                    else {
                         $answerRecord = [
                             'response_id' => $response->id,
                             'question_id' => $questionId,
                             'question_option_id' => $optionIds,
                         ];
-                        
+
                         if (isset($answerData['custom_input']) && !empty($answerData['custom_input'])) {
                             $answerRecord['custom_input_value'] = $answerData['custom_input'];
                         }
-                        
+
                         Answer::create($answerRecord);
                     }
                 }
-                
+
                 elseif (isset($answerData['answer_text']) && !empty($answerData['answer_text'])) {
                     Answer::create([
                         'response_id' => $response->id,
@@ -222,15 +277,15 @@ class HouseDescriptionController extends Controller
                         'question_id' => $questionId,
                         'answer_numeric' => $answerData['answer_numeric'],
                     ];
-                    
+
                     if (isset($answerData['unit_of_measure_id']) && !empty($answerData['unit_of_measure_id'])) {
                         $answerRecord['unit_of_measure_id'] = $answerData['unit_of_measure_id'];
                     }
-                    
+
                     Answer::create($answerRecord);
                 }
-        
-                
+
+
                 elseif (isset($answerData['latitude']) && isset($answerData['longitude'])) {
                     if (!empty($answerData['latitude']) && !empty($answerData['longitude'])) {
                         Answer::create([
@@ -268,14 +323,16 @@ class HouseDescriptionController extends Controller
                 'message' => 'Survey submitted successfully!',
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -290,7 +347,7 @@ class HouseDescriptionController extends Controller
     // public function show($wardId)
     // {
     //     $ward = Ward::findOrFail($wardId);
-        
+
     //     $sections = SurveySection::with([
     //         'questions' => function ($query) {
     //             $query->ordered()
@@ -313,7 +370,7 @@ class HouseDescriptionController extends Controller
      */
     public function edit(string $id)
     {
-        //
+    //
     }
 
     /**
@@ -321,7 +378,7 @@ class HouseDescriptionController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+    //
     }
 
     /**
@@ -329,6 +386,6 @@ class HouseDescriptionController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+    //
     }
 }

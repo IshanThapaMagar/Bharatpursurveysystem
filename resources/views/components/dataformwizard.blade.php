@@ -1,4 +1,4 @@
-@props(['wards' => null])
+@props(['wards' => null, 'wardInfo' => null, 'sections' => null, 'lookupData' => null])
 @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
@@ -300,6 +300,8 @@
 @endpush
 
 <div x-data="surveyWizard()" class="px-12 sm:py-1">
+    {{-- Ward selector: only in AJAX mode (no server-side data passed) --}}
+    @if(!$wardInfo)
     <div class="mb-8 animate-fade-in-up">
         <div class="w-52">
             <label for="ward-select" class="block text-sm font-semibold text-gray-900 mb-2">
@@ -315,7 +317,9 @@
             </select>
         </div>
     </div>
+    @endif
 
+    @if(!$wardInfo)
     <!-- Loading State -->
     <div x-show="isLoading" x-cloak class="flex justify-center items-center py-20">
         <div class="text-center">
@@ -334,10 +338,14 @@
         <p class="text-gray-600">Please select a ward from the dropdown above to begin the survey.</p>
     </div>
 
-    <!-- Survey Form -->
+    <!-- Survey Form (AJAX mode) -->
     <div x-show="selectedWardId && !isLoading && sections.length > 0" x-cloak>
+    @else
+    <!-- Survey Form (server-side mode: always visible) -->
+    <div>
+    @endif
         <!-- Progress Bar -->
-        <div class="mb-8 animate-fade-in-up">
+        <div class="mb-6 animate-fade-in-up">
             <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100">
                 <div class="progress-bar h-full bg-gradient-to-r from-indigo-500 to-purple-600"
                     :style="`width: ${(currentStep / totalSteps) * 100}%`"></div>
@@ -411,13 +419,13 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col overflow-y-auto max-h-screen p-6 lg:p-10">
+                <div class="flex flex-col p-4 lg:p-8">
                     <form @submit.prevent="handleSubmit" class="flex flex-1 flex-col">
                         <div class="flex-1">
                             <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-300"
                                 x-transition:enter-start="opacity-0 transform translate-y-4"
                                 x-transition:enter-end="opacity-100 transform translate-y-0" x-cloak>
-                                <div class="mb-8">
+                                <div class="mb-6">
                                     <h2 class="text-3xl font-bold text-gray-900"
                                         style="font-family: 'Archivo', sans-serif;">Householder Information</h2>
                                     <p class="mt-2 text-base text-gray-600">Please provide the householder's basic
@@ -434,17 +442,17 @@
                                     x-transition:enter-start="opacity-0 transform translate-y-4"
                                     x-transition:enter-end="opacity-100 transform translate-y-0" x-cloak>
 
-                                    <div class="mb-8">
+                                    <div class="mb-6">
                                         <h2 class="text-3xl font-bold text-gray-900"
                                             style="font-family: 'Archivo', sans-serif;" x-text="section.title"></h2>
                                         <p x-show="section.description" class="mt-2 text-base text-gray-600"
                                             x-text="section.description"></p>
                                     </div>
 
-                                    <div class="grid gap-6 grid-cols-1">
+                                    <div class="grid gap-4 grid-cols-1">
                                         <template x-for="question in section.questions" :key="question.id">
                                             <div
-                                                class="rounded-xl border border-gray-200 bg-gray-50 p-6 transition-all hover:border-indigo-200 hover:bg-white">
+                                                class="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-all hover:border-indigo-200 hover:bg-white">
                                                 <div class="block">
                                                     <span class="text-base font-semibold text-gray-900">
                                                         <span x-text="question.question_text"></span>
@@ -984,7 +992,7 @@
                         </div>
 
                         <!-- Navigation buttons -->
-                        <div class="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
+                        <div class="mt-6 flex items-center justify-between border-t border-gray-200 pt-6">
                             <button type="button" @click="prevStep()" :disabled="currentStep === 1"
                                 class="flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-all duration-200"
                                 :class="currentStep === 1 ?
@@ -1060,8 +1068,14 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script>
         function surveyWizard() {
+            // PHP-provided server-side data (null in AJAX mode)
+            const phpWardInfo   = @json($wardInfo);
+            const phpSections   = @json($sections);
+            const phpLookupData = @json($lookupData);
+            const isServerSide  = phpWardInfo !== null;
+
             return {
-                selectedWardId: '',
+                selectedWardId: isServerSide ? phpWardInfo.id : '',
                 isLoading: false,
                 currentStep: 1,
                 totalSteps: 0,
@@ -1069,8 +1083,8 @@
                 isSubmitting: false,
                 errors: {},
                 householderErrors: {},
-                wardInfo: {},
-                sections: [],
+                wardInfo: isServerSide ? phpWardInfo : {},
+                sections: isServerSide ? phpSections : [],
                 steps: [],
                 maps: {},
                 markers: {},
@@ -1079,14 +1093,14 @@
                     isOpen: false,
                     questionId: null
                 },
-                lookupData: {
+                lookupData: isServerSide ? phpLookupData : {
                     mother_tongues: [],
                     castes: [],
                     toles: [],
                     citizenship_permanent_addresses: []
                 },
                 formData: {
-                    ward_id: null,
+                    ward_id: isServerSide ? phpWardInfo.id : null,
                     householder: {
                         householder_name: '',
                         father_name: '',
@@ -1094,7 +1108,7 @@
                         mother_tongue_id: '',
                         caste_id: '',
                         tole_id: '',
-                        ward_no: '',
+                        ward_no: isServerSide ? phpWardInfo.ward_no : '',
                         lot_number: '',
                         house_number: '',
                         phone_number: '',
@@ -1106,13 +1120,51 @@
                 },
 
                 init() {
-                    // Auto-select ward if only one is available (for restricted users)
-                    this.$nextTick(() => {
-                        const wardSelect = document.getElementById('ward-select');
-                        if (wardSelect && wardSelect.options.length === 2 && wardSelect.options[1].value) {
-                            this.selectedWardId = wardSelect.options[1].value;
-                            this.loadWardData();
-                        }
+                    if (isServerSide) {
+                        // Server-side mode: build steps & answers directly from PHP data
+                        this._buildFromSections();
+                    } else {
+                        // AJAX mode: auto-select if only one ward available
+                        this.$nextTick(() => {
+                            const wardSelect = document.getElementById('ward-select');
+                            if (wardSelect && wardSelect.options.length === 2 && wardSelect.options[1].value) {
+                                this.selectedWardId = wardSelect.options[1].value;
+                                this.loadWardData();
+                            }
+                        });
+                    }
+                },
+
+                _buildFromSections() {
+                    this.totalSteps = 1 + this.sections.length;
+                    this.steps = [
+                        { id: 1, title: 'Householder Information', description: 'Basic householder details' },
+                        ...this.sections.map((section, index) => ({
+                            id: index + 2,
+                            title: section.title,
+                            description: section.description || ''
+                        }))
+                    ];
+                    this.formData.answers = {};
+                    this.sections.forEach(section => {
+                        section.questions.forEach(question => {
+                            const inputType = question.input_type?.input_type_name;
+                            if (inputType === 'checkbox') {
+                                this.formData.answers[question.id] = { question_option_id: [], custom_inputs: {} };
+                            } else if (['radio', 'dropdown'].includes(inputType)) {
+                                this.formData.answers[question.id] = { question_option_id: '', custom_inputs: {} };
+                            } else if (inputType === 'number') {
+                                this.formData.answers[question.id] = { answer_numeric: '', unit_of_measure_id: '' };
+                            } else if (inputType === 'linear_scale') {
+                                this.formData.answers[question.id] = { answer_numeric: '' };
+                            } else if (inputType === 'file') {
+                                this.formData.answers[question.id] = { files: [] };
+                            } else if (inputType === 'location') {
+                                this.formData.answers[question.id] = { latitude: '', longitude: '' };
+                            } else {
+                                this.formData.answers[question.id] = { answer_text: '' };
+                            }
+                        });
                     });
                 },
 
@@ -1548,7 +1600,8 @@
                     }
 
                     if (!h.citizenship_permanent_address_id || h.citizenship_permanent_address_id === '') {
-                        this.householderErrors.citizenship_permanent_address_id = 'Citizenship permanent address is required';
+                        this.householderErrors.citizenship_permanent_address_id =
+                            'Citizenship permanent address is required';
                         isValid = false;
                     }
 

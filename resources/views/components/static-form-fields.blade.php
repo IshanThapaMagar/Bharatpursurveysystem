@@ -88,13 +88,14 @@
     </div>
 
     <!-- Ward No -->
-    <div class="rounded-xl border border-gray-200 bg-gray-50 p-6 transition-all hover:border-indigo-200 hover:bg-white">
+    <div class="rounded-xl border border-gray-200 bg-gray-50 p-6 transition-all hover:border-indigo-200 hover:bg-white"
+        :class="selectedWardId ? 'opacity-75 cursor-not-allowed' : ''">
         <label class="block text-base font-semibold text-gray-900">
             वडा नं <span class="required-asterisk">*</span>
         </label>
         <input type="number" x-model.number="formData.householder.ward_no" @input="clearHouseholderError('ward_no')"
-            required
-            class="input-field mt-4 block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            required :disabled="selectedWardId"
+            class="input-field mt-4 block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
             placeholder="Enter ward number">
         <p x-show="householderErrors.ward_no" class="mt-2 text-sm text-red-600 error-message"
             x-text="householderErrors.ward_no"></p>
