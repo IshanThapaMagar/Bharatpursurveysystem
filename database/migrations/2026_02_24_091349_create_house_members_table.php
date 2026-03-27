@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class extends Migration 
 {
     /**
      * Run the migrations.
@@ -40,6 +40,21 @@ return new class extends Migration
             $table->foreignId('pooling_place_id')->nullable()->constrained('pooling_places');
             $table->foreignId('native_speaking_level')->nullable()->constrained('mother_tongue_proficiencies');
             $table->timestamps();
+
+            $table->index('house_holder_id');
+            $table->index('gender_id');
+            $table->index('age');
+            $table->index('education_level_id');
+            $table->index('religion_id');
+            $table->index('district_id');
+            $table->index('disability_id');
+            $table->index('health_status_id');
+            $table->index('native_speaking_level');
+
+
+            $table->index(['house_holder_id', 'gender_id']);
+            $table->index(['house_holder_id', 'education_level_id']);
+            $table->index(['house_holder_id', 'religion_id']);
         });
     }
 

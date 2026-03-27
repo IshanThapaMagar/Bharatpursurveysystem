@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class extends Migration 
 {
     /**
      * Run the migrations.
@@ -26,6 +26,15 @@ return new class extends Migration
             $table->string('phone_number', 10);
             $table->string('citizenship_permanent_address');
             $table->timestamps();
+
+
+            $table->index('mother_tongue_id');
+            $table->index('caste_id');
+            $table->index('tole_id');
+            $table->index('ward_no');
+
+
+            $table->index(['mother_tongue_id', 'caste_id']);
         });
     }
 

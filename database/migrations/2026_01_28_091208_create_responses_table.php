@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class extends Migration 
 {
     /**
      * Run the migrations.
@@ -18,6 +18,11 @@ return new class extends Migration
             $table->foreignId('householder_id')->constrained('house_holders')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamp('submitted_at')->useCurrent();
             $table->timestamps();
+
+            $table->index('user_id');
+            $table->index('ward_id');
+            $table->index('householder_id');
+            $table->index(['ward_id', 'householder_id']);
         });
     }
 

@@ -18,361 +18,148 @@ class DashboardController extends Controller
             $selectedWard = $authUser->ward_id;
         }
 
-        $allOptions = DB::table('questions as q')
-            ->join('survey_sections as ss', 'ss.id', '=', 'q.survey_section_id')
-            ->join('input_types as it', 'it.id', '=', 'q.input_type_id')
-            ->join('question_options as qo', 'qo.question_id', '=', 'q.id')
-            ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
-            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                $q->where('ss.ward_id', $selectedWard);
-            })
-            ->whereIn('it.input_type_name', ['radio', 'checkbox', 'dropdown'])
-            ->select(
-                'q.id as question_id',
-                'q.question_text',
-                'qo.id as question_option_id',
-                'oc.choice_text'
-            )
-            ->get();
+        $cacheKey = "dashboard_charts_{$selectedWard}";
+        $charts = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function() use ($selectedWard) {
+            $allOptions = DB::table('questions as q')
+                ->join('survey_sections as ss', 'ss.id', '=', 'q.survey_section_id')
+                ->join('input_types as it', 'it.id', '=', 'q.input_type_id')
+                ->join('question_options as qo', 'qo.question_id', '=', 'q.id')
+                ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
+                ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                    $q->where('ss.ward_id', $selectedWard);
+                })
+                ->whereIn('it.input_type_name', ['radio', 'checkbox', 'dropdown'])
+                ->select(
+                    'q.id as question_id',
+                    'q.question_text',
+                    'qo.id as question_option_id',
+                    'oc.choice_text'
+                )
+                ->get();
 
-        $answerCounts = DB::table('answers as a')
-            ->join('responses as r', 'r.id', '=', 'a.response_id')
-            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                $q->where('r.ward_id', $selectedWard);
-            })
-            ->select(
-                'a.question_option_id',
-                DB::raw('COUNT(a.id) as total')
-            )
-            ->groupBy('a.question_option_id')
-            ->pluck('total', 'question_option_id');
+            $answerCounts = DB::table('answers as a')
+                ->join('responses as r', 'r.id', '=', 'a.response_id')
+                ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
+                    $q->where('r.ward_id', $selectedWard);
+                })
+                ->select(
+                    'a.question_option_id',
+                    DB::raw('COUNT(a.id) as total')
+                )
+                ->groupBy('a.question_option_id')
+                ->pluck('total', 'question_option_id');
 
-       
-        $results = $allOptions->map(function ($option) use ($answerCounts) {
-            return (object)[
-                'question_id' => $option->question_id,
-                'question_text' => $option->question_text,
-                'choice_text' => $option->choice_text,
-                'total' => $answerCounts[$option->question_option_id] ?? 0
-            ];
+            $results = $allOptions->map(function ($option) use ($answerCounts) {
+                return (object)[
+                    'question_id' => $option->question_id,
+                    'question_text' => $option->question_text,
+                    'choice_text' => $option->choice_text,
+                    'total' => $answerCounts[$option->question_option_id] ?? 0
+                ];
+            });
+
+            return $results->groupBy('question_id');
         });
 
-        $charts = $results->groupBy('question_id');
+        $stats = \App\Models\DashboardStatistic::where('ward_id', (string)$selectedWard)->first();
 
-        $ageStats = DB::table('house_members as hm')
-            ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
-            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                $q->where('r.ward_id', $selectedWard);
-            })
-            ->selectRaw("
-                COUNT(CASE WHEN hm.age BETWEEN 0 AND 5 THEN 1 END) as group1,
-                COUNT(CASE WHEN hm.age BETWEEN 6 AND 16 THEN 1 END) as group2,
-                COUNT(CASE WHEN hm.age BETWEEN 17 AND 32 THEN 1 END) as group3,
-                COUNT(CASE WHEN hm.age BETWEEN 33 AND 54 THEN 1 END) as group4,
-                COUNT(CASE WHEN hm.age BETWEEN 55 AND 65 THEN 1 END) as group5,
-                COUNT(CASE WHEN hm.age > 65 THEN 1 END) as group6,
-                COUNT(hm.id) as total_members
-            ")
-            ->first();
-
-        $ageGroups = [
-            [
-                'label' => __('Infant (0-5)'),
-                'range' => '(०-५)',
-                'count' => $ageStats->group1,
-                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group1 / $ageStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-rose-500',
-                'light_color' => 'bg-rose-100',
-                'border_color' => 'border-rose-200'
-            ],
-            [
-                'label' => __('Children (6-16)'),
-                'range' => '(६-१६)',
-                'count' => $ageStats->group2,
-                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group2 / $ageStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-blue-500',
-                'light_color' => 'bg-blue-100',
-                'border_color' => 'border-blue-200'
-            ],
-            [
-                'label' => __('Youth (17-32)'),
-                'range' => '(१७-३२)',
-                'count' => $ageStats->group3,
-                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group3 / $ageStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-amber-500',
-                'light_color' => 'bg-amber-100',
-                'border_color' => 'border-amber-200'
-            ],
-            [
-                'label' => __('Adult (33-54)'),
-                'range' => '(३३-५४)',
-                'count' => $ageStats->group4,
-                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group4 / $ageStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-emerald-500',
-                'light_color' => 'bg-emerald-100',
-                'border_color' => 'border-emerald-200'
-            ],
-            [
-                'label' => __('Elderly (55-65)'),
-                'range' => '(५५-६५)',
-                'count' => $ageStats->group5,
-                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group5 / $ageStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-violet-500',
-                'light_color' => 'bg-violet-100',
-                'border_color' => 'border-violet-200'
-            ],
-            [
-                'label' => __('Senior Citizen (65+)'),
-                'range' => '(६५ - माथि)',
-                'count' => $ageStats->group6,
-                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group6 / $ageStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-cyan-500',
-                'light_color' => 'bg-cyan-100',
-                'border_color' => 'border-cyan-200'
-            ],
-        ];
-
-        $genderStats = DB::table('house_members as hm')
-            ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
-            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                $q->where('r.ward_id', $selectedWard);
-            })
-            ->selectRaw("
-                COUNT(CASE WHEN hm.gender_id = 1 THEN 1 END) as male,
-                COUNT(CASE WHEN hm.gender_id = 2 THEN 1 END) as female,
-                COUNT(CASE WHEN hm.gender_id NOT IN (1, 2) THEN 1 END) as other,
-                COUNT(hm.id) as total_members
-            ")
-            ->first();
-
-        $genderGroups = [
-            [
-                'label' => __('Male'),
-                'count' => $genderStats->male,
-                'percentage' => $genderStats->total_members > 0 ? round(($genderStats->male / $genderStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-blue-600',
-                'light_color' => 'bg-blue-50',
-                'border_color' => 'border-blue-200'
-            ],
-            [
-                'label' => __('Female'),
-                'count' => $genderStats->female,
-                'percentage' => $genderStats->total_members > 0 ? round(($genderStats->female / $genderStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-pink-600',
-                'light_color' => 'bg-pink-50',
-                'border_color' => 'border-pink-200'
-            ],
-            [
-                'label' => __('Other'),
-                'count' => $genderStats->other,
-                'percentage' => $genderStats->total_members > 0 ? round(($genderStats->other / $genderStats->total_members) * 100, 2) : 0,
-                'color' => 'bg-orange-600',
-                'light_color' => 'bg-orange-50',
-                'border_color' => 'border-orange-200'
-            ],
-        ];
-
-        $citStats = DB::table('house_holders as hh')
-            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                $q->where('r.ward_id', $selectedWard);
-            })
-            ->selectRaw("
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 1 THEN 1 END) as stat1,
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 2 THEN 1 END) as stat2,
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 3 THEN 1 END) as stat3,
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 4 THEN 1 END) as stat4,
-                COUNT(hh.id) as total_householders
-            ")
-            ->first();
-
-        $citizenshipGroups = [
-            [
-                'id' => 1,
-                'label' => 'स्थायी जन्म',
-                'count' => $citStats->stat1,
-                'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat1 / $citStats->total_householders) * 100, 2) : 0,
-                'color' => 'bg-teal-500',
-                'light_color' => 'bg-teal-50',
-                'border_color' => 'border-teal-200'
-            ],
-            [
-                'id' => 2,
-                'label' => 'बसाईसराई',
-                'count' => $citStats->stat2,
-                'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat2 / $citStats->total_householders) * 100, 2) : 0,
-                'color' => 'bg-indigo-500',
-                'light_color' => 'bg-indigo-50',
-                'border_color' => 'border-indigo-200'
-            ],
-            [
-                'id' => 3,
-                'label' => 'अस्थायी बसोबास',
-                'count' => $citStats->stat3,
-                'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat3 / $citStats->total_householders) * 100, 2) : 0,
-                'color' => 'bg-fuchsia-500',
-                'light_color' => 'bg-fuchsia-50',
-                'border_color' => 'border-fuchsia-200'
-            ],
-            [
-                'id' => 4,
-                'label' => 'बसाईसराईको निसा नभएको',
-                'count' => $citStats->stat4,
-                'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat4 / $citStats->total_householders) * 100, 2) : 0,
-                'color' => 'bg-slate-500',
-                'light_color' => 'bg-slate-50',
-                'border_color' => 'border-slate-200'
-            ],
-        ];
-
-       
-        $motherTongueStats = DB::table('mother_tongues as mt')
-            ->leftJoin('house_holders as hh', function($join) use ($selectedWard) {
-                $join->on('hh.mother_tongue_id', '=', 'mt.id')
-                    ->whereIn('hh.id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                                $q->where('ward_id', $selectedWard);
-                            });
-                    });
-            })
-            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
-            ->select('mt.id', 'mt.name', DB::raw('COUNT(hm.id) as total'))
-            ->groupBy('mt.id', 'mt.name')
-            ->orderByDesc('total')
-            ->get();
-
+        $ageGroups = $stats ? ($stats->age_groups ?? []) : [];
+        $genderGroups = $stats ? ($stats->gender_groups ?? []) : [];
+        $citizenshipGroups = $stats ? ($stats->citizenship_groups ?? []) : [];
+        
+        $motherTongueStats = $stats && $stats->mother_tongue_stats 
+            ? collect($stats->mother_tongue_stats)->map(fn($item) => (object)$item) 
+            : collect();
         $motherTongueTotal = $motherTongueStats->sum('total');
 
-        
-        $casteStats = DB::table('castes as c')
-            ->leftJoin('house_holders as hh', function($join) use ($selectedWard) {
-                $join->on('hh.caste_id', '=', 'c.id')
-                    ->whereIn('hh.id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                                $q->where('ward_id', $selectedWard);
-                            });
-                    });
-            })
-            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
-            ->select('c.id', 'c.name', DB::raw('COUNT(hm.id) as total'))
-            ->groupBy('c.id', 'c.name')
-            ->orderByDesc('total')
-            ->get();
-
+        $casteStats = $stats && $stats->caste_stats 
+            ? collect($stats->caste_stats)->map(fn($item) => (object)$item) 
+            : collect();
         $casteTotal = $casteStats->sum('total');
 
- 
-        $educationStats = DB::table('education_levels as el')
-            ->leftJoin('education_level_translations as elt', function ($join) {
-                $join->on('elt.education_level_id', '=', 'el.id')
-                     ->where('elt.locale', '=', 'np');
-            })
-            ->leftJoin('house_members as hm', function($join) use ($selectedWard) {
-                $join->on('hm.education_level_id', '=', 'el.id')
-                    ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                                $q->where('ward_id', $selectedWard);
-                            });
-                    });
-            })
-            ->select(
-                'el.id',
-                DB::raw('COALESCE(MAX(elt.name), MAX(CAST(el.id AS CHAR))) as label'),
-                DB::raw('COUNT(hm.id) as total')
-            )
-            ->groupBy('el.id')
-            ->orderByDesc('total')
-            ->get();
-
+        $educationStats = $stats && $stats->education_stats 
+            ? collect($stats->education_stats)->map(fn($item) => (object)$item) 
+            : collect();
         $educationTotal = $educationStats->sum('total');
 
-
-        $religionStats = DB::table('religions as rel')
-            ->leftJoin('religion_translations as relt', function ($join) {
-                $join->on('relt.religion_id', '=', 'rel.id')
-                     ->where('relt.locale', '=', 'np');
-            })
-            ->leftJoin('house_members as hm', function($join) use ($selectedWard) {
-                $join->on('hm.religion_id', '=', 'rel.id')
-                    ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
-                                $q->where('ward_id', $selectedWard);
-                            });
-                    });
-            })
-            ->select(
-                'rel.id',
-                DB::raw('COALESCE(MAX(relt.name), MAX(CAST(rel.id AS CHAR))) as label'),
-                DB::raw('COUNT(hm.id) as total')
-            )
-            ->groupBy('rel.id')
-            ->orderByDesc('total')
-            ->get();
-
+        $religionStats = $stats && $stats->religion_stats 
+            ? collect($stats->religion_stats)->map(fn($item) => (object)$item) 
+            : collect();
         $religionTotal = $religionStats->sum('total');
 
         $pinnedCharts = \App\Models\DashboardChart::where('user_id', auth()->id())->get();
         $chartsData = [];
         
         if ($pinnedCharts->isNotEmpty()) {
-            foreach ($pinnedCharts as $pinned) {
-                 $options = DB::table('question_options as qo')
+            $cacheKeyPinned = "dashboard_pinned_charts_{$selectedWard}_" . auth()->id();
+            $chartsData = \Illuminate\Support\Facades\Cache::remember($cacheKeyPinned, now()->addMinutes(10), function() use ($pinnedCharts, $selectedWard) {
+                $data = [];
+                $pinnedQuestionIds = $pinnedCharts->pluck('question_id')->toArray();
+                $questionTitles = DB::table('questions')->whereIn('id', $pinnedQuestionIds)->pluck('question_text', 'id');
+
+                $optionsQuery = DB::table('question_options as qo')
                     ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
-                    ->where('qo.question_id', $pinned->question_id)
-                    ->select('qo.id', 'oc.choice_text', 'oc.custom_input_type')
+                    ->whereIn('qo.question_id', $pinnedQuestionIds)
+                    ->select('qo.question_id', 'qo.id', 'oc.choice_text', 'oc.custom_input_type')
                     ->get()
-                    ->keyBy('id');
-                    
-                $answers = DB::table('answers as a')
+                    ->groupBy('question_id')
+                    ->map(function($items) { return $items->keyBy('id'); });
+
+                $answersQuery = DB::table('answers as a')
                     ->join('responses as r', 'r.id', '=', 'a.response_id')
                     ->leftJoin('question_options as qo', 'qo.id', '=', 'a.question_option_id')
                     ->when($selectedWard !== 'all', function ($q) use ($selectedWard) {
                         $q->where('r.ward_id', $selectedWard);
                     })
-                    ->where(function($query) use ($pinned) {
-                        $query->where('a.question_id', $pinned->question_id)
-                              ->orWhere('qo.question_id', $pinned->question_id);
+                    ->where(function($query) use ($pinnedQuestionIds) {
+                        $query->whereIn('a.question_id', $pinnedQuestionIds)
+                              ->orWhereIn('qo.question_id', $pinnedQuestionIds);
                     })
-                    ->select('a.question_option_id', 'a.custom_input_value')
+                    ->select('a.question_id as a_q_id', 'qo.question_id as qo_q_id', 'a.question_option_id', 'a.custom_input_value')
                     ->get();
                     
-                $dataCounts = [];
-                foreach ($answers as $answer) {
-                    $label = '';
-                    if ($answer->question_option_id && $options->has($answer->question_option_id)) {
-                        $option = $options->get($answer->question_option_id);
-                        $label = $option->choice_text;
-                        if (!empty(trim((string)$answer->custom_input_value))) {
-                            $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
+                $answersByQuestion = [];
+                foreach ($answersQuery as $ans) {
+                    $qId = $ans->a_q_id ?? $ans->qo_q_id;
+                    if ($qId) {
+                        $answersByQuestion[$qId][] = $ans;
+                    }
+                }
+
+                foreach ($pinnedCharts as $pinned) {
+                    $qId = $pinned->question_id;
+                    $options = $optionsQuery->get($qId) ?? collect();
+                    $answers = $answersByQuestion[$qId] ?? [];
+
+                    $dataCounts = [];
+                    foreach ($answers as $answer) {
+                        $label = '';
+                        if ($answer->question_option_id && $options->has($answer->question_option_id)) {
+                            $option = $options->get($answer->question_option_id);
+                            $label = $option->choice_text;
+                            if (!empty(trim((string)$answer->custom_input_value))) {
+                                $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
+                            }
+                        } elseif (!empty(trim((string)$answer->custom_input_value))) {
+                            $label = trim((string)$answer->custom_input_value);
                         }
-                    } elseif (!empty(trim((string)$answer->custom_input_value))) {
-                        $label = trim((string)$answer->custom_input_value);
+                        
+                        if (empty($label)) continue;
+                        if (!isset($dataCounts[$label])) $dataCounts[$label] = 0;
+                        $dataCounts[$label]++;
                     }
                     
-                    if (empty($label)) continue;
-                    
-                    if (!isset($dataCounts[$label])) $dataCounts[$label] = 0;
-                    $dataCounts[$label]++;
+                    if (!empty($dataCounts)) {
+                        $data[$qId] = [
+                            'title' => $pinned->custom_title ?? $questionTitles[$qId] ?? 'Unknown',
+                            'labels' => array_keys($dataCounts),
+                            'totals' => array_values($dataCounts),
+                        ];
+                    }
                 }
                 
-                if (!empty($dataCounts)) {
-                    $chartsData[$pinned->question_id] = [
-                        'title' => $pinned->custom_title ?? DB::table('questions')->where('id', $pinned->question_id)->value('question_text'),
-                        'labels' => array_keys($dataCounts),
-                        'totals' => array_values($dataCounts),
-                    ];
-                }
-            }
+                return $data;
+            });
         }
 
         return view('dashboard', compact(
@@ -421,18 +208,16 @@ class DashboardController extends Controller
                 $j->on('dt.disability_id', '=', 'hm.disability_id')->where('dt.locale', '=', 'np');
             })
             ->select(
+                'hm.id',
                 'hm.full_name',
                 'hm.age',
                 'hm.dob_bs',
-                DB::raw('COALESCE(MAX(gt.name), "—") as gender'),
-                DB::raw('COALESCE(MAX(mst.name), "—") as marital_status'),
-                DB::raw('COALESCE(MAX(elt.name), "—") as education_level'),
-                DB::raw('COALESCE(MAX(hst.name), "—") as health_status'),
-                DB::raw('COALESCE(MAX(itt.name), "—") as institution_type'),
-                DB::raw('COALESCE(MAX(dt.name), "—") as disability')
-            )
-            ->groupBy(
-                'hm.id', 'hm.full_name', 'hm.age', 'hm.dob_bs'
+                DB::raw('COALESCE(gt.name, "—") as gender'),
+                DB::raw('COALESCE(mst.name, "—") as marital_status'),
+                DB::raw('COALESCE(elt.name, "—") as education_level'),
+                DB::raw('COALESCE(hst.name, "—") as health_status'),
+                DB::raw('COALESCE(itt.name, "—") as institution_type'),
+                DB::raw('COALESCE(dt.name, "—") as disability')
             );
 
 
@@ -490,93 +275,106 @@ class DashboardController extends Controller
             ->orderBy('q.order_index')
             ->get();
 
-        $charts = [];
+        $questionIds = $questions->pluck('id')->toArray();
+        $cacheKey = "survey_report_charts_{$selectedWard}";
+        
+        $charts = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function() use ($questions, $questionIds, $selectedWard) {
+            $chartsData = [];
+            if (empty($questionIds)) return $chartsData;
 
-        foreach ($questions as $question) {
-            $dataCounts = [];
-            $labels = [];
-            $totals = [];
-            $chartType = $question->input_type_name === 'linear_scale' ? 'bar' : 'pie';
+            $allOptions = DB::table('question_options as qo')
+                ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
+                ->whereIn('qo.question_id', $questionIds)
+                ->select('qo.question_id', 'qo.id', 'oc.choice_text', 'oc.custom_input_type')
+                ->get()
+                ->groupBy('question_id')
+                ->map(function($items) { return $items->keyBy('id'); });
 
-            if ($question->input_type_name === 'linear_scale') {
-                $from = $question->scale_from ?? 1;
-                $to = $question->scale_to ?? 5;
-                
-                for ($i = $from; $i <= $to; $i++) {
-                    $dataCounts[$i] = 0;
+            $allAnswers = DB::table('answers as a')
+                ->join('responses as r', 'r.id', '=', 'a.response_id')
+                ->leftJoin('question_options as qo', 'qo.id', '=', 'a.question_option_id')
+                ->where('r.ward_id', $selectedWard)
+                ->where(function($query) use ($questionIds) {
+                    $query->whereIn('a.question_id', $questionIds)
+                          ->orWhereIn('qo.question_id', $questionIds);
+                })
+                ->select('a.question_id as a_q_id', 'qo.question_id as qo_q_id', 'a.question_option_id', 'a.custom_input_value', 'a.answer_numeric')
+                ->get();
+            
+            $answersByQuestion = [];
+            foreach ($allAnswers as $ans) {
+                $qId = $ans->a_q_id ?? $ans->qo_q_id;
+                if ($qId) {
+                    $answersByQuestion[$qId][] = $ans;
                 }
+            }
 
-                $answers = DB::table('answers as a')
-                    ->join('responses as r', 'r.id', '=', 'a.response_id')
-                    ->where('r.ward_id', $selectedWard)
-                    ->where('a.question_id', $question->id)
-                    ->whereNotNull('a.answer_numeric')
-                    ->select('a.answer_numeric')
-                    ->get();
+            foreach ($questions as $question) {
+                $dataCounts = [];
+                $labels = [];
+                $totals = [];
+                $chartType = $question->input_type_name === 'linear_scale' ? 'bar' : 'pie';
+                $answers = $answersByQuestion[$question->id] ?? [];
 
-                foreach ($answers as $answer) {
-                    $val = (int)$answer->answer_numeric;
-                    if (isset($dataCounts[$val])) {
-                        $dataCounts[$val]++;
+                if ($question->input_type_name === 'linear_scale') {
+                    $from = $question->scale_from ?? 1;
+                    $to = $question->scale_to ?? 5;
+                    for ($i = $from; $i <= $to; $i++) {
+                        $dataCounts[$i] = 0;
                     }
-                }
 
-                $labels = array_map('strval', array_keys($dataCounts));
-                $totals = array_values($dataCounts);
-            } else {
-                $options = DB::table('question_options as qo')
-                    ->join('option_choices as oc', 'oc.id', '=', 'qo.option_choice_id')
-                    ->where('qo.question_id', $question->id)
-                    ->select('qo.id', 'oc.choice_text', 'oc.custom_input_type')
-                    ->get()
-                    ->keyBy('id');
-
-                $answers = DB::table('answers as a')
-                    ->join('responses as r', 'r.id', '=', 'a.response_id')
-                    ->leftJoin('question_options as qo', 'qo.id', '=', 'a.question_option_id')
-                    ->where('r.ward_id', $selectedWard)
-                    ->where(function($query) use ($question) {
-                        $query->where('a.question_id', $question->id)
-                              ->orWhere('qo.question_id', $question->id);
-                    })
-                    ->select('a.question_option_id', 'a.custom_input_value')
-                    ->get();
-
-                foreach ($answers as $answer) {
-                    $label = '';
-                    if ($answer->question_option_id && $options->has($answer->question_option_id)) {
-                        $option = $options->get($answer->question_option_id);
-                        $label = $option->choice_text;
-                        if (!empty(trim((string)$answer->custom_input_value))) {
-                            $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
+                    foreach ($answers as $answer) {
+                        if ($answer->answer_numeric !== null) {
+                            $val = (int)$answer->answer_numeric;
+                            if (isset($dataCounts[$val])) {
+                                $dataCounts[$val]++;
+                            }
                         }
-                    } elseif (!empty(trim((string)$answer->custom_input_value))) {
-                        $label = trim((string)$answer->custom_input_value);
                     }
-                    
-                    if (empty($label)) continue;
 
-                    if (!isset($dataCounts[$label])) {
-                        $dataCounts[$label] = 0;
+                    $labels = array_map('strval', array_keys($dataCounts));
+                    $totals = array_values($dataCounts);
+                } else {
+                    $options = $allOptions->get($question->id) ?? collect();
+
+                    foreach ($answers as $answer) {
+                        $label = '';
+                        if ($answer->question_option_id && $options->has($answer->question_option_id)) {
+                            $option = $options->get($answer->question_option_id);
+                            $label = $option->choice_text;
+                            if (!empty(trim((string)$answer->custom_input_value))) {
+                                $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
+                            }
+                        } elseif (!empty(trim((string)$answer->custom_input_value))) {
+                            $label = trim((string)$answer->custom_input_value);
+                        }
+                        
+                        if (empty($label)) continue;
+
+                        if (!isset($dataCounts[$label])) {
+                            $dataCounts[$label] = 0;
+                        }
+                        $dataCounts[$label]++;
                     }
-                    $dataCounts[$label]++;
+
+                    $labels = array_keys($dataCounts);
+                    $totals = array_values($dataCounts);
                 }
 
-                $labels = array_keys($dataCounts);
-                $totals = array_values($dataCounts);
+                if (!empty($labels)) {
+                    $chartsData[$question->id] = [
+                        'question_text' => $question->question_text,
+                        'labels' => $labels,
+                        'totals' => $totals,
+                        'chart_type' => $chartType,
+                        'scale_label_low' => $question->scale_label_low ?? null,
+                        'scale_label_high' => $question->scale_label_high ?? null,
+                    ];
+                }
             }
-
-            if (!empty($labels)) {
-                $charts[$question->id] = [
-                    'question_text' => $question->question_text,
-                    'labels' => $labels,
-                    'totals' => $totals,
-                    'chart_type' => $chartType,
-                    'scale_label_low' => $question->scale_label_low ?? null,
-                    'scale_label_high' => $question->scale_label_high ?? null,
-                ];
-            }
-        }
+            
+            return $chartsData;
+        });
         
         $pinnedCharts = \App\Models\DashboardChart::where('user_id', auth()->id())->get()->keyBy('question_id');
 
@@ -628,125 +426,27 @@ class DashboardController extends Controller
             $wardNoDisplay = DB::table('wards')->where('id', $selectedWard)->value('ward_no') ?? $selectedWard;
         }
 
-        // --- Data Fetching Logic (Simplified copy from index) ---
+        $stats = \App\Models\DashboardStatistic::where('ward_id', (string)$selectedWard)->first();
+
+        $ageGroups = $stats ? ($stats->age_groups ?? []) : [];
+        $genderGroups = $stats ? ($stats->gender_groups ?? []) : [];
+        $citizenshipGroups = $stats ? ($stats->citizenship_groups ?? []) : [];
         
-        // Age Stats
-        $ageStats = DB::table('house_members as hm')
-            ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
-            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->when($selectedWard !== 'all', fn($q) => $q->where('r.ward_id', $selectedWard))
-            ->selectRaw("
-                COUNT(CASE WHEN hm.age BETWEEN 0 AND 5 THEN 1 END) as group1,
-                COUNT(CASE WHEN hm.age BETWEEN 6 AND 16 THEN 1 END) as group2,
-                COUNT(CASE WHEN hm.age BETWEEN 17 AND 32 THEN 1 END) as group3,
-                COUNT(CASE WHEN hm.age BETWEEN 33 AND 54 THEN 1 END) as group4,
-                COUNT(CASE WHEN hm.age BETWEEN 55 AND 65 THEN 1 END) as group5,
-                COUNT(CASE WHEN hm.age > 65 THEN 1 END) as group6,
-                COUNT(hm.id) as total_members
-            ")
-            ->first();
+        $motherTongueStats = $stats && $stats->mother_tongue_stats 
+            ? collect($stats->mother_tongue_stats)->map(fn($item) => (object)$item) 
+            : collect();
 
-        // Gender Stats
-        $genderStats = DB::table('house_members as hm')
-            ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
-            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->when($selectedWard !== 'all', fn($q) => $q->where('r.ward_id', $selectedWard))
-            ->selectRaw("
-                COUNT(CASE WHEN hm.gender_id = 1 THEN 1 END) as male,
-                COUNT(CASE WHEN hm.gender_id = 2 THEN 1 END) as female,
-                COUNT(CASE WHEN hm.gender_id NOT IN (1, 2) THEN 1 END) as other,
-                COUNT(hm.id) as total_members
-            ")
-            ->first();
+        $casteStats = $stats && $stats->caste_stats 
+            ? collect($stats->caste_stats)->map(fn($item) => (object)$item) 
+            : collect();
 
-        // Citizenship Stats
-        $citStats = DB::table('house_holders as hh')
-            ->join('responses as r', 'r.householder_id', '=', 'hh.id')
-            ->when($selectedWard !== 'all', fn($q) => $q->where('r.ward_id', $selectedWard))
-            ->selectRaw("
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 1 THEN 1 END) as stat1,
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 2 THEN 1 END) as stat2,
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 3 THEN 1 END) as stat3,
-                COUNT(CASE WHEN hh.citizenship_permanent_address_id = 4 THEN 1 END) as stat4,
-                COUNT(hh.id) as total_householders
-            ")
-            ->first();
+        $educationStats = $stats && $stats->education_stats 
+            ? collect($stats->education_stats)->map(fn($item) => (object)$item) 
+            : collect();
 
-        // Mother Tongue Stats
-        $motherTongueStats = DB::table('mother_tongues as mt')
-            ->leftJoin('house_holders as hh', function($join) use ($selectedWard) {
-                $join->on('hh.mother_tongue_id', '=', 'mt.id')
-                    ->whereIn('hh.id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
-                    });
-            })
-            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
-            ->select('mt.name', DB::raw('COUNT(hm.id) as total'))
-            ->groupBy('mt.id', 'mt.name')
-            ->orderByDesc('total')
-            ->get();
-
-        // Caste Stats
-        $casteStats = DB::table('castes as c')
-            ->leftJoin('house_holders as hh', function($join) use ($selectedWard) {
-                $join->on('hh.caste_id', '=', 'c.id')
-                    ->whereIn('hh.id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
-                    });
-            })
-            ->leftJoin('house_members as hm', 'hm.house_holder_id', '=', 'hh.id')
-            ->select('c.name', DB::raw('COUNT(hm.id) as total'))
-            ->groupBy('c.id', 'c.name')
-            ->orderByDesc('total')
-            ->get();
-
-        // Education Stats
-        $educationStats = DB::table('education_levels as el')
-            ->leftJoin('education_level_translations as elt', function ($join) {
-                $join->on('elt.education_level_id', '=', 'el.id')
-                     ->where('elt.locale', '=', 'np');
-            })
-            ->leftJoin('house_members as hm', function($join) use ($selectedWard) {
-                $join->on('hm.education_level_id', '=', 'el.id')
-                    ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
-                    });
-            })
-            ->select(
-                DB::raw('COALESCE(MAX(elt.name), MAX(CAST(el.id AS CHAR))) as label'),
-                DB::raw('COUNT(hm.id) as total')
-            )
-            ->groupBy('el.id')
-            ->orderByDesc('total')
-            ->get();
-
-        // Religion Stats
-        $religionStats = DB::table('religions as rel')
-            ->leftJoin('religion_translations as relt', function ($join) {
-                $join->on('relt.religion_id', '=', 'rel.id')
-                     ->where('relt.locale', '=', 'np');
-            })
-            ->leftJoin('house_members as hm', function($join) use ($selectedWard) {
-                $join->on('hm.religion_id', '=', 'rel.id')
-                    ->whereIn('hm.house_holder_id', function($query) use ($selectedWard) {
-                        $query->select('householder_id')
-                            ->from('responses')
-                            ->when($selectedWard !== 'all', fn($q) => $q->where('ward_id', $selectedWard));
-                    });
-            })
-            ->select(
-                DB::raw('COALESCE(MAX(relt.name), MAX(CAST(rel.id AS CHAR))) as label'),
-                DB::raw('COUNT(hm.id) as total')
-            )
-            ->groupBy('rel.id')
-            ->orderByDesc('total')
-            ->get();
+        $religionStats = $stats && $stats->religion_stats 
+            ? collect($stats->religion_stats)->map(fn($item) => (object)$item) 
+            : collect();
 
         // --- Prepare CSV ---
         $filename = "dashboard_data_ward_{$selectedWard}_" . date('Y-m-d') . ".csv";
@@ -755,7 +455,7 @@ class DashboardController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function() use ($ageStats, $genderStats, $citStats, $motherTongueStats, $casteStats, $educationStats, $religionStats, $wardNoDisplay) {
+        $callback = function() use ($ageGroups, $genderGroups, $citizenshipGroups, $motherTongueStats, $casteStats, $educationStats, $religionStats, $wardNoDisplay) {
             $file = fopen('php://output', 'w');
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
@@ -769,31 +469,21 @@ class DashboardController extends Controller
             fputcsv($file, ['Category', 'Label', 'Count', 'Percentage (%)']);
 
             // Age Groups
-            $totalAge = $ageStats->total_members ?: 1;
-            fputcsv($file, ['Age Group', 'Infant (0-5)', $ageStats->group1, round(($ageStats->group1 / $totalAge) * 100, 2)]);
-            fputcsv($file, ['Age Group', 'Children (6-16)', $ageStats->group2, round(($ageStats->group2 / $totalAge) * 100, 2)]);
-            fputcsv($file, ['Age Group', 'Youth (17-32)', $ageStats->group3, round(($ageStats->group3 / $totalAge) * 100, 2)]);
-            fputcsv($file, ['Age Group', 'Adult (33-54)', $ageStats->group4, round(($ageStats->group4 / $totalAge) * 100, 2)]);
-            fputcsv($file, ['Age Group', 'Elderly (55-65)', $ageStats->group5, round(($ageStats->group5 / $totalAge) * 100, 2)]);
-            fputcsv($file, ['Age Group', 'Senior Citizen (65+)', $ageStats->group6, round(($ageStats->group6 / $totalAge) * 100, 2)]);
-
+            foreach ($ageGroups as $group) {
+                fputcsv($file, ['Age Group', $group['label'], $group['count'], $group['percentage']]);
+            }
             fputcsv($file, []);
 
             // Gender
-            $totalGender = $genderStats->total_members ?: 1;
-            fputcsv($file, ['Gender', 'Male', $genderStats->male, round(($genderStats->male / $totalGender) * 100, 2)]);
-            fputcsv($file, ['Gender', 'Female', $genderStats->female, round(($genderStats->female / $totalGender) * 100, 2)]);
-            fputcsv($file, ['Gender', 'Other', $genderStats->other, round(($genderStats->other / $totalGender) * 100, 2)]);
-
+            foreach ($genderGroups as $group) {
+                fputcsv($file, ['Gender', $group['label'], $group['count'], $group['percentage']]);
+            }
             fputcsv($file, []);
 
             // Citizenship
-            $totalCit = $citStats->total_householders ?: 1;
-            fputcsv($file, ['Residence (Household)', 'स्थायी जन्म', $citStats->stat1, round(($citStats->stat1 / $totalCit) * 100, 2)]);
-            fputcsv($file, ['Residence (Household)', 'बसाईसराई', $citStats->stat2, round(($citStats->stat2 / $totalCit) * 100, 2)]);
-            fputcsv($file, ['Residence (Household)', 'अस्थायी बसोबास', $citStats->stat3, round(($citStats->stat3 / $totalCit) * 100, 2)]);
-            fputcsv($file, ['Residence (Household)', 'बसाईसराईको निसा नभएको', $citStats->stat4, round(($citStats->stat4 / $totalCit) * 100, 2)]);
-
+            foreach ($citizenshipGroups as $group) {
+                fputcsv($file, ['Residence (Household)', $group['label'], $group['count'], $group['percentage']]);
+            }
             fputcsv($file, []);
 
             // Mother Tongue
@@ -801,7 +491,6 @@ class DashboardController extends Controller
             foreach ($motherTongueStats as $row) {
                 fputcsv($file, ['Mother Tongue', $row->name, $row->total, round(($row->total / $totalMT) * 100, 2)]);
             }
-
             fputcsv($file, []);
 
             // Caste
@@ -809,7 +498,6 @@ class DashboardController extends Controller
             foreach ($casteStats as $row) {
                 fputcsv($file, ['Caste', $row->name, $row->total, round(($row->total / $totalCaste) * 100, 2)]);
             }
-
             fputcsv($file, []);
 
             // Education
@@ -817,7 +505,6 @@ class DashboardController extends Controller
             foreach ($educationStats as $row) {
                 fputcsv($file, ['Education', $row->label, $row->total, round(($row->total / $totalEdu) * 100, 2)]);
             }
-
             fputcsv($file, []);
 
             // Religion
