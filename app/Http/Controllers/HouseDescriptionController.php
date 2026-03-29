@@ -12,7 +12,10 @@ use App\Models\Caste;
 use App\Models\Tole;
 use App\Models\CitizenshipPermanentAddress;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
+use App\Services\DashboardCacheService;
 
 class HouseDescriptionController extends Controller
 {
@@ -29,10 +32,9 @@ class HouseDescriptionController extends Controller
     {
         $authUser = auth()->user();
         if ($authUser->isSuperAdmin()) {
-            $wards = Ward::orderBy('ward_no')->get();
-        }
-        else {
-            $wards = Ward::where('id', $authUser->ward_id)->get();
+            $wards = Ward::orderBy('ward_no')->select('id', 'ward_no')->get();
+        } else {
+            $wards = Ward::where('id', $authUser->ward_id)->select('id', 'ward_no')->get();
         }
 
         return view('housedescription.createdataform', compact('wards'));
@@ -40,34 +42,55 @@ class HouseDescriptionController extends Controller
 
     /**
      * Fetch sections with questions and all nested relations for a given ward.
+     * Cached per-ward for 60 minutes — survey structure rarely changes mid-session.
      */
     public function getSectionsData($wardId): array
     {
-        return SurveySection::with([
-            'questions' => function ($query) {
-                $query->ordered()->with([
-                    'inputType',
-                    'optionGroup.optionChoices' => fn($q) => $q->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder'),
-                    'questionOptions.optionChoice' => fn($q) => $q->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder'),
-                ]);
-            },
-        ])
-        ->forWard($wardId)
-        ->ordered()
-        ->get()
-        ->toArray();
+        return Cache::remember("survey_sections_ward_{$wardId}", now()->addMinutes(60), function () use ($wardId) {
+            return SurveySection::with([
+                'questions' => function ($query) {
+                    $query->ordered()->with([
+                        'inputType',
+                        'optionGroup.optionChoices' => fn($q) => $q->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder'),
+                        'questionOptions.optionChoice' => fn($q) => $q->select('id', 'option_group_id', 'choice_text', 'custom_input_type', 'custom_input_placeholder'),
+                    ]);
+                },
+            ])
+            ->forWard($wardId)
+            ->ordered()
+            ->get()
+            ->toArray();
+        });
     }
 
     /**
      * Fetch all lookup data for a given ward.
+     * Global lookups (mother tongues, castes, addresses) are cached for 24 hours.
+     * Toles are cached per-ward for 24 hours.
      */
     public function getLookupDataArray($wardId): array
     {
+        $motherTongues = Cache::remember('lookup_mother_tongues', now()->addHours(24), fn() =>
+            MotherTongue::select('id', 'name')->orderBy('name')->get()->toArray()
+        );
+
+        $castes = Cache::remember('lookup_castes', now()->addHours(24), fn() =>
+            Caste::select('id', 'name')->orderBy('name')->get()->toArray()
+        );
+
+        $citizenshipAddresses = Cache::remember('lookup_citizenship_addresses', now()->addHours(24), fn() =>
+            CitizenshipPermanentAddress::select('id', 'name')->orderBy('name')->get()->toArray()
+        );
+
+        $toles = Cache::remember("lookup_toles_ward_{$wardId}", now()->addHours(24), fn() =>
+            Tole::where('ward_id', $wardId)->select('id', 'name', 'ward_id')->orderBy('name')->get()->toArray()
+        );
+
         return [
-            'mother_tongues'                 => MotherTongue::all()->toArray(),
-            'castes'                         => Caste::all()->toArray(),
-            'toles'                          => Tole::where('ward_id', $wardId)->get()->toArray(),
-            'citizenship_permanent_addresses'=> CitizenshipPermanentAddress::all()->toArray(),
+            'mother_tongues'                  => $motherTongues,
+            'castes'                          => $castes,
+            'toles'                           => $toles,
+            'citizenship_permanent_addresses' => $citizenshipAddresses,
         ];
     }
 
@@ -81,10 +104,10 @@ class HouseDescriptionController extends Controller
             abort(403, 'Unauthorized access to this ward.');
         }
 
-        $wardInfo = Ward::findOrFail($wardId);
-        $sections  = $this->getSectionsData($wardId);
+        $wardInfo   = Ward::select('id', 'ward_no')->findOrFail($wardId);
+        $sections   = $this->getSectionsData($wardId);
         $lookupData = $this->getLookupDataArray($wardId);
-        $wards      = Ward::orderBy('ward_no')->get();
+        $wards      = Ward::orderBy('ward_no')->select('id', 'ward_no')->get();
 
         return view('housedescription.surveywizard', compact('wards', 'wardInfo', 'sections', 'lookupData'));
     }
@@ -140,20 +163,17 @@ class HouseDescriptionController extends Controller
         }
 
         try {
-            $motherTongues = MotherTongue::all();
-            $castes = Caste::all();
-            $toles = Tole::where('ward_id', $wardId)->get();
-            $citizenshipAddresses = CitizenshipPermanentAddress::all();
+            // Re-use the same cached lookup arrays used by the server-side wizard.
+            $lookupData = $this->getLookupDataArray($wardId);
 
             return response()->json([
-                'success' => true,
-                'mother_tongues' => $motherTongues,
-                'castes' => $castes,
-                'toles' => $toles,
-                'citizenship_permanent_addresses' => $citizenshipAddresses,
+                'success'                        => true,
+                'mother_tongues'                 => $lookupData['mother_tongues'],
+                'castes'                         => $lookupData['castes'],
+                'toles'                          => $lookupData['toles'],
+                'citizenship_permanent_addresses'=> $lookupData['citizenship_permanent_addresses'],
             ]);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch lookup data',
@@ -221,7 +241,10 @@ class HouseDescriptionController extends Controller
                 'submitted_at' => now(),
             ]);
 
-            // Process answers
+            // ── Build answer rows in memory, then bulk-insert in one query ────
+            $answerRows = [];
+            $now = now()->toDateTimeString();
+
             foreach ($request->input('answers', []) as $questionId => $answerData) {
 
                 if (isset($answerData['question_option_id'])) {
@@ -234,89 +257,123 @@ class HouseDescriptionController extends Controller
                     if (is_array($optionIds)) {
                         foreach ($optionIds as $optionId) {
                             if (!empty($optionId)) {
-                                $answerRecord = [
-                                    'response_id' => $response->id,
-                                    'question_id' => $questionId,
+                                $row = [
+                                    'response_id'        => $response->id,
+                                    'question_id'        => $questionId,
                                     'question_option_id' => $optionId,
+                                    'answer_text'        => null,
+                                    'answer_numeric'     => null,
+                                    'custom_input_value' => null,
+                                    'unit_of_measure_id' => null,
+                                    'created_at'         => $now,
+                                    'updated_at'         => $now,
                                 ];
 
-                                if (isset($answerData['custom_inputs'][$optionId]) && !empty($answerData['custom_inputs'][$optionId])) {
-                                    $answerRecord['custom_input_value'] = $answerData['custom_inputs'][$optionId];
+                                if (!empty($answerData['custom_inputs'][$optionId])) {
+                                    $row['custom_input_value'] = $answerData['custom_inputs'][$optionId];
                                 }
 
-                                Answer::create($answerRecord);
+                                $answerRows[] = $row;
                             }
                         }
-                    }
-                    else {
-                        $answerRecord = [
-                            'response_id' => $response->id,
-                            'question_id' => $questionId,
+                    } else {
+                        $row = [
+                            'response_id'        => $response->id,
+                            'question_id'        => $questionId,
                             'question_option_id' => $optionIds,
+                            'answer_text'        => null,
+                            'answer_numeric'     => null,
+                            'custom_input_value' => null,
+                            'unit_of_measure_id' => null,
+                            'created_at'         => $now,
+                            'updated_at'         => $now,
                         ];
 
-                        if (isset($answerData['custom_input']) && !empty($answerData['custom_input'])) {
-                            $answerRecord['custom_input_value'] = $answerData['custom_input'];
+                        if (!empty($answerData['custom_input'])) {
+                            $row['custom_input_value'] = $answerData['custom_input'];
                         }
 
-                        Answer::create($answerRecord);
+                        $answerRows[] = $row;
                     }
-                }
 
-                elseif (isset($answerData['answer_text']) && !empty($answerData['answer_text'])) {
-                    Answer::create([
-                        'response_id' => $response->id,
-                        'question_id' => $questionId,
-                        'answer_text' => $answerData['answer_text'],
-                    ]);
-                }
-
-                elseif (isset($answerData['answer_numeric']) && $answerData['answer_numeric'] !== null && $answerData['answer_numeric'] !== '') {
-                    $answerRecord = [
-                        'response_id' => $response->id,
-                        'question_id' => $questionId,
-                        'answer_numeric' => $answerData['answer_numeric'],
+                } elseif (!empty($answerData['answer_text'])) {
+                    $answerRows[] = [
+                        'response_id'        => $response->id,
+                        'question_id'        => $questionId,
+                        'question_option_id' => null,
+                        'answer_text'        => $answerData['answer_text'],
+                        'answer_numeric'     => null,
+                        'custom_input_value' => null,
+                        'unit_of_measure_id' => null,
+                        'created_at'         => $now,
+                        'updated_at'         => $now,
                     ];
 
-                    if (isset($answerData['unit_of_measure_id']) && !empty($answerData['unit_of_measure_id'])) {
-                        $answerRecord['unit_of_measure_id'] = $answerData['unit_of_measure_id'];
-                    }
+                } elseif (isset($answerData['answer_numeric']) && $answerData['answer_numeric'] !== null && $answerData['answer_numeric'] !== '') {
+                    $answerRows[] = [
+                        'response_id'        => $response->id,
+                        'question_id'        => $questionId,
+                        'question_option_id' => null,
+                        'answer_text'        => null,
+                        'answer_numeric'     => $answerData['answer_numeric'],
+                        'custom_input_value' => null,
+                        'unit_of_measure_id' => !empty($answerData['unit_of_measure_id']) ? $answerData['unit_of_measure_id'] : null,
+                        'created_at'         => $now,
+                        'updated_at'         => $now,
+                    ];
 
-                    Answer::create($answerRecord);
-                }
-
-
-                elseif (isset($answerData['latitude']) && isset($answerData['longitude'])) {
-                    if (!empty($answerData['latitude']) && !empty($answerData['longitude'])) {
-                        Answer::create([
-                            'response_id' => $response->id,
-                            'question_id' => $questionId,
-                            'answer_text' => json_encode([
-                                'latitude' => floatval($answerData['latitude']),
-                                'longitude' => floatval($answerData['longitude']),
-                                'type' => 'location'
-                            ]),
-                        ]);
-                    }
+                } elseif (!empty($answerData['latitude']) && !empty($answerData['longitude'])) {
+                    $answerRows[] = [
+                        'response_id'        => $response->id,
+                        'question_id'        => $questionId,
+                        'question_option_id' => null,
+                        'answer_text'        => json_encode([
+                            'latitude'  => floatval($answerData['latitude']),
+                            'longitude' => floatval($answerData['longitude']),
+                            'type'      => 'location',
+                        ]),
+                        'answer_numeric'     => null,
+                        'custom_input_value' => null,
+                        'unit_of_measure_id' => null,
+                        'created_at'         => $now,
+                        'updated_at'         => $now,
+                    ];
                 }
             }
 
-            // Handle files separately as they are in $request->file()
+            // Handle file uploads (must be stored individually before the bulk insert)
             $allFiles = $request->file('answers', []);
             foreach ($allFiles as $questionId => $fileData) {
                 if (isset($fileData['files']) && is_array($fileData['files'])) {
                     foreach ($fileData['files'] as $file) {
                         $filePath = $file->store('survey-responses', 'public');
-                        Answer::create([
-                            'response_id' => $response->id,
-                            'question_id' => $questionId,
-                            'answer_text' => $filePath,
-                        ]);
+                        $answerRows[] = [
+                            'response_id'        => $response->id,
+                            'question_id'        => $questionId,
+                            'question_option_id' => null,
+                            'answer_text'        => $filePath,
+                            'answer_numeric'     => null,
+                            'custom_input_value' => null,
+                            'unit_of_measure_id' => null,
+                            'created_at'         => $now,
+                            'updated_at'         => $now,
+                        ];
                     }
                 }
             }
 
+            // Single bulk INSERT instead of N individual queries
+            if (!empty($answerRows)) {
+                DB::table('answers')->insert($answerRows);
+            }
+
             DB::commit();
+
+            // ── Real-time dashboard update ────────────────────────────────
+            // Bust cached charts so the next dashboard load reads fresh data.
+            DashboardCacheService::invalidate($validated['ward_id']);
+            // Re-run stat aggregation for this ward in the background.
+            Artisan::call('dashboard:aggregate-stats', ['--ward' => $validated['ward_id']]);
 
             return response()->json([
                 'success' => true,

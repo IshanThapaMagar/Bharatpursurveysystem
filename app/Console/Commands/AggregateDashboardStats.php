@@ -13,7 +13,7 @@ class AggregateDashboardStats extends Command
      *
      * @var string
      */
-    protected $signature = 'dashboard:aggregate-stats';
+    protected $signature = 'dashboard:aggregate-stats {--ward= : Only aggregate for this ward ID (or "all")}';
 
     /**
      * The console command description.
@@ -27,8 +27,15 @@ class AggregateDashboardStats extends Command
      */
     public function handle()
     {
-        $wards = DB::table('wards')->pluck('id')->toArray();
-        $targets = array_merge(['all'], $wards);
+        $wardOption = $this->option('ward');
+
+        if ($wardOption !== null) {
+            // Only aggregate for the specified ward (or 'all' aggregate)
+            $targets = ($wardOption === 'all') ? ['all'] : ['all', $wardOption];
+        } else {
+            $wards = DB::table('wards')->pluck('id')->toArray();
+            $targets = array_merge(['all'], $wards);
+        }
 
         foreach ($targets as $selectedWard) {
             $this->info("Aggregating stats for Ward: {$selectedWard}");

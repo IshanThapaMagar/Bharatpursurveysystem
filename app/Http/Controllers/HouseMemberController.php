@@ -22,6 +22,8 @@ use App\Models\HouseHolder;
 use App\Models\RelationshipTranslation;
 use App\Models\Response;
 use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
+use Illuminate\Support\Facades\Artisan;
+use App\Services\DashboardCacheService;
 
 class HouseMemberController extends Controller
 {
@@ -200,6 +202,11 @@ class HouseMemberController extends Controller
             $houseMember->dob_ad = $dob_ad_str;
             $houseMember->age = $age;
             $houseMember->save();
+
+            // ── Real-time dashboard update ────────────────────────────────
+            $wardId = $householder->tole->ward_id ?? null;
+            DashboardCacheService::invalidate($wardId);
+            Artisan::call('dashboard:aggregate-stats', ['--ward' => $wardId]);
 
             return redirect()->back()
                 ->with('success', __('Family member added successfully'));
@@ -384,6 +391,11 @@ class HouseMemberController extends Controller
             $member->age    = $age;
             $member->save();
 
+            // ── Real-time dashboard update ────────────────────────────────
+            $wardId = $member->houseHolder->tole->ward_id ?? null;
+            DashboardCacheService::invalidate($wardId);
+            Artisan::call('dashboard:aggregate-stats', ['--ward' => $wardId]);
+
             // Redirect back to the survey response show page
             $response = Response::where('householder_id', $member->house_holder_id)->first();
             if ($response) {
@@ -411,7 +423,12 @@ class HouseMemberController extends Controller
             abort(403, 'You do not have permission to delete this member.');
         }
 
+        $wardId = $member->houseHolder->tole->ward_id ?? null;
         $member->delete();
+
+        // ── Real-time dashboard update ────────────────────────────────
+        DashboardCacheService::invalidate($wardId);
+        Artisan::call('dashboard:aggregate-stats', ['--ward' => $wardId]);
 
         return redirect()->back()->with('success', __('Family member deleted successfully'));
     }
@@ -429,6 +446,11 @@ class HouseMemberController extends Controller
         $member->is_demised = true;
         $member->demise_date = $request->demise_date ?? now()->toDateString(); 
         $member->save();
+
+        // ── Real-time dashboard update ────────────────────────────────
+        $wardId = $member->houseHolder->tole->ward_id ?? null;
+        DashboardCacheService::invalidate($wardId);
+        Artisan::call('dashboard:aggregate-stats', ['--ward' => $wardId]);
 
         return redirect()->back()->with('success', __('Member marked as demised'));
     }

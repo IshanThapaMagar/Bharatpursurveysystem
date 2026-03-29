@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use App\Services\DashboardCacheService;
 
 class DashboardController extends Controller
 {
@@ -407,6 +409,13 @@ class DashboardController extends Controller
             \App\Models\DashboardChart::where('user_id', auth()->id())
                 ->where('question_id', $validated['question_id'])
                 ->delete();
+        }
+
+        // Bust this user's pinned-chart caches across all wards
+        $wards = array_merge(['all'], DB::table('wards')->pluck('id')->toArray());
+        $userId = auth()->id();
+        foreach ($wards as $ward) {
+            Cache::forget("dashboard_pinned_charts_{$ward}_{$userId}");
         }
 
         return response()->json(['success' => true]);

@@ -11,6 +11,8 @@ use App\Models\Caste;
 use App\Models\MotherTongue;
 use App\Models\CitizenshipPermanentAddress;
 use App\Models\Householder;
+use Illuminate\Support\Facades\Artisan;
+use App\Services\DashboardCacheService;
 
 class ResponseController extends Controller
 {
@@ -478,8 +480,15 @@ class ResponseController extends Controller
 
         // Respond appropriately for AJAX or standard form submit
         if ($request->expectsJson()) {
+            // ── Real-time dashboard update ────────────────────────────────
+            DashboardCacheService::invalidate($response->ward_id);
+            Artisan::call('dashboard:aggregate-stats', ['--ward' => $response->ward_id]);
             return response()->json(['success' => true, 'message' => 'Response updated successfully.']);
         }
+
+        // ── Real-time dashboard update ────────────────────────────────
+        DashboardCacheService::invalidate($response->ward_id);
+        Artisan::call('dashboard:aggregate-stats', ['--ward' => $response->ward_id]);
 
         return redirect()
             ->route('survey-responses.show', $response->id)
@@ -502,7 +511,12 @@ class ResponseController extends Controller
             ], 403);
         }
 
+        $wardId = $response->ward_id;
         $response->delete();
+
+        // ── Real-time dashboard update ────────────────────────────────
+        DashboardCacheService::invalidate($wardId);
+        Artisan::call('dashboard:aggregate-stats', ['--ward' => $wardId]);
 
         return response()->json([
             'success' => true,
