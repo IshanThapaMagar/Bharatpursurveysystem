@@ -8,13 +8,10 @@ use App\Http\Controllers\HouseMemberController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\WelcomeController;
-
-
+use App\Http\Controllers\AdministrationController;
 
 
 Route::get('/', [WelcomeController::class , 'index'])->name('welcome');
-
-
 
 Route::get('language/{locale}', function ($locale) {
     if (in_array($locale, array_values(config('app.available_locales')))) {
@@ -39,7 +36,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
 
     // Survey & Householder Management
     Route::resource('surveyform', SurveyBuilderController::class);
-    Route::get('/house-description/create/{ward}', [HouseDescriptionController::class, 'createWithWard'])->name('house-description.create-with-ward');
+    Route::get('/house-description/create/{ward}', [HouseDescriptionController::class , 'createWithWard'])->name('house-description.create-with-ward');
     Route::resource('house-description', HouseDescriptionController::class);
     Route::resource('house-member', HouseMemberController::class);
     Route::post('/house-member/{id}/mark-demise', [HouseMemberController::class , 'markDemise'])->name('house-member.mark-demise');
@@ -51,6 +48,11 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::resource('survey-responses', ResponseController::class);
     Route::get('/toles-by-ward', [ResponseController::class , 'getTolesByWard'])->name('toles.by.ward');
     Route::resource('users', \App\Http\Controllers\UserController::class);
+
+    // Palika Routes
+    Route::get('/palika', [AdministrationController::class , 'index'])->name('palika.index');
+    Route::get('/palika/admin/create', [AdministrationController::class , 'createAdmin'])->name('palika.admin.create');
+    Route::post('/palika/admin/store', [AdministrationController::class , 'storeAdmin'])->name('palika.admin.store');
 });
 
 

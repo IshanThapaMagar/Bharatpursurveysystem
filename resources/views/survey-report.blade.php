@@ -23,11 +23,21 @@
                 </form>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    @forelse ($charts as $questionId => $chart)
-                        @php
-                            $isPinned = isset($pinnedCharts) && $pinnedCharts->has($questionId);
-                            $customTitle = $isPinned ? $pinnedCharts[$questionId]->custom_title : '';
-                        @endphp
+                    @php
+                        $groupedCharts = collect($charts)->groupBy('section_title');
+                    @endphp
+
+                    @forelse ($groupedCharts as $sectionTitle => $sectionCharts)
+                        <div class="col-span-1 md:col-span-2 mt-4 mb-0">
+                            <h3 class="text-2xl font-bold text-indigo-900 border-b pb-3 mb-2">{{ $sectionTitle }}</h3>
+                        </div>
+
+                        @foreach ($sectionCharts as $chart)
+                            @php
+                                $questionId = $chart['question_id'];
+                                $isPinned = isset($pinnedCharts) && $pinnedCharts->has($questionId);
+                                $customTitle = $isPinned ? $pinnedCharts[$questionId]->custom_title : '';
+                            @endphp
                         <div
                             class="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
 
@@ -62,6 +72,7 @@
                                 <canvas id="chart-{{ $questionId }}"></canvas>
                             </div>
                         </div>
+                        @endforeach
                     @empty
                         <div
                             class="col-span-1 md:col-span-2 flex flex-col items-center justify-center text-gray-500 p-12 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50">
@@ -226,13 +237,14 @@
                             plugins: {
                                 legend: {
                                     display: data.chart_type !== 'bar',
-                                    position: 'bottom',
+                                    position: window.innerWidth < 768 ? 'bottom' : 'right',
                                     labels: {
-                                        padding: 24,
+                                        padding: 15,
                                         usePointStyle: true,
                                         pointStyle: 'circle',
+                                        boxWidth: 8,
                                         font: {
-                                            size: 13,
+                                            size: 12,
                                             family: "'Inter', sans-serif",
                                             weight: '500'
                                         }

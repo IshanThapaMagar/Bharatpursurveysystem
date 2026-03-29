@@ -401,11 +401,17 @@
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: {
-                                    position: 'bottom',
+                                    position: window.innerWidth < 768 ? 'bottom' : 'right',
                                     labels: {
-                                        padding: 16,
+                                        padding: 15,
                                         usePointStyle: true,
-                                        pointStyle: 'circle'
+                                        pointStyle: 'circle',
+                                        boxWidth: 8,
+                                        font: {
+                                            size: 12,
+                                            family: "'Inter', sans-serif",
+                                            weight: '500'
+                                        }
                                     }
                                 }
                             }
@@ -584,9 +590,15 @@
                                 legend: {
                                     position: 'bottom',
                                     labels: {
-                                        padding: 16,
+                                        padding: 15,
                                         usePointStyle: true,
-                                        pointStyle: 'circle'
+                                        pointStyle: 'circle',
+                                        boxWidth: 8,
+                                        font: {
+                                            size: 12,
+                                            family: "'Inter', sans-serif",
+                                            weight: '500'
+                                        }
                                     }
                                 },
                                 tooltip: {

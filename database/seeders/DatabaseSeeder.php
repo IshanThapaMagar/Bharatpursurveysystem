@@ -16,25 +16,26 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RoleSeeder::class,
-            SuperAdminSeeder::class,
-            WardNumberSeeder::class,
-            GenderSeeder::class,
-            ReligionSeeder::class,
-            BloodGroupSeeder::class,
-            DisabilitySeeder::class,
-            DistrictSeeder::class,
-            EducationLevelSeeder::class,
-            GovernmentSupportTypeSeeder::class,
-            HealthStatusSeeder::class,
-            InstitutionTypeSeeder::class,
-            MaritalStatusSeeder::class,
-            MotherTongueProficiencySeeder::class,
-            RelationshipSeeder::class,
-            SpecialSkillSeeder::class,
-            PoolingPlaceSeeder::class,
-            LookupTablesSeeder::class,
-            
+            RoleSeeder::class ,
+            SuperAdminSeeder::class ,
+            WardNumberSeeder::class ,
+            GenderSeeder::class ,
+            ReligionSeeder::class ,
+            BloodGroupSeeder::class ,
+            DisabilitySeeder::class ,
+            DistrictSeeder::class ,
+            EducationLevelSeeder::class ,
+            GovernmentSupportTypeSeeder::class ,
+            HealthStatusSeeder::class ,
+            InstitutionTypeSeeder::class ,
+            MaritalStatusSeeder::class ,
+            MotherTongueProficiencySeeder::class ,
+            RelationshipSeeder::class ,
+            SpecialSkillSeeder::class ,
+            PoolingPlaceSeeder::class ,
+            LookupTablesSeeder::class ,
+            PalikaDesignationSeeder::class ,
+
         ]);
     }
 }

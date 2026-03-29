@@ -16,6 +16,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
 </head>
 <style>
@@ -26,7 +27,8 @@
 @stack('styles')
 
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100" x-data="{ miniSidebar: false }" @sidebar-toggled.window="miniSidebar = $event.detail.miniSidebar">
+    <div class="min-h-screen bg-gray-100" x-data="{ miniSidebar: false }"
+        @sidebar-toggled.window="miniSidebar = $event.detail.miniSidebar">
         @include('layouts.navigation')
         <x-sidebar />
 

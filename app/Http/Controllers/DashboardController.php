@@ -273,12 +273,13 @@ class DashboardController extends Controller
             ->join('input_types as it', 'it.id', '=', 'q.input_type_id')
             ->where('ss.ward_id', $selectedWard)
             ->whereIn('it.input_type_name', ['radio', 'checkbox', 'dropdown', 'linear_scale'])
-            ->select('q.id', 'q.question_text', 'q.order_index', 'it.input_type_name', 'q.scale_from', 'q.scale_to', 'q.scale_label_low', 'q.scale_label_high')
+            ->select('q.id', 'q.question_text', 'q.order_index', 'it.input_type_name', 'q.scale_from', 'q.scale_to', 'q.scale_label_low', 'q.scale_label_high', 'ss.title as section_title', 'ss.order_index as section_order')
+            ->orderBy('ss.order_index')
             ->orderBy('q.order_index')
             ->get();
 
         $questionIds = $questions->pluck('id')->toArray();
-        $cacheKey = "survey_report_charts_{$selectedWard}";
+        $cacheKey = "survey_report_charts_v2_{$selectedWard}";
         
         $charts = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function() use ($questions, $questionIds, $selectedWard) {
             $chartsData = [];
@@ -365,6 +366,8 @@ class DashboardController extends Controller
 
                 if (!empty($labels)) {
                     $chartsData[$question->id] = [
+                        'question_id' => $question->id,
+                        'section_title' => $question->section_title,
                         'question_text' => $question->question_text,
                         'labels' => $labels,
                         'totals' => $totals,
