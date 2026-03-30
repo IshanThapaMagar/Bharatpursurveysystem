@@ -1,4 +1,5 @@
 import './bootstrap';
+import './smooth-navigation';
 
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';

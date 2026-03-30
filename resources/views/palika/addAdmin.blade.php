@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-12 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="py-12 sm:py-24 px-4 sm:px-6 lg:px-8">
 
         <!-- Header Section -->
         <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -187,7 +187,7 @@
                                         document.getElementById('image-preview').src = '#';
                                         document.getElementById('upload-icon').classList.remove('hidden');
                                     "
-                                        class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                                        class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                         {{ __('Delete') }}
                                     </button>
                                 </div>

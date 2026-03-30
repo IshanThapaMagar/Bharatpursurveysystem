@@ -127,5 +127,12 @@
   "Add User": "प्रयोगकर्ता थप्नुहोस्",
   "Add New User": "नयाँ प्रयोगकर्ता थप्नुहोस्",
   "Householder information already added": "घरधनी सम्बन्धी जानकारी पहिले नै थपिएको छ।",
-  "HouseHolder": "घरधनी"
+  "HouseHolder": "घरधनी",
+  "Tole Resource Mapping": "टोलको श्रोत नक्सांकन",
+  "Municipality": "पालिका",
+  "Important Sites": "महत्वपूर्ण साइटहरू",
+  "Site details": "साइट विवरण",
+  "Site form": "साइट फारम",
+  "Resource mapping details": "श्रोत नक्सांकनको विवरण",
+  "Resource mapping form": "श्रोत नक्सांकन फारम"
 }

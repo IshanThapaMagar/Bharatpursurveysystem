@@ -9,6 +9,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\AdministrationController;
+use App\Http\Controllers\ResourceMappingController;
+use App\Http\Controllers\ImportantSiteController;
 
 
 Route::get('/', [WelcomeController::class , 'index'])->name('welcome');
@@ -49,10 +51,16 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/toles-by-ward', [ResponseController::class , 'getTolesByWard'])->name('toles.by.ward');
     Route::resource('users', \App\Http\Controllers\UserController::class);
 
-    // Palika Routes
+    // Palika & Ward Routes
     Route::get('/palika', [AdministrationController::class , 'index'])->name('palika.index');
     Route::get('/palika/admin/create', [AdministrationController::class , 'createAdmin'])->name('palika.admin.create');
     Route::post('/palika/admin/store', [AdministrationController::class , 'storeAdmin'])->name('palika.admin.store');
+    Route::resource('wards', \App\Http\Controllers\WardController::class);
+    Route::resource('resource-mapping', ResourceMappingController::class);
+
+
+    Route::resource('important-site', ImportantSiteController::class);
+    Route::delete('/important-site/{importantSite}/photo', [ImportantSiteController::class, 'deletePhoto'])->name('important-site.deletePhoto');
 });
 
 

@@ -71,7 +71,7 @@
                         {{ __('Details of Municipality in the computer system') }}
                     </h2>
                     <p class="text-gray-500 text-sm mt-1">
-                        {{ __('View Municipality information and add ward details') }}
+                        {{ __('View Municipality information and manage ward details') }}
                     </p>
                 </div>
                 <div>
@@ -147,56 +147,69 @@
                 </div>
             @endif
 
+            <div class="mt-12 flex justify-between items-center mb-6">
+                <a href="{{ route('wards.create') }}"
+                    class="px-2 py-1  bg-blue-600 text-white font-semibold rounded-sm shadow hover:bg-blue-700 transition">
+                    {{ __('Add New Ward') }}
+                </a>
+            </div>
+
             <div class="overflow-x-auto">
-                <table id="responses-table" class="min-w-full divide-y divide-gray-200 table-auto text-sm">
+                <table id="wards-table" class="min-w-full divide-y divide-gray-200 table-auto text-sm">
                     <thead class="bg-gray-50">
                         <tr>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                ऋ.स
+                                {{ __('S.N.') }}
                             </th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                स्थान
+                                {{ __('Ward No.') }}
                             </th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                वडा नम्बर
+                                {{ __('Ward Name') }}
                             </th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                कार्यहरू
+                                {{ __('Location') }}
+                            </th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {{ __('Actions') }}
                             </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
-                        @foreach ($responses ?? [] as $index => $response)
+                        @foreach ($wards ?? [] as $index => $ward)
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td data-label="ऋ.स" class="px-4 py-3 whitespace-nowrap">{{ $index + 1 }}</td>
-                                <td data-label="स्थान" class="px-4 py-3">
-                                    {{ $response->householder?->location ?? '-' }}
+                                <td data-label="{{ __('S.N.') }}" class="px-4 py-3 whitespace-nowrap">{{ $index + 1 }}</td>
+                                <td data-label="{{ __('Ward No.') }}" class="px-4 py-3 font-bold text-blue-600">
+                                    {{ $ward->ward_no }}
                                 </td>
-                                <td data-label="वडा नम्बर" class="px-4 py-3">
-                                    {{ $response->ward?->ward_no ?? '-' }}
+                                <td data-label="{{ __('Ward Name') }}" class="px-4 py-3">
+                                    {{ $ward->name }}
                                 </td>
-                                <td data-label="कार्यहरू" class="px-4 py-3">
+                                <td data-label="{{ __('Location') }}" class="px-4 py-3">
+                                    {{ $ward->location }}
+                                </td>
+                                <td data-label="{{ __('Actions') }}" class="px-4 py-3">
                                     <div class="flex flex-wrap gap-2">
-                                        <a href="{{ route('survey-responses.show', $response->id) }}"
-                                            class="px-4 py-2 bg-green-500 text-white font-semibold rounded-md shadow hover:bg-green-600 transition">
-                                            {{ __('Full details') }}
+                                        <a href="{{ route('wards.edit', $ward->id) }}"
+                                            class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-md shadow hover:bg-yellow-600 transition">
+                                            {{ __('Edit') }}
                                         </a>
 
-                                        @if (auth()->user()->isSuperAdmin() || (auth()->user()->isWardAdmin() && auth()->user()->ward_id == $response->ward_id))
-                                            <a href="{{ route('survey-responses.edit', $response->id) }}"
-                                                class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-md shadow hover:bg-yellow-600 transition">
-                                                {{ __('Edit') }}
-                                            </a>
-
-                                            <button type="button" onclick="deleteResponse({{ $response->id }})"
+                                        <form action="{{ route('wards.destroy', $ward->id) }}" method="POST"
+                                            class="inline-block"
+                                            onsubmit="return confirm('{{ __('Are you sure you want to delete this ward and all its details?') }}')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
                                                 class="px-4 py-2 bg-red-500 text-white font-semibold rounded-md shadow hover:bg-red-600 transition">
                                                 {{ __('Delete') }}
                                             </button>
-                                        @endif
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -208,51 +221,26 @@
     </div>
 
     @push('scripts')
-        <script type="module">
+        <script>
             $(document).ready(function() {
-                const table = new DataTable('#responses-table', {
-                    searching: false,
-                    paging: false,
-                    info: false,
-                    lengthChange: false,
+                const table = new DataTable('#wards-table', {
+                    searching: true,
+                    paging: true,
+                    info: true,
+                    lengthChange: true,
                     language: {
                         zeroRecords: "{{ __('No matching records found') }}",
                         emptyTable: "{{ __('No data available in table') }}",
                     },
                     columnDefs: [{
-                            targets: [0, 3],
+                            targets: [0, 4],
                             orderable: false
-                        } // Disable ordering for serial and action columns
+                        }
                     ],
                     order: [
                         [1, 'asc']
                     ],
                 });
-
-                window.deleteResponse = function(id) {
-                    if (!confirm('के तपाईं पक्का हुनुहुन्छ? यो रेकर्ड स्थायी रूपमा मेटिनेछ।')) return;
-
-                    fetch(`/admin/survey-responses/${id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                location.reload();
-                            } else {
-                                alert(data.message || 'Error occurred');
-                            }
-                        })
-                        .catch(e => {
-                            console.error(e);
-                            alert('An error occurred');
-                        });
-                };
             });
         </script>
     @endpush

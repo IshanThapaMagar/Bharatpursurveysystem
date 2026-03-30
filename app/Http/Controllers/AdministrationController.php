@@ -14,13 +14,16 @@ class AdministrationController extends Controller
         $admins = PalikaAdmin::with('designation.translations')
             ->select('id', 'name', 'designation_id', 'email', 'phone', 'photo')
             ->get();
-        return view("palika.index", compact('admins'));
+        $wards = \App\Models\Ward::with('members.designation.translations')->orderBy('ward_no')->get();
+
+        return view("palika.index", compact('admins', 'wards'));
     }
 
     public function createAdmin()
     {
         $designations = PalikaDesignation::with('translations')->get();
         $usedDesignations = PalikaAdmin::pluck('designation_id')->toArray();
+        
         return view("palika.addAdmin", compact('designations', 'usedDesignations'));
     }
 

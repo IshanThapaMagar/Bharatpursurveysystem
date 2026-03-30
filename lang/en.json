@@ -127,5 +127,12 @@
   "Add User": "Add User",
   "Add New User": "Add New User",
   "Householder information already added": "Householder information already added",
-  "HouseHolder": "HouseHolder"
+  "HouseHolder": "HouseHolder",
+  "Tole Resource Mapping": "Tole Resource Mapping",
+  "Municipality": "Municipality",
+  "Important Sites": "Important Sites",
+  "Site details": "Site details",
+  "Site form": "Site form",
+  "Resource mapping details": "Resource mapping details",
+  "Resource mapping form": "Resource mapping form"
 }

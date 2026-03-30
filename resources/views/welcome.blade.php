@@ -24,7 +24,7 @@
 
     {{-- ===== Top Navigation Bar ===== --}}
     <nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class=" px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
 
                 {{-- Brand --}}
@@ -61,7 +61,7 @@
     </nav>
 
     {{-- ===== Main Content ===== --}}
-    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-14">
+    <div class=" px-4 sm:px-6 lg:px-8 py-10 space-y-14">
 
         {{-- ===== Age Group Info Boxes ===== --}}
         <section>

@@ -1,4 +1,4 @@
-<aside class="fixed left-0 h-screen z-40" :class="miniSidebar ? 'w-16' : 'w-64'" aria-label="Sidebar"
+<aside class="fixed left-0 h-screen z-40" :class="miniSidebar ? 'w-16' : 'w-72'" aria-label="Sidebar"
     x-data="mainSidebarState()" @open-sidebar.window="miniSidebar = false" @close-sidebar.window="miniSidebar = true">
     <div class="h-full px-3 py-24 bg-[#03396c] dark:bg-[#03396c]">
         <!-- Toggle Button -->
@@ -79,6 +79,58 @@
                 </ul>
             </li>
 
+            <li>
+                <button type="button" @click="imp_sites = !imp_sites"
+                    class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
+                    :class="miniSidebar ? 'justify-center' : ''" aria-controls="dropdown-example">
+                    <i class="fa-solid fa-crosshairs"></i>
+
+                    <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap" x-show="!miniSidebar">
+                        {{ __('Important Sites') }}</span>
+                    <svg class="w-3 h-3" x-show="!miniSidebar" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 4 4 4-4" />
+                    </svg>
+                </button>
+                <ul x-show="imp_sites && !miniSidebar" x-transition class="py-2 space-y-2">
+                    <li>
+                        <a href="{{ route('important-site.index') }}"
+                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Site details') }}</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('important-site.create') }}"
+                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Site form') }}</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li>
+                <button type="button" @click="trm = !trm"
+                    class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
+                    :class="miniSidebar ? 'justify-center' : ''" aria-controls="dropdown-example">
+                    <i class="fa-regular fa-map"></i>
+
+                    <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap" x-show="!miniSidebar">
+                        {{ __('Tole Resource Mapping') }}</span>
+                    <svg class="w-3 h-3" x-show="!miniSidebar" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 4 4 4-4" />
+                    </svg>
+                </button>
+                <ul x-show="trm && !miniSidebar" x-transition class="py-2 space-y-2">
+                    <li>
+                        <a href="{{ route('resource-mapping.index') }}"
+                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Resource mapping details') }}</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('resource-mapping.create') }}"
+                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Resource mapping form') }}</a>
+                    </li>
+                </ul>
+            </li>
+
             @if (Auth::user()->isSuperAdmin() || Auth::user()->isWardAdmin())
                 <li>
                     <button type="button" @click="surveyform = !surveyform"
@@ -87,16 +139,17 @@
                         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
                             xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                             viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2"
                                 d="M15 4h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3m0 3h6m-3 5h3m-6 0h.01M12 16h3m-6 0h.01M10 3v4h4V3h-4Z" />
                         </svg>
 
                         <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap" x-show="!miniSidebar">
                             {{ __('Survey builder') }}</span>
-                        <svg class="w-3 h-3" x-show="!miniSidebar" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                            fill="none" viewBox="0 0 10 6">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m1 1 4 4 4-4" />
+                        <svg class="w-3 h-3" x-show="!miniSidebar" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2" d="m1 1 4 4 4-4" />
                         </svg>
                     </button>
                     <ul x-show="surveyform && !miniSidebar" x-transition class="py-2 space-y-2">
@@ -137,6 +190,8 @@
             homedescription: false,
             surveyform: false,
             miniSidebar: false,
+            imp_sites: false,
+            trm: false,
             init() {
                 this.$watch('miniSidebar', (newVal) => {
                     window.dispatchEvent(new CustomEvent('sidebar-toggled', {
