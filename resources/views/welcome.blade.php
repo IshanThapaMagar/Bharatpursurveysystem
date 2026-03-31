@@ -444,9 +444,9 @@
             // Store chart instances and data globally for persistence across AJAX loads
             window.welcomeCharts = window.welcomeCharts || {};
             window.welcomeChartData = {
-                ageGroups: @json($ageGroups ?? []),
-                genderGroups: @json($genderGroups ?? []),
-                chartsData: @json($chartsData ?? [])
+                ageGroups: @json(isset($ageGroups) ? $ageGroups : []),
+                genderGroups: @json(isset($genderGroups) ? $genderGroups : []),
+                chartsData: @json(isset($chartsData) ? $chartsData : [])
             };
 
             function initializeWelcomeCharts() {
