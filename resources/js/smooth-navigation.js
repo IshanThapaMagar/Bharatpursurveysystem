@@ -126,11 +126,6 @@ export function initSmoothNavigation() {
             window.dispatchEvent(new CustomEvent('reinitialize-maps'));
         }
 
-        // Re-initialize charts if present
-        if (window.Chart) {
-            window.dispatchEvent(new CustomEvent('reinitialize-charts'));
-        }
-
         // Re-initialize forms
         window.dispatchEvent(new CustomEvent('reinitialize-forms'));
 
@@ -150,6 +145,20 @@ export function initSmoothNavigation() {
                 console.error('[Smooth Nav] Error executing inline script:', error);
             }
         });
+
+        // Re-initialize charts AFTER inline scripts have run
+        // Each page defines its own window.initialize*Charts function via its inline <script>.
+        // The inline script already ran above, updated window.*ChartData, and defined the function,
+        // but we call it again explicitly here to be safe with async timing.
+        if (window.Chart && typeof window.initializeDashboardCharts === 'function') {
+            window.initializeDashboardCharts();
+        }
+        if (window.Chart && typeof window.initializeWelcomeCharts === 'function') {
+            window.initializeWelcomeCharts();
+        }
+        if (window.Chart && typeof window.initializeSurveyReportCharts === 'function') {
+            window.initializeSurveyReportCharts();
+        }
     }
 
     // Expose navigation function globally for custom usage

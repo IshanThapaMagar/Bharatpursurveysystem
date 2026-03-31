@@ -22,7 +22,7 @@
     <link href="{{ asset('nepali.datepicker.v5.0.6/nepali.datepicker.v5.0.6.min.css') }}" rel="stylesheet">
 @endpush
 
-<div class="min-h-screen bg-gray-50 py-10 px-4" x-data="{
+<div class="min-h-screen bg-gray-50 py-1 px-4" x-data="{
     isHouseHolder: false,
     householderExists: @json($householderExists),
     householderName: '{{ $householder?->householder_name ?? '' }}',
@@ -82,7 +82,7 @@
         @endif
     </div>
 
-    <form action="{{ route('house-member.store') }}" class="l shadow-lg px-20 space-y-10" method="POST">
+    <form action="{{ route('house-member.store') }}" class="l px-5 space-y-2" method="POST">
         @csrf
         <input type="hidden" name="house_holder_id" value="{{ $householder_id }}">
         <div class="border-b pb-4 flex items-center justify-between">
@@ -101,12 +101,12 @@
                     class="flex items-center gap-3 cursor-pointer select-none rounded-xl px-4 py-2 hover:bg-blue-100 transition"
                     :class="householderExists ? 'opacity-50 cursor-not-allowed' : ''">
                     <input type="checkbox" class="w-5 h-5 rounded accent-blue-600 cursor-pointer"
-                        @change="setHouseHolder($event.target.checked)"
-                        :disabled="householderExists">
+                        @change="setHouseHolder($event.target.checked)" :disabled="householderExists">
                     <span class="text-sm font-semibold text-blue-700">{{ __('HouseHolder') }}</span>
                 </label>
                 <template x-if="householderExists">
-                    <span class="text-[10px] text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                    <span
+                        class="text-[10px] text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded border border-red-100">
                         {{ __('Householder information already added') }}
                     </span>
                 </template>

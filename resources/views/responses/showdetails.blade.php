@@ -5,11 +5,11 @@
                 @if (auth()->user()->isSuperAdmin() || auth()->user()->ward_id == $response->ward_id)
                     <a href="{{ route('house-member.create', ['household_id' => $household->id]) }}"
                         class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg shadow hover:bg-indigo-700 transition">
-                        Add Family Member
+                        {{ __('Add Family Member') }}
                     </a>
                 @endif
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-t-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-5 py-3.5 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
                     <svg class="w-4 h-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -78,7 +78,7 @@
 
 
             {{-- Family Members Section --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-white shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-5 py-3.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <h2 class="font-semibold text-sm text-gray-800">परिवारका सदस्यहरूको विवरण</h2>
@@ -86,19 +86,23 @@
                 </div>
 
                 <div class="overflow-x-auto">
-                    @if($household->members->isEmpty())
+                    @if ($household->members->isEmpty())
                         <div class="p-8 text-center bg-gray-50/50">
-                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 mb-3">
+                            <div
+                                class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 mb-3">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
-                            <p class="text-gray-600 font-medium">माफ गर्नुहोला | परिवारको कुनै पनि सदस्य भेटीएन वा प्रणालीमा विवरण राखिएको छैन |</p>
+                            <p class="text-gray-600 font-medium">माफ गर्नुहोला | परिवारको कुनै पनि सदस्य भेटीएन वा
+                                प्रणालीमा विवरण राखिएको छैन |</p>
                         </div>
                     @else
                         <table class="w-full text-[11px] leading-tight border-collapse">
                             <thead>
-                                <tr class="bg-gray-100 border-b border-gray-200 text-gray-600 uppercase tracking-tight font-bold">
+                                <tr
+                                    class="bg-gray-100 border-b border-gray-200 text-gray-600 uppercase tracking-tight font-bold">
                                     <th class="px-2 py-2 border-r">{{ __('S.N') }}</th>
                                     <th class="px-2 py-2 border-r min-w-[120px]">{{ __('Full Name') }}</th>
                                     <th class="px-2 py-2 border-r">{{ __('Relation') }}</th>
@@ -121,60 +125,93 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 italic">
-                                @foreach($household->members as $idx => $member)
-                                    <tr class="hover:bg-indigo-50/30 transition-colors {{ $member->is_demised ? 'bg-gray-100 grayscale' : '' }}">
+                                @foreach ($household->members as $idx => $member)
+                                    <tr
+                                        class="hover:bg-indigo-50/30 transition-colors {{ $member->is_demised ? 'bg-gray-100 grayscale' : '' }}">
                                         <td class="px-2 py-1.5 border-r text-center">{{ $idx + 1 }}</td>
                                         <td class="px-2 py-1.5 border-r font-semibold text-gray-900 not-italic">
                                             {{ $member->full_name }}
-                                            @if($member->is_demised)
-                                                <span class="block text-[9px] text-red-600 font-bold uppercase">(Demised)</span>
+                                            @if ($member->is_demised)
+                                                <span
+                                                    class="block text-[9px] text-red-600 font-bold uppercase">(Demised)</span>
                                             @endif
                                         </td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->relationship?->name ?? '-' }}</td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->gender?->name ?? '-' }}</td>
                                         <td class="px-2 py-1.5 border-r text-center">{{ $member->age ?? '-' }}</td>
-                                        <td class="px-2 py-1.5 border-r">{{ $member->maritalStatus?->name ?? '-' }}</td>
-                                        <td class="px-2 py-1.5 border-r">{{ $member->educationLevel?->name ?? '-' }}</td>
+                                        <td class="px-2 py-1.5 border-r">{{ $member->maritalStatus?->name ?? '-' }}
+                                        </td>
+                                        <td class="px-2 py-1.5 border-r">{{ $member->educationLevel?->name ?? '-' }}
+                                        </td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->occupation ?? '-' }}</td>
-                                        <td class="px-2 py-1.5 border-r text-center">{{ $member->has_voterId ? 'छ' : 'छैन' }}</td>
-                                        <td class="px-2 py-1.5 border-r">{{ $member->healthStatus?->name ?? '-' }}</td>
+                                        <td class="px-2 py-1.5 border-r text-center">
+                                            {{ $member->has_voterId ? 'छ' : 'छैन' }}</td>
+                                        <td class="px-2 py-1.5 border-r">{{ $member->healthStatus?->name ?? '-' }}
+                                        </td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->district?->name ?? '-' }}</td>
-                                        <td class="px-2 py-1.5 border-r">{{ $member->institutionType?->name ?? '-' }}</td>
-                                        <td class="px-2 py-1.5 border-r text-center">{{ $member->bloodGroup?->name ?? '-' }}</td>
-                                        <td class="px-2 py-1.5 border-r">{{ $member->permanent_account_no ?? '-' }}</td>
+                                        <td class="px-2 py-1.5 border-r">{{ $member->institutionType?->name ?? '-' }}
+                                        </td>
+                                        <td class="px-2 py-1.5 border-r text-center">
+                                            {{ $member->bloodGroup?->name ?? '-' }}</td>
+                                        <td class="px-2 py-1.5 border-r">{{ $member->permanent_account_no ?? '-' }}
+                                        </td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->nid_no ?? '-' }}</td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->disability?->name ?? '-' }}</td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->citizenship_number ?? '-' }}</td>
-                                        <td class="px-2 py-1.5 border-r">{{ $member->governmentSupportType?->name ?? '-' }}</td>
+                                        <td class="px-2 py-1.5 border-r">
+                                            {{ $member->governmentSupportType?->name ?? '-' }}</td>
                                         <td class="px-2 py-1.5 text-center">
                                             <div class="flex items-center justify-center gap-2">
                                                 @if (auth()->user()->isSuperAdmin() || (auth()->user()->isWardAdmin() && auth()->user()->ward_id == $response->ward_id))
                                                     {{-- Edit --}}
-                                                    <a href="{{ route('house-member.edit', $member->id) }}" title="Edit Details" class="text-blue-500 hover:text-blue-700 transition">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                    <a href="{{ route('house-member.edit', $member->id) }}"
+                                                        title="Edit Details"
+                                                        class="text-blue-500 hover:text-blue-700 transition">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                                            </path>
                                                         </svg>
                                                     </a>
 
                                                     {{-- Mark Demise --}}
-                                                    @if(!$member->is_demised)
-                                                        <form action="{{ route('house-member.mark-demise', $member->id) }}" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ कि यो सदस्यलाई दिवंगतको रूपमा चिन्ह लगाउन चाहनुहुन्छ?')">
+                                                    @if (!$member->is_demised)
+                                                        <form
+                                                            action="{{ route('house-member.mark-demise', $member->id) }}"
+                                                            method="POST" class="inline"
+                                                            onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ कि यो सदस्यलाई दिवंगतको रूपमा चिन्ह लगाउन चाहनुहुन्छ?')">
                                                             @csrf
-                                                            <button type="submit" class="text-amber-500 hover:text-amber-700 transition" title="Mark as Demise">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                            <button type="submit"
+                                                                class="text-amber-500 hover:text-amber-700 transition"
+                                                                title="Mark as Demise">
+                                                                <svg class="w-4 h-4" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                                                    </path>
                                                                 </svg>
                                                             </button>
                                                         </form>
                                                     @endif
 
                                                     {{-- Delete --}}
-                                                    <form action="{{ route('house-member.destroy', $member->id) }}" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ कि यो सदस्यलाई हटाउन चाहनुहुन्छ?')">
+                                                    <form action="{{ route('house-member.destroy', $member->id) }}"
+                                                        method="POST" class="inline"
+                                                        onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ कि यो सदस्यलाई हटाउन चाहनुहुन्छ?')">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="text-red-400 hover:text-red-600 transition" title="Delete">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                        <button type="submit"
+                                                            class="text-red-400 hover:text-red-600 transition"
+                                                            title="Delete">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                                </path>
                                                             </svg>
                                                         </button>
                                                     </form>
@@ -193,8 +230,7 @@
 
 
             @if ($sections->isNotEmpty())
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                    x-data="{ activeTab: 0 }">
+                <div class="bg-white shadow-sm border border-gray-200 overflow-hidden" x-data="{ activeTab: 0 }">
 
                     {{-- Tab Bar --}}
                     <div class="flex overflow-x-auto border-b border-gray-200">
@@ -222,10 +258,12 @@
                                 <table class="w-full text-sm">
                                     <thead>
                                         <tr class="bg-gray-100/70 border-b border-gray-200">
-                                            <th class="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 w-1/2">
+                                            <th
+                                                class="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 w-1/2">
                                                 प्रश्न
                                             </th>
-                                            <th class="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 w-1/2">
+                                            <th
+                                                class="px-5 py-2.5 text-left text-xs font-semibold text-gray-500 w-1/2">
                                                 उत्तर
                                             </th>
                                         </tr>
@@ -272,14 +310,15 @@
             @endif
 
             {{-- ===== Response Metadata Table ===== --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-b-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs">
                         <thead>
                             <tr class="bg-gray-100/70 border-b border-gray-200">
                                 <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">विवरण दिने</th>
                                 <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">मिति</th>
-                                <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">तथ्यांक संकलन वडा</th>
+                                <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">तथ्यांक संकलन वडा
+                                </th>
                                 <th class="px-5 py-1.5 text-left font-semibold text-gray-500 w-1/4">संकलन गर्ने</th>
                             </tr>
                         </thead>
@@ -308,7 +347,8 @@
 
 
     {{-- Photo View Modal --}}
-    <div id="photoModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+    <div id="photoModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4"
         onclick="closePhotoModal()">
         <div class="relative max-w-2xl w-full" onclick="event.stopPropagation()">
 

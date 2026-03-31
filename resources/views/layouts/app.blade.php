@@ -17,6 +17,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <!-- Chart.js & SweetAlert2 loaded globally so AJAX-navigated chart pages always find them -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 <style>
@@ -32,7 +35,7 @@
         @include('layouts.navigation')
         <x-sidebar />
 
-        <main class="transition-all duration-300" :class="miniSidebar ? 'ml-16' : 'ml-64'">
+        <main class="transition-all duration-300" :class="miniSidebar ? 'ml-16' : 'ml-72'">
             {{ $slot }}
         </main>
     </div>

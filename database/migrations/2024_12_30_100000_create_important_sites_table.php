@@ -19,8 +19,7 @@ return new class extends Migration
             $table->decimal('longitude', 11, 8)->nullable();
             $table->softDeletes();
             $table->timestamps();
-
-            $table->foreign('ward_id')->references('id')->on('wards')->onDelete('cascade');
+            $table->index('ward_id');
         });
     }
 

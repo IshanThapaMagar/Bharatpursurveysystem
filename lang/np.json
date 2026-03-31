@@ -134,5 +134,11 @@
   "Site details": "साइट विवरण",
   "Site form": "साइट फारम",
   "Resource mapping details": "श्रोत नक्सांकनको विवरण",
-  "Resource mapping form": "श्रोत नक्सांकन फारम"
+  "Resource mapping form": "श्रोत नक्सांकन फारम",
+  "Details of Municipality in the computer system": "कम्प्युटर प्रणालीमा पालिकाको विवरण",
+  "View Municipality information and manage ward details": "पालिका जानकारी हेर्नुहोस् र वडा विवरणहरू व्यवस्थापन गर्नुहोस्",
+  "Add Palika Admin →": "पालिका प्रशासक थप्नुहोस् →",
+  "Add New Ward": "नयाँ वडा थप्नुहोस्",
+  "Add Family Member": "परिवार सदस्य थप्नुहोस्"
+
 }

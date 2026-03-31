@@ -16,7 +16,9 @@
     @endif
 
     <style>
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -29,8 +31,7 @@
 
                 {{-- Brand --}}
                 <div class="flex items-center">
-                    <img src="{{ asset('assets/logo/logo-horizontal.png') }}"
-                        alt="Lmnc Logo"
+                    <img src="{{ asset('assets/logo/logo-horizontal.png') }}" alt="Lmnc Logo"
                         class="h-10 w-auto object-contain">
                 </div>
 
@@ -71,33 +72,45 @@
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @php
-                    $ageRanges = [
-                        [0, 5],
-                        [6, 16],
-                        [17, 32],
-                        [33, 54],
-                        [55, 65],
-                        [66, 200],
+                    $ageRanges = [[0, 5], [6, 16], [17, 32], [33, 54], [55, 65], [66, 200]];
+                    $ageImages = [
+                        'infant.webp',
+                        'children.png',
+                        'youth.png',
+                        'adult.jpg',
+                        'elderly.webp',
+                        'senior-citizen.png',
                     ];
                 @endphp
                 @foreach ($ageGroups as $gi => $group)
                     @php [$rMin, $rMax] = $ageRanges[$gi]; @endphp
-                    <div class="block p-5 rounded-sm border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                    {{ $group['label'] }}</h4>
-                            </div>
-                            <span class="text-2xl font-bold text-gray-800">{{ $group['percentage'] }}%</span>
+                    <div
+                        class="relative block p-5 rounded-sm border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300 overflow-hidden">
+                        <!-- Background Image -->
+                        <div
+                            class="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 pointer-events-none overflow-hidden rounded-sm flex items-center justify-center">
+                            <img src="{{ asset('assets/images/' . $ageImages[$gi]) }}" alt="{{ $group['label'] }}"
+                                class="w-full h-full object-contain object-center">
                         </div>
-                        <div class="mb-2">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs font-medium text-gray-600">{{ __('Population Count') }}</span>
-                                <span class="text-sm font-bold text-gray-800">{{ $group['count'] }}</span>
+
+                        <!-- Content -->
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                        {{ $group['label'] }}</h4>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-800">{{ $group['percentage'] }}%</span>
                             </div>
-                            <div class="w-full bg-white rounded-full h-2.5 overflow-hidden">
-                                <div class="h-2.5 rounded-full {{ $group['color'] }}"
-                                    style="width: {{ $group['percentage'] }}%"></div>
+                            <div class="mb-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-medium text-gray-600">{{ __('Population Count') }}</span>
+                                    <span class="text-sm font-bold text-gray-800">{{ $group['count'] }}</span>
+                                </div>
+                                <div class="w-full bg-white rounded-full h-2.5 overflow-hidden">
+                                    <div class="h-2.5 rounded-full {{ $group['color'] }}"
+                                        style="width: {{ $group['percentage'] }}%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -112,24 +125,40 @@
                 लिंग अनुसार जनसंख्या
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @php $genderIds = [1, 2, 3]; @endphp
+                @php
+                    $genderIds = [1, 2, 3];
+                    $genderImages = ['male.jpg', 'female.png'];
+                @endphp
                 @foreach ($genderGroups as $gi => $group)
-                    <div class="block p-5 rounded-sm border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                    {{ $group['label'] }}</h4>
+                    <div
+                        class="relative block p-5 rounded-sm border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300 overflow-hidden">
+                        <!-- Background Image (only for male and female) -->
+                        @if ($gi < 2)
+                            <div
+                                class="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 pointer-events-none overflow-hidden rounded-sm flex items-center justify-center">
+                                <img src="{{ asset('assets/images/' . $genderImages[$gi]) }}"
+                                    alt="{{ $group['label'] }}" class="w-full h-full object-contain object-center">
                             </div>
-                            <span class="text-2xl font-bold text-gray-800">{{ $group['percentage'] }}%</span>
-                        </div>
-                        <div class="mb-2">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs font-medium text-gray-600">{{ __('Total Count') }}</span>
-                                <span class="text-sm font-bold text-gray-800">{{ $group['count'] }}</span>
+                        @endif
+
+                        <!-- Content -->
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                        {{ $group['label'] }}</h4>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-800">{{ $group['percentage'] }}%</span>
                             </div>
-                            <div class="w-full bg-white rounded-full h-2.5 overflow-hidden">
-                                <div class="h-2.5 rounded-full {{ $group['color'] }}"
-                                    style="width: {{ $group['percentage'] }}%"></div>
+                            <div class="mb-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-medium text-gray-600">{{ __('Total Count') }}</span>
+                                    <span class="text-sm font-bold text-gray-800">{{ $group['count'] }}</span>
+                                </div>
+                                <div class="w-full bg-white rounded-full h-2.5 overflow-hidden">
+                                    <div class="h-2.5 rounded-full {{ $group['color'] }}"
+                                        style="width: {{ $group['percentage'] }}%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -145,14 +174,16 @@
             </h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {{-- Age Bar Chart --}}
-                <div class="bg-slate-50 border border-slate-100 rounded-sm p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
+                <div
+                    class="bg-slate-50 border border-slate-100 rounded-sm p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
                     <div class="w-full relative min-h-[380px] flex justify-center items-center">
                         <canvas id="ageDemographicsChart"></canvas>
                     </div>
                 </div>
 
                 {{-- Gender Pie Chart --}}
-                <div class="bg-slate-50 border border-slate-100 rounded-sm p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
+                <div
+                    class="bg-slate-50 border border-slate-100 rounded-sm p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
                     <h4 class="font-bold text-lg mb-6 text-center text-slate-800 leading-tight w-full">
                         {{ __('Gender Distribution') }}</h4>
                     <div class="w-full relative min-h-[380px] flex justify-center items-center">
@@ -170,14 +201,16 @@
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach ($citizenshipGroups as $group)
-                    <div class="bg-white border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow duration-300 rounded-sm">
+                    <div
+                        class="bg-white border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow duration-300 rounded-sm">
                         <h4 class="text-sm font-semibold text-gray-700">{{ $group['label'] }}</h4>
                         <span class="text-2xl font-bold text-gray-900">{{ $group['count'] }}</span>
                         <div class="w-full bg-gray-200 h-2 rounded-sm overflow-hidden">
                             <div class="{{ $group['color'] }} h-2 rounded-sm"
                                 style="width: {{ $group['percentage'] }}%"></div>
                         </div>
-                        <span class="text-xs text-gray-600 text-right">{{ number_format($group['percentage'], 2) }}%</span>
+                        <span
+                            class="text-xs text-gray-600 text-right">{{ number_format($group['percentage'], 2) }}%</span>
                     </div>
                 @endforeach
             </div>
@@ -193,25 +226,39 @@
 
                 {{-- मातृभाषा --}}
                 <div class="flex flex-col">
-                    <h3 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                    <h3
+                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
                         मातृभाषा</h3>
                     <div class="space-y-0 text-sm">
                         @php
                             $mtColors = [
-                                'bg-blue-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500',
-                                'bg-indigo-500', 'bg-violet-500', 'bg-cyan-500', 'bg-fuchsia-500',
-                                'bg-orange-500', 'bg-teal-500', 'bg-lime-500', 'bg-pink-500',
+                                'bg-blue-500',
+                                'bg-emerald-500',
+                                'bg-rose-500',
+                                'bg-amber-500',
+                                'bg-indigo-500',
+                                'bg-violet-500',
+                                'bg-cyan-500',
+                                'bg-fuchsia-500',
+                                'bg-orange-500',
+                                'bg-teal-500',
+                                'bg-lime-500',
+                                'bg-pink-500',
                             ];
                         @endphp
                         @forelse ($motherTongueStats as $index => $row)
                             @php $pct = $motherTongueTotal > 0 ? number_format(($row->total / $motherTongueTotal) * 100, 2) : 0; @endphp
-                            <div class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                            <div
+                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-2 h-2 rounded-full {{ $mtColors[$index % count($mtColors)] }} shadow-sm flex-shrink-0"></div>
+                                    <div
+                                        class="w-2 h-2 rounded-full {{ $mtColors[$index % count($mtColors)] }} shadow-sm flex-shrink-0">
+                                    </div>
                                     <span class="text-gray-700 font-medium">{{ $row->name }}</span>
                                 </div>
                                 <div class="flex items-center gap-16 text-gray-600">
-                                    <span class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                    <span
+                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                     <span class="w-16 text-right">{{ $pct }}%</span>
                                 </div>
                             </div>
@@ -223,25 +270,39 @@
 
                 {{-- जातजातीहरु --}}
                 <div class="flex flex-col">
-                    <h3 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                    <h3
+                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
                         जातजातीहरु</h3>
                     <div class="space-y-0 text-sm">
                         @php
                             $casteColors = [
-                                'bg-indigo-500', 'bg-teal-500', 'bg-purple-500', 'bg-orange-500',
-                                'bg-pink-500', 'bg-red-500', 'bg-sky-500', 'bg-emerald-500',
-                                'bg-yellow-500', 'bg-blue-500', 'bg-gray-500', 'bg-rose-500',
+                                'bg-indigo-500',
+                                'bg-teal-500',
+                                'bg-purple-500',
+                                'bg-orange-500',
+                                'bg-pink-500',
+                                'bg-red-500',
+                                'bg-sky-500',
+                                'bg-emerald-500',
+                                'bg-yellow-500',
+                                'bg-blue-500',
+                                'bg-gray-500',
+                                'bg-rose-500',
                             ];
                         @endphp
                         @forelse ($casteStats as $index => $row)
                             @php $pct = $casteTotal > 0 ? number_format(($row->total / $casteTotal) * 100, 2) : 0; @endphp
-                            <div class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                            <div
+                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-2 h-2 rounded-full {{ $casteColors[$index % count($casteColors)] }} shadow-sm flex-shrink-0"></div>
+                                    <div
+                                        class="w-2 h-2 rounded-full {{ $casteColors[$index % count($casteColors)] }} shadow-sm flex-shrink-0">
+                                    </div>
                                     <span class="text-gray-700 font-medium">{{ $row->name }}</span>
                                 </div>
                                 <div class="flex items-center gap-16 text-gray-600">
-                                    <span class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                    <span
+                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                     <span class="w-16 text-right">{{ $pct }}%</span>
                                 </div>
                             </div>
@@ -253,25 +314,37 @@
 
                 {{-- शिक्षाको अवस्था --}}
                 <div class="flex flex-col">
-                    <h3 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                    <h3
+                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
                         शिक्षाको अवस्था</h3>
                     <div class="space-y-0 text-sm">
                         @php
                             $eduColors = [
-                                'bg-amber-500', 'bg-blue-500', 'bg-green-500', 'bg-orange-500',
-                                'bg-red-500', 'bg-violet-500', 'bg-cyan-500', 'bg-indigo-500',
-                                'bg-emerald-500', 'bg-rose-500',
+                                'bg-amber-500',
+                                'bg-blue-500',
+                                'bg-green-500',
+                                'bg-orange-500',
+                                'bg-red-500',
+                                'bg-violet-500',
+                                'bg-cyan-500',
+                                'bg-indigo-500',
+                                'bg-emerald-500',
+                                'bg-rose-500',
                             ];
                         @endphp
                         @forelse ($educationStats as $index => $row)
                             @php $pct = $educationTotal > 0 ? number_format(($row->total / $educationTotal) * 100, 2) : 0; @endphp
-                            <div class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                            <div
+                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-2 h-2 rounded-full {{ $eduColors[$index % count($eduColors)] }} shadow-sm flex-shrink-0"></div>
+                                    <div
+                                        class="w-2 h-2 rounded-full {{ $eduColors[$index % count($eduColors)] }} shadow-sm flex-shrink-0">
+                                    </div>
                                     <span class="text-gray-700 font-medium">{{ $row->label }}</span>
                                 </div>
                                 <div class="flex items-center gap-16 text-gray-600">
-                                    <span class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                    <span
+                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                     <span class="w-16 text-right">{{ $pct }}%</span>
                                 </div>
                             </div>
@@ -283,25 +356,39 @@
 
                 {{-- धर्म --}}
                 <div class="flex flex-col">
-                    <h3 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                    <h3
+                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
                         धर्म (जनसंख्या के आधारमा)</h3>
                     <div class="space-y-0 text-sm">
                         @php
                             $relColors = [
-                                'bg-rose-500', 'bg-sky-500', 'bg-emerald-500', 'bg-amber-500',
-                                'bg-indigo-500', 'bg-violet-500', 'bg-cyan-500', 'bg-fuchsia-500',
-                                'bg-orange-500', 'bg-teal-500', 'bg-lime-500', 'bg-pink-500',
+                                'bg-rose-500',
+                                'bg-sky-500',
+                                'bg-emerald-500',
+                                'bg-amber-500',
+                                'bg-indigo-500',
+                                'bg-violet-500',
+                                'bg-cyan-500',
+                                'bg-fuchsia-500',
+                                'bg-orange-500',
+                                'bg-teal-500',
+                                'bg-lime-500',
+                                'bg-pink-500',
                             ];
                         @endphp
                         @forelse ($religionStats as $index => $row)
                             @php $pct = $religionTotal > 0 ? number_format(($row->total / $religionTotal) * 100, 2) : 0; @endphp
-                            <div class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                            <div
+                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-2 h-2 rounded-full {{ $relColors[$index % count($relColors)] }} shadow-sm flex-shrink-0"></div>
+                                    <div
+                                        class="w-2 h-2 rounded-full {{ $relColors[$index % count($relColors)] }} shadow-sm flex-shrink-0">
+                                    </div>
                                     <span class="text-gray-700 font-medium">{{ $row->label }}</span>
                                 </div>
                                 <div class="flex items-center gap-16 text-gray-600">
-                                    <span class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                    <span
+                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
                                     <span class="w-16 text-right">{{ $pct }}%</span>
                                 </div>
                             </div>
@@ -323,7 +410,8 @@
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     @foreach ($chartsData as $questionId => $data)
-                        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
+                        <div
+                            class="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center">
                             <h4 class="font-bold text-lg mb-6 text-center text-slate-800 leading-tight w-full">
                                 {{ $data['title'] }}
                             </h4>
@@ -338,9 +426,288 @@
 
     </div>
 
+    <!-- Chart.js (welcome uses its own standalone layout, not x-app-layout) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Inline chart initialization script for AJAX navigation support -->
+    <script>
+        (function() {
+            // Wait for Chart to be available
+            function waitForChart(callback, attempts = 0) {
+                if (typeof Chart !== 'undefined') {
+                    callback();
+                } else if (attempts < 50) {
+                    setTimeout(() => waitForChart(callback, attempts + 1), 10);
+                }
+            }
+
+            // Store chart instances and data globally for persistence across AJAX loads
+            window.welcomeCharts = window.welcomeCharts || {};
+            window.welcomeChartData = {
+                ageGroups: @json($ageGroups ?? []),
+                genderGroups: @json($genderGroups ?? []),
+                chartsData: @json($chartsData ?? [])
+            };
+
+            function initializeWelcomeCharts() {
+                // Check if Chart.js library is loaded
+                if (typeof Chart === 'undefined') {
+                    console.warn('[Welcome Charts] Chart.js not loaded yet');
+                    setTimeout(initializeWelcomeCharts, 50);
+                    return;
+                }
+
+                // Destroy existing charts before creating new ones
+                Object.values(window.welcomeCharts).forEach(chart => {
+                    if (chart && typeof chart.destroy === 'function') {
+                        chart.destroy();
+                    }
+                });
+                window.welcomeCharts = {};
+
+                // Use global data instead of @json() to persist across AJAX loads
+                const ageGroupsData = window.welcomeChartData.ageGroups;
+                const ageCtx = document.getElementById('ageDemographicsChart');
+
+                if (ageCtx && ageGroupsData.length > 0) {
+                    const customLabels = [
+                        'जम्मा शिशु',
+                        'जम्मा बालबालिका',
+                        'जम्मा युवा',
+                        'जम्मा अधबैंसे',
+                        'जम्मा बृद्ध',
+                        'जम्मा जेष्ठ नागरिक'
+                    ];
+                    const ageLabels = ageGroupsData.length === 6 ?
+                        customLabels :
+                        ageGroupsData.map(g => g.label + ' ' + (g.range || ''));
+                    const ageCounts = ageGroupsData.map(g => g.count);
+                    const ageColors = ['#4f46e5', '#f97316', '#4ade80', '#ef4444', '#dc2626', '#fbbf24'];
+
+                    window.welcomeCharts.ageChart = new Chart(ageCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ageLabels,
+                            datasets: [{
+                                label: 'नगरपालिकाको जनसंख्या',
+                                data: ageCounts,
+                                backgroundColor: ageColors,
+                                borderSkipped: false,
+                                borderRadius: 0,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.9
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'उमेर समूह अनुसारको तथ्यांक',
+                                    font: {
+                                        size: 16,
+                                        family: "'Inter', sans-serif",
+                                        weight: 'normal'
+                                    },
+                                    color: '#4b5563',
+                                    padding: {
+                                        bottom: 20
+                                    }
+                                },
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        color: '#4b5563',
+                                        font: {
+                                            family: "'Inter', sans-serif"
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(156, 163, 175, 0.9)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    padding: 12,
+                                    cornerRadius: 6,
+                                    displayColors: true
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: true,
+                                        color: '#e5e7eb'
+                                    },
+                                    ticks: {
+                                        color: '#6b7280',
+                                        font: {
+                                            family: "'Inter', sans-serif"
+                                        }
+                                    },
+                                    border: {
+                                        display: true,
+                                        color: '#9ca3af'
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        display: true,
+                                        color: '#e5e7eb'
+                                    },
+                                    ticks: {
+                                        color: '#6b7280',
+                                        font: {
+                                            family: "'Inter', sans-serif"
+                                        },
+                                        stepSize: 500
+                                    },
+                                    border: {
+                                        display: true,
+                                        color: '#9ca3af'
+                                    }
+                                }
+                            },
+                            layout: {
+                                padding: {
+                                    top: 10,
+                                    bottom: 10
+                                }
+                            }
+                        },
+                        plugins: [{
+                            id: 'customCanvasBackgroundColor',
+                            beforeDraw: (chart, args, options) => {
+                                const {
+                                    ctx
+                                } = chart;
+                                ctx.save();
+                                ctx.globalCompositeOperation = 'destination-over';
+                                ctx.fillStyle = options.color || '#f3f4f6';
+                                ctx.fillRect(0, 0, chart.width, chart.height);
+                                ctx.restore();
+                            }
+                        }]
+                    });
+                }
+
+                const genderGroupsData = window.welcomeChartData.genderGroups;
+                const genderCtx = document.getElementById('genderDemographicsChart');
+
+                if (genderCtx && genderGroupsData.length > 0) {
+                    const genderLabels = genderGroupsData.map(g => g.label);
+                    const genderCounts = genderGroupsData.map(g => g.count);
+                    const genderColors = ['#3E95CD', '#8E5EA2', '#3CBA9F'];
+
+                    window.welcomeCharts.genderChart = new Chart(genderCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: genderLabels,
+                            datasets: [{
+                                data: genderCounts,
+                                backgroundColor: genderColors,
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                hoverOffset: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 16,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                    titleFont: {
+                                        size: 14,
+                                        family: "'Inter', sans-serif"
+                                    },
+                                    bodyFont: {
+                                        size: 14,
+                                        family: "'Inter', sans-serif",
+                                        weight: 'bold'
+                                    },
+                                    padding: 12,
+                                    cornerRadius: 8,
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Pinned Survey Analytics
+                const chartsData = window.welcomeChartData.chartsData;
+                const chartColors = [
+                    '#4f46e5', '#ec4899', '#0ea5e9', '#f59e0b',
+                    '#10b981', '#8b5cf6', '#f43f5e', '#14b8a6',
+                    '#eab308', '#6366f1', '#f97316', '#d946ef'
+                ];
+
+                Object.entries(chartsData).forEach(([questionId, data]) => {
+                    const labels = data.labels;
+                    const totals = data.totals;
+                    const bgColors = labels.map((_, i) => chartColors[i % chartColors.length]);
+                    const ctx = document.getElementById(`dashboard-chart-${questionId}`);
+                    if (!ctx) return;
+
+                    window.welcomeCharts[`dashboard-chart-${questionId}`] = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: totals,
+                                backgroundColor: bgColors,
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                hoverOffset: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 16,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Make function globally accessible for AJAX navigation
+            window.initializeWelcomeCharts = initializeWelcomeCharts;
+
+            // Initialize on page load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeWelcomeCharts);
+            } else {
+                initializeWelcomeCharts();
+            }
+
+            // Reinitialize when AJAX loads new content
+            window.addEventListener('reinitialize-charts', initializeWelcomeCharts);
+        })();
+    </script>
+
     {{-- ===== Footer ===== --}}
     <footer class="bg-white border-t border-gray-200 mt-16">
-        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
+        <div
+            class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
             <span>© {{ date('Y') }} भरतपुर महानगरपालिका — सार्वजनिक तथ्याङ्क पोर्टल</span>
             @guest
                 <a href="{{ route('login') }}" class="text-blue-600 hover:underline font-medium">प्रशासन लगइन</a>
@@ -348,178 +715,6 @@
         </div>
     </footer>
 
-    {{-- ===== Chart Scripts ===== --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-
-            const ageGroupsData = @json($ageGroups ?? []);
-            const ageCtx = document.getElementById('ageDemographicsChart');
-
-            if (ageCtx && ageGroupsData.length > 0) {
-                const customLabels = [
-                    'जम्मा शिशु',
-                    'जम्मा बालबालिका',
-                    'जम्मा युवा',
-                    'जम्मा अधबैंसे',
-                    'जम्मा बृद्ध',
-                    'जम्मा जेष्ठ नागरिक'
-                ];
-                const ageLabels = ageGroupsData.length === 6
-                    ? customLabels
-                    : ageGroupsData.map(g => g.label + ' ' + (g.range || ''));
-                const ageCounts = ageGroupsData.map(g => g.count);
-                const ageColors = ['#4f46e5', '#f97316', '#4ade80', '#ef4444', '#dc2626', '#fbbf24'];
-
-                new Chart(ageCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ageLabels,
-                        datasets: [{
-                            label: 'नगरपालिकाको जनसंख्या',
-                            data: ageCounts,
-                            backgroundColor: ageColors,
-                            borderSkipped: false,
-                            borderRadius: 0,
-                            barPercentage: 0.8,
-                            categoryPercentage: 0.9
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'उमेर समूह अनुसारको तथ्यांक',
-                                font: { size: 16, family: "'Inter', sans-serif", weight: 'normal' },
-                                color: '#4b5563',
-                                padding: { bottom: 20 }
-                            },
-                            legend: {
-                                display: true,
-                                position: 'top',
-                                labels: { color: '#4b5563', font: { family: "'Inter', sans-serif" } }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(156, 163, 175, 0.9)',
-                                titleColor: '#ffffff',
-                                bodyColor: '#ffffff',
-                                padding: 12,
-                                cornerRadius: 6,
-                                displayColors: true
-                            }
-                        },
-                        scales: {
-                            x: {
-                                grid: { display: true, color: '#e5e7eb' },
-                                ticks: { color: '#6b7280', font: { family: "'Inter', sans-serif" } },
-                                border: { display: true, color: '#9ca3af' }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                grid: { display: true, color: '#e5e7eb' },
-                                ticks: { color: '#6b7280', font: { family: "'Inter', sans-serif" }, stepSize: 500 },
-                                border: { display: true, color: '#9ca3af' }
-                            }
-                        },
-                        layout: { padding: { top: 10, bottom: 10 } }
-                    },
-                    plugins: [{
-                        id: 'customCanvasBackgroundColor',
-                        beforeDraw: (chart, args, options) => {
-                            const { ctx } = chart;
-                            ctx.save();
-                            ctx.globalCompositeOperation = 'destination-over';
-                            ctx.fillStyle = options.color || '#f3f4f6';
-                            ctx.fillRect(0, 0, chart.width, chart.height);
-                            ctx.restore();
-                        }
-                    }]
-                });
-            }
-
-            const genderGroupsData = @json($genderGroups ?? []);
-            const genderCtx = document.getElementById('genderDemographicsChart');
-
-            if (genderCtx && genderGroupsData.length > 0) {
-                const genderLabels = genderGroupsData.map(g => g.label);
-                const genderCounts = genderGroupsData.map(g => g.count);
-                const genderColors = ['#3E95CD', '#8E5EA2', '#3CBA9F'];
-
-                new Chart(genderCtx, {
-                    type: 'pie',
-                    data: {
-                        labels: genderLabels,
-                        datasets: [{
-                            data: genderCounts,
-                            backgroundColor: genderColors,
-                            borderWidth: 2,
-                            borderColor: '#ffffff',
-                            hoverOffset: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                titleFont: { size: 14, family: "'Inter', sans-serif" },
-                                bodyFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
-                                padding: 12,
-                                cornerRadius: 8,
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Pinned Survey Analytics
-            const chartsData = @json($chartsData ?? []);
-            const chartColors = [
-                '#4f46e5', '#ec4899', '#0ea5e9', '#f59e0b',
-                '#10b981', '#8b5cf6', '#f43f5e', '#14b8a6',
-                '#eab308', '#6366f1', '#f97316', '#d946ef'
-            ];
-
-            Object.entries(chartsData).forEach(([questionId, data]) => {
-                const labels = data.labels;
-                const totals = data.totals;
-                const bgColors = labels.map((_, i) => chartColors[i % chartColors.length]);
-                const ctx = document.getElementById(`dashboard-chart-${questionId}`);
-                if (!ctx) return;
-
-                new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: totals,
-                            backgroundColor: bgColors,
-                            borderWidth: 2,
-                            borderColor: '#ffffff',
-                            hoverOffset: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' }
-                            }
-                        }
-                    }
-                });
-            });
-        });
-    </script>
-
 </body>
+
 </html>

@@ -1,10 +1,10 @@
 <aside class="fixed left-0 h-screen z-40" :class="miniSidebar ? 'w-16' : 'w-72'" aria-label="Sidebar"
     x-data="mainSidebarState()" @open-sidebar.window="miniSidebar = false" @close-sidebar.window="miniSidebar = true">
-    <div class="h-full px-3 py-24 bg-[#03396c] dark:bg-[#03396c]">
+    <div class="h-full py-24 bg-[#03396c] dark:bg-[#03396c]">
         <!-- Toggle Button -->
-        <div class="flex justify-end mb-4">
+        <div class="flex justify-end mb-4 px-3">
             <button type="button" @click="miniSidebar = !miniSidebar"
-                class="flex justify-center items-center size-8 text-white hover:bg-blue-900 rounded-lg transition-colors">
+                class="flex justify-center items-center size-8 text-white hover:bg-blue-900 transition-colors">
                 <svg class="size-4" :class="miniSidebar ? 'rotate-180' : ''" xmlns="http://www.w3.org/2000/svg"
                     width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -15,28 +15,28 @@
             </button>
         </div>
 
-        <ul class="space-y-2 font-medium">
-            <li>
+        <ul class="space-y-2 font-medium w-full">
+            <li class="w-full">
                 <a href="{{ route('dashboard') }}"
-                    class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-blue-900 dark:hover:bg-gray-700 group"
+                    class="flex items-center w-full px-4 py-2 text-white dark:text-white hover:bg-blue-900 dark:hover:bg-blue-800 group"
                     :class="miniSidebar ? 'justify-center' : ''">
                     <i class="fa-solid fa-sliders"></i>
                     <span class="flex-1 ms-3 whitespace-nowrap" x-show="!miniSidebar">{{ __('Dashboard') }}</span>
                 </a>
             </li>
 
-            <li>
+            <li class="w-full">
                 <a href="{{ route('dashboard.survey-report') }}"
-                    class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-blue-900 dark:hover:bg-gray-700 group"
+                    class="flex items-center w-full px-4 py-2 text-white dark:text-white hover:bg-blue-900 dark:hover:bg-blue-800 group"
                     :class="miniSidebar ? 'justify-center' : ''">
                     <i class="fa-solid fa-chart-column"></i>
                     <span class="flex-1 ms-3 whitespace-nowrap" x-show="!miniSidebar">{{ __('Survey Report') }}</span>
                 </a>
             </li>
 
-            <li>
+            <li class="w-full">
                 <a href="{{ route('palika.index') }}"
-                    class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-blue-900 dark:hover:bg-gray-700 group"
+                    class="flex items-center w-full px-4 py-2 text-white dark:text-white hover:bg-blue-900 dark:hover:bg-blue-800 group"
                     :class="miniSidebar ? 'justify-center' : ''">
                     <i class="fa-solid fa-building-columns"></i>
                     <span class="flex-1 ms-3 whitespace-nowrap" x-show="!miniSidebar">{{ __('Municipality') }}</span>
@@ -44,9 +44,9 @@
             </li>
 
 
-            <li>
+            <li class="w-full">
                 <button type="button" @click="homedescription = !homedescription"
-                    class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
+                    class="flex items-center w-full px-4 py-2 text-base text-white transition duration-75 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800"
                     :class="miniSidebar ? 'justify-center' : ''" aria-controls="dropdown-example">
                     <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
@@ -63,25 +63,25 @@
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                <ul x-show="homedescription && !miniSidebar" x-transition class="py-2 space-y-2">
-                    <li>
+                <ul x-show="homedescription && !miniSidebar" x-transition class="py-2 space-y-2 w-full">
+                    <li class="w-full">
                         <a href="{{ route('survey-responses.index') }}"
-                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Data details') }}</a>
+                            class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Data details') }}</a>
                     </li>
-                    <li>
+                    <li class="w-full">
                         <a href="{{ route('house-description.create') }}"
-                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Data form') }}</a>
+                            class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Data form') }}</a>
                     </li>
-                    <!-- <li>
+                    <!-- <li class="w-full">
                         <a href=""
-                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Member details') }}</a>
+                            class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Member details') }}</a>
                     </li> -->
                 </ul>
             </li>
 
-            <li>
+            <li class="w-full">
                 <button type="button" @click="imp_sites = !imp_sites"
-                    class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
+                    class="flex items-center w-full px-4 py-2 text-base text-white transition duration-75 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800"
                     :class="miniSidebar ? 'justify-center' : ''" aria-controls="dropdown-example">
                     <i class="fa-solid fa-crosshairs"></i>
 
@@ -93,21 +93,21 @@
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                <ul x-show="imp_sites && !miniSidebar" x-transition class="py-2 space-y-2">
-                    <li>
+                <ul x-show="imp_sites && !miniSidebar" x-transition class="py-2 space-y-2 w-full">
+                    <li class="w-full">
                         <a href="{{ route('important-site.index') }}"
-                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Site details') }}</a>
+                            class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Site details') }}</a>
                     </li>
-                    <li>
+                    <li class="w-full">
                         <a href="{{ route('important-site.create') }}"
-                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Site form') }}</a>
+                            class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Site form') }}</a>
                     </li>
                 </ul>
             </li>
 
-            <li>
+            <li class="w-full">
                 <button type="button" @click="trm = !trm"
-                    class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
+                    class="flex items-center w-full px-4 py-2 text-base text-white transition duration-75 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800"
                     :class="miniSidebar ? 'justify-center' : ''" aria-controls="dropdown-example">
                     <i class="fa-regular fa-map"></i>
 
@@ -119,22 +119,22 @@
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                <ul x-show="trm && !miniSidebar" x-transition class="py-2 space-y-2">
-                    <li>
+                <ul x-show="trm && !miniSidebar" x-transition class="py-2 space-y-2 w-full">
+                    <li class="w-full">
                         <a href="{{ route('resource-mapping.index') }}"
-                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Resource mapping details') }}</a>
+                            class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Resource mapping details') }}</a>
                     </li>
-                    <li>
+                    <li class="w-full">
                         <a href="{{ route('resource-mapping.create') }}"
-                            class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Resource mapping form') }}</a>
+                            class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Resource mapping form') }}</a>
                     </li>
                 </ul>
             </li>
 
             @if (Auth::user()->isSuperAdmin() || Auth::user()->isWardAdmin())
-                <li>
+                <li class="w-full">
                     <button type="button" @click="surveyform = !surveyform"
-                        class="flex items-center w-full p-2 text-base text-white transition duration-75 rounded-lg group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700"
+                        class="flex items-center w-full px-4 py-2 text-base text-white transition duration-75 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800"
                         :class="miniSidebar ? 'justify-center' : ''" aria-controls="dropdown-example">
                         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
                             xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
@@ -152,21 +152,21 @@
                                 stroke-width="2" d="m1 1 4 4 4-4" />
                         </svg>
                     </button>
-                    <ul x-show="surveyform && !miniSidebar" x-transition class="py-2 space-y-2">
-                        <li>
+                    <ul x-show="surveyform && !miniSidebar" x-transition class="py-2 space-y-2 w-full">
+                        <li class="w-full">
                             <a href="{{ route('surveyform.index') }}"
-                                class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Manage sections') }}</a>
+                                class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Manage sections') }}</a>
                         </li>
-                        <li>
+                        <li class="w-full">
                             <a href="{{ route('surveyform.create') }}"
-                                class="flex items-center w-full p-2 text-white transition duration-75 rounded-lg pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-gray-700">{{ __('Add questions') }}</a>
+                                class="flex items-center w-full px-4 py-2 text-white transition duration-75 pl-11 group hover:bg-blue-900 dark:text-white dark:hover:bg-blue-800">{{ __('Add questions') }}</a>
                         </li>
                     </ul>
                 </li>
                 @endif @if (Auth::user()->isSuperAdmin() || Auth::user()->isWardAdmin())
-                    <li>
+                    <li class="w-full">
                         <a href="{{ route('users.index') }}"
-                            class="flex items-center p-2 text-white rounded-lg dark:text-white hover:bg-blue-900 dark:hover:bg-gray-700 group"
+                            class="flex items-center w-full px-4 py-2 text-white dark:text-white hover:bg-blue-900 dark:hover:bg-blue-800 group"
                             :class="miniSidebar ? 'justify-center' : ''">
                             <svg class="shrink-0 w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"

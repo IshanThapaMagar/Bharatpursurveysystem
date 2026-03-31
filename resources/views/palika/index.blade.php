@@ -75,9 +75,8 @@
                     </p>
                 </div>
                 <div>
-                    <a href="{{ route('palika.admin.create') }}"
-                        class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition">
-                        Add Palika Admin
+                    <a href="{{ route('palika.admin.create') }}" class="text-gray-600 underline hover:text-gray-800">
+                        {{ __('Add Palika Admin →') }}
                     </a>
                 </div>
             </div>
@@ -183,7 +182,8 @@
                     <tbody class="bg-white divide-y divide-gray-100">
                         @foreach ($wards ?? [] as $index => $ward)
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td data-label="{{ __('S.N.') }}" class="px-4 py-3 whitespace-nowrap">{{ $index + 1 }}</td>
+                                <td data-label="{{ __('S.N.') }}" class="px-4 py-3 whitespace-nowrap">
+                                    {{ $index + 1 }}</td>
                                 <td data-label="{{ __('Ward No.') }}" class="px-4 py-3 font-bold text-blue-600">
                                     {{ $ward->ward_no }}
                                 </td>
@@ -233,10 +233,9 @@
                         emptyTable: "{{ __('No data available in table') }}",
                     },
                     columnDefs: [{
-                            targets: [0, 4],
-                            orderable: false
-                        }
-                    ],
+                        targets: [0, 4],
+                        orderable: false
+                    }],
                     order: [
                         [1, 'asc']
                     ],
