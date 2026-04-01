@@ -31,7 +31,7 @@ class Response extends Model
 
     public function householder(): BelongsTo
     {
-        return $this->belongsTo(Householder::class);
+        return $this->belongsTo(HouseHolder::class);
     }
 
     public function answers(): HasMany
