@@ -10,7 +10,7 @@ use App\Models\Tole;
 use App\Models\Caste;
 use App\Models\MotherTongue;
 use App\Models\CitizenshipPermanentAddress;
-use App\Models\Householder;
+use App\Models\HouseHolder;
 use Illuminate\Support\Facades\Artisan;
 use App\Services\DashboardCacheService;
 
@@ -372,7 +372,7 @@ class ResponseController extends Controller
             }
 
             if (!empty($updateData)) {
-                Householder::where('id', $response->householder_id)->update($updateData);
+                HouseHolder::where('id', $response->householder_id)->update($updateData);
             }
         }
 
