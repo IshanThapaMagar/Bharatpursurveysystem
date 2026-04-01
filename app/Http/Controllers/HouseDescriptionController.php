@@ -6,7 +6,7 @@ use App\Models\SurveySection;
 use App\Models\Ward;
 use App\Models\Response;
 use App\Models\Answer;
-use App\Models\Householder;
+use App\Models\HouseHolder;
 use App\Models\MotherTongue;
 use App\Models\Caste;
 use App\Models\Tole;
@@ -63,11 +63,6 @@ class HouseDescriptionController extends Controller
         });
     }
 
-    /**
-     * Fetch all lookup data for a given ward.
-     * Global lookups (mother tongues, castes, addresses) are cached for 24 hours.
-     * Toles are cached per-ward for 24 hours.
-     */
     public function getLookupDataArray($wardId): array
     {
         $motherTongues = Cache::remember('lookup_mother_tongues', now()->addHours(24), fn() =>
@@ -218,7 +213,7 @@ class HouseDescriptionController extends Controller
             }
 
 
-            $householder = Householder::create([
+            $householder = HouseHolder::create([
                 'householder_name' => $validated['householder_name'],
                 'father_name' => $validated['father_name'],
                 'mother_name' => $validated['mother_name'],

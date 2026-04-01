@@ -27,13 +27,11 @@ class TolesSeeder extends Seeder
 
         $wardToles = [
             1 => $defaultToles,
-            // Add ward-specific overrides here if needed
         ];
 
         $wards = Ward::all();
 
         foreach ($wards as $ward) {
-            // Use ward-specific toles if available, otherwise use default toles
             $tolesToSeed = $wardToles[$ward->id] ?? $defaultToles;
 
             foreach ($tolesToSeed as $toleName) {

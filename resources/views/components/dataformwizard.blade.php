@@ -300,7 +300,6 @@
 @endpush
 
 <div x-data="surveyWizard()" class="px-12 sm:py-1">
-    {{-- Ward selector: only in AJAX mode (no server-side data passed) --}}
     @if(!$wardInfo)
     <div class="mb-8 animate-fade-in-up">
         <div class="w-52">
@@ -320,7 +319,7 @@
     @endif
 
     @if(!$wardInfo)
-    <!-- Loading State -->
+  
     <div x-show="isLoading" x-cloak class="flex justify-center items-center py-20">
         <div class="text-center">
             <div class="loading-spinner mx-auto mb-4"></div>
@@ -328,7 +327,7 @@
         </div>
     </div>
 
-    <!-- No Ward Selected State -->
+   
     <div x-show="!selectedWardId && !isLoading" x-cloak class="text-center py-20">
         <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -338,13 +337,13 @@
         <p class="text-gray-600">Please select a ward from the dropdown above to begin the survey.</p>
     </div>
 
-    <!-- Survey Form (AJAX mode) -->
+   
     <div x-show="selectedWardId && !isLoading && sections.length > 0" x-cloak>
     @else
-    <!-- Survey Form (server-side mode: always visible) -->
+  
     <div>
     @endif
-        <!-- Progress Bar -->
+      
         <div class="mb-6 animate-fade-in-up">
             <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100">
                 <div class="progress-bar h-full bg-gradient-to-r from-indigo-500 to-purple-600"
@@ -357,7 +356,7 @@
 
         <div class="animate-fade-in-up overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
             <div class="grid lg:grid-cols-[300px_1fr]">
-                <!-- Left sidebar with stepper -->
+              
                 <div
                     class="border-b border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 p-6 lg:border-b-0 lg:border-r lg:p-8">
                     <div class="mb-8 flex items-center gap-3">
@@ -373,18 +372,18 @@
                         </div>
                     </div>
 
-                    <!-- Stepper -->
+                
                     <div class="space-y-6">
                         <template x-for="(step, index) in steps" :key="step.id">
                             <div class="relative">
-                                <!-- Connecting line -->
+                               
                                 <div x-show="index < steps.length - 1" class="step-line"
                                     :class="currentStep > step.id ? 'step-line-completed' : ''"></div>
 
                                 <button @click="navigateToStep(step.id)" type="button"
                                     class="relative flex w-full items-start gap-3 text-left transition-all duration-200 hover:opacity-80"
                                     :class="currentStep >= step.id ? '' : 'opacity-50'">
-                                    <!-- Step circle -->
+                                 
                                     <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200"
                                         :class="currentStep > step.id ?
                                             'border-emerald-500 bg-emerald-500 shadow-lg shadow-emerald-500/30' :
@@ -405,7 +404,7 @@
                                         </template>
                                     </div>
 
-                                    <!-- Step content -->
+                                   
                                     <div class="flex-1 pt-0.5">
                                         <p class="text-sm font-semibold leading-tight"
                                             :class="currentStep === step.id ? 'text-gray-900' : 'text-gray-600'"
@@ -435,7 +434,7 @@
                                 <x-static-form-fields />
                             </div>
 
-                            <!-- Dynamic Sections -->
+          
                             <template x-for="(section, sIndex) in sections" :key="section.id">
                                 <div x-show="currentStep === sIndex + 2"
                                     x-transition:enter="transition ease-out duration-300"
@@ -464,7 +463,7 @@
                                                         x-text="question.question_subtext"></span>
 
                                                     <div class="mt-4">
-                                                        <!-- Short Text Input -->
+                                              
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'short_text'">
                                                             <input type="text"
@@ -475,7 +474,7 @@
                                                                 placeholder="Enter your answer">
                                                         </template>
 
-                                                        <!-- Long Text / Textarea -->
+                                           
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'long_text'">
                                                             <textarea x-model="formData.answers[question.id].answer_text" @input="clearError(question.id)"
@@ -484,7 +483,6 @@
                                                                 placeholder="Enter your answer"></textarea>
                                                         </template>
 
-                                                        <!-- Email Input -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'email'">
                                                             <input type="email"
@@ -495,7 +493,7 @@
                                                                 placeholder="email@example.com">
                                                         </template>
 
-                                                        <!-- Number Input -->
+                                               
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'number'">
                                                             <input type="number" step="0.01"
@@ -506,7 +504,7 @@
                                                                 placeholder="">
                                                         </template>
 
-                                                        <!-- Date Input -->
+                                 
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'date'">
                                                             <input type="date"
@@ -516,7 +514,6 @@
                                                                 class="input-field mt-1 block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                                         </template>
 
-                                                        <!-- Radio Buttons -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'radio'">
                                                             <div class="mt-3 space-y-3">
@@ -556,7 +553,7 @@
                                                             </div>
                                                         </template>
 
-                                                        <!-- Linear Scale -->
+                                
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'linear_scale'">
                                                             <div class="mt-6" @click.stop>
@@ -587,7 +584,6 @@
                                                             </div>
                                                         </template>
 
-                                                        <!-- Checkboxes -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'checkbox'">
                                                             <div class="mt-3 space-y-3">
@@ -624,7 +620,7 @@
                                                             </div>
                                                         </template>
 
-                                                        <!-- Dropdown -->
+                           
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'dropdown'">
                                                             <select
@@ -642,11 +638,10 @@
                                                             </select>
                                                         </template>
 
-                                                        <!-- Location/GPS Input with Modal Map -->
                                                         <template
                                                             x-if="question.input_type?.input_type_name === 'location'">
                                                             <div>
-                                                                <!-- Location Selection Button -->
+                                                        
                                                                 <button type="button"
                                                                     @click="openMapModal(question.id)"
                                                                     class="w-full mt-2 flex items-center justify-center gap-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition-all hover:border-indigo-500 hover:bg-indigo-50">
@@ -675,7 +670,7 @@
                                                                     </div>
                                                                 </button>
 
-                                                                <!-- Coordinates Display (Read-only) -->
+                                                          
                                                                 <div x-show="formData.answers[question.id].latitude"
                                                                     class="location-coordinates mt-3">
                                                                     <div
@@ -738,7 +733,7 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <!-- Hidden inputs for validation -->
+                                                             
                                                                 <input type="hidden"
                                                                     x-model="formData.answers[question.id].latitude"
                                                                     :required="question.answer_required">
@@ -746,7 +741,7 @@
                                                                     x-model="formData.answers[question.id].longitude"
                                                                     :required="question.answer_required">
 
-                                                                <!-- Map Modal -->
+                                                        
                                                                 <div x-show="mapModal.isOpen && mapModal.questionId === question.id"
                                                                     x-cloak class="modal-overlay"
                                                                     @click.self="closeMapModal()"

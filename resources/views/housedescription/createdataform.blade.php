@@ -2,10 +2,10 @@
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50 py-16">
         <div x-data="{ selectedWardId: '' }" class="w-full max-w-md mx-auto px-4">
 
-            {{-- Card --}}
+    
             <div class="bg-white rounded-2xl shadow-2xl p-10 text-center">
 
-                {{-- Icon --}}
+
                 <div class="flex justify-center mb-6">
                     <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg">
                         <svg class="h-9 w-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +20,6 @@
                 </h1>
                 <p class="text-sm text-gray-500 mb-8">Select a ward below to begin the house description survey.</p>
 
-                {{-- Ward Dropdown --}}
                 <div class="text-left mb-6">
                     <label for="ward-select" class="block text-sm font-semibold text-gray-700 mb-2">
                         Select Ward <span class="text-red-500">*</span>
@@ -37,7 +36,7 @@
                     </select>
                 </div>
 
-                {{-- Start Survey Button — shown only after ward is selected --}}
+               
                 <div x-show="selectedWardId" x-cloak
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform translate-y-3"
@@ -54,7 +53,7 @@
                     </a>
                 </div>
 
-                {{-- Placeholder when no ward selected --}}
+              
                 <div x-show="!selectedWardId" class="mt-2 text-xs text-gray-400">
                     Select a ward to continue
                 </div>
