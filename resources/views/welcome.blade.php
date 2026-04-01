@@ -426,10 +426,10 @@
 
     </div>
 
-    <!-- Chart.js (welcome uses its own standalone layout, not x-app-layout) -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Inline chart initialization script for AJAX navigation support -->
+
     <script>
         (function() {
             // Wait for Chart to be available
@@ -450,22 +450,20 @@
             };
 
             function initializeWelcomeCharts() {
-                // Check if Chart.js library is loaded
+
                 if (typeof Chart === 'undefined') {
                     console.warn('[Welcome Charts] Chart.js not loaded yet');
                     setTimeout(initializeWelcomeCharts, 50);
                     return;
                 }
 
-                // Destroy existing charts before creating new ones
+
                 Object.values(window.welcomeCharts).forEach(chart => {
                     if (chart && typeof chart.destroy === 'function') {
                         chart.destroy();
                     }
                 });
                 window.welcomeCharts = {};
-
-                // Use global data instead of @json() to persist across AJAX loads
                 const ageGroupsData = window.welcomeChartData.ageGroups;
                 const ageCtx = document.getElementById('ageDemographicsChart');
 
@@ -644,7 +642,7 @@
                     });
                 }
 
-                // Pinned Survey Analytics
+
                 const chartsData = window.welcomeChartData.chartsData;
                 const chartColors = [
                     '#4f46e5', '#ec4899', '#0ea5e9', '#f59e0b',
@@ -689,22 +687,21 @@
                 });
             }
 
-            // Make function globally accessible for AJAX navigation
+
             window.initializeWelcomeCharts = initializeWelcomeCharts;
 
-            // Initialize on page load
+
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initializeWelcomeCharts);
             } else {
                 initializeWelcomeCharts();
             }
 
-            // Reinitialize when AJAX loads new content
             window.addEventListener('reinitialize-charts', initializeWelcomeCharts);
         })();
     </script>
 
-    {{-- ===== Footer ===== --}}
+
     <footer class="bg-white border-t border-gray-200 mt-16">
         <div
             class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
