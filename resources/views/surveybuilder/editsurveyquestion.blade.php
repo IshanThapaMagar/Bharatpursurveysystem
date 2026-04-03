@@ -443,6 +443,11 @@
                             value: 'linear_scale',
                             label: t.linear_scale || 'Linear Scale',
                             description: t.linear_scale_description || 'Scale from 1 to a number'
+                        },
+                        {
+                            value: 'location',
+                            label: t.location || 'Location',
+                            description: t.location_description || 'Interactive map with coordinates'
                         }
                     ],
 

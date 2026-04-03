@@ -3,8 +3,6 @@
         <div class="px-4 sm:px-6 lg:px-8 max-w-[100%]">
             <div class="bg-white overflow-hidden shadow-sm rounded-sm">
                 <div class="p-6 text-gray-900">
-
-                    <!-- Ward Dropdown & Export -->
                     <div class="flex flex-wrap items-center justify-between mb-8 gap-4">
                         <form method="GET" class="flex items-center gap-4">
                             <select name="ward" onchange="this.form.submit()"
@@ -84,7 +82,7 @@
                         @endforeach
                     </div>
 
-                    <!-- Gender Statistics Info Boxes -->
+         
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                         @php
                             $genderIds = [1, 2, 3]; // male, female, other
@@ -93,7 +91,7 @@
                         @foreach ($genderGroups as $gi => $group)
                             <a href="{{ route('dashboard.members', ['filter_type' => 'gender', 'gender_id' => $genderIds[$gi], 'ward' => $selectedWard, 'label' => $group['label']]) }}"
                                 class="relative block p-5 rounded-sm border {{ $group['border_color'] }} {{ $group['light_color'] }} hover:shadow-md transition-shadow duration-300 overflow-hidden">
-                                <!-- Background Image (only for male and female) -->
+                        
                                 @if ($gi < 2)
                                     <div
                                         class="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 pointer-events-none overflow-hidden rounded-sm flex items-center justify-center">
@@ -183,10 +181,8 @@
                         @endforeach
                     </div>
 
-                    <!-- Statistics Collage (Screenshot Style) -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10 mt-12 mb-16">
-
-                        <!-- मातृभाषा Table -->
+                   
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10 mt-12 mb-16">                       
                         <div class="flex flex-col">
                             <h3
                                 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
@@ -230,7 +226,6 @@
                             </div>
                         </div>
 
-                        <!-- जातजातीहरु Table -->
                         <div class="flex flex-col">
                             <h3
                                 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
@@ -274,7 +269,6 @@
                             </div>
                         </div>
 
-                        <!-- शिक्षाको अवस्था Table -->
                         <div class="flex flex-col">
                             <h3
                                 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
@@ -316,7 +310,6 @@
                             </div>
                         </div>
 
-                        <!-- धर्म Table -->
                         <div class="flex flex-col">
                             <h3
                                 class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
@@ -362,7 +355,6 @@
 
                     </div>
 
-                    <!-- Pinned Charts -->
                     @if (isset($chartsData) && count($chartsData) > 0)
                         <div class="mb-12">
                             <div class="flex items-center justify-between mb-6">
@@ -391,9 +383,7 @@
         </div>
     </div>
 
-    <!-- Global chart initialization for dashboard -->
     <script>
-        // Store data globally so it persists across AJAX navigation
         window.dashboardChartData = {
             chartsData: @json($chartsData ?? []),
             ageGroups: @json($ageGroups ?? []),
@@ -403,14 +393,12 @@
         window.dashboardCharts = window.dashboardCharts || {};
 
         function initializeDashboardCharts() {
-            // Ensure Chart is available
             if (typeof Chart === 'undefined') {
                 console.warn('[Dashboard Charts] Chart.js not loaded yet');
                 setTimeout(initializeDashboardCharts, 50);
                 return;
             }
 
-            // Destroy existing charts
             Object.values(window.dashboardCharts).forEach(chart => {
                 if (chart && typeof chart.destroy === 'function') {
                     chart.destroy();
@@ -687,7 +675,6 @@
         // Reinitialize when AJAX loads new content
         window.addEventListener('reinitialize-charts', initializeDashboardCharts);
 
-        // Make sure function is callable at any time
         window.initializeDashboardCharts = initializeDashboardCharts;
     </script>
 

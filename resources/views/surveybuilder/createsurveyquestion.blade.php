@@ -10,13 +10,10 @@
                         class="space-y-4" method="POST">
                         @csrf
 
-                        {{-- Hidden inputs for JSON submission --}}
                         <input type="hidden" name="survey_data" x-ref="surveyDataInput">
                         <input type="hidden" name="ward_id" x-ref="wardIdInput">
 
                         <div class="fixed top-20 right-4 flex flex-col gap-2 z-50">
-
-                            {{-- Success Message --}}
                             @if (session('success'))
                                 <div class="max-w-xs w-full p-4 bg-layer border border-layer-line rounded-xl shadow-lg"
                                     role="alert" tabindex="-1" aria-labelledby="hs-toast-success-label">
@@ -56,7 +53,7 @@
                                 </div>
                             @endif
 
-                            {{-- Validation Errors --}}
+
                             @if ($errors->any())
                                 <div class="max-w-xs w-full p-4 bg-layer border border-layer-line rounded-xl shadow-lg"
                                     role="alert" tabindex="-1" aria-labelledby="hs-toast-validation-label">
@@ -89,7 +86,7 @@
                             </label>
                             <select name="ward_id" id="ward_id"
                                 class="block w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-gray-900">
-                                @if(auth()->user()->isSuperAdmin())
+                                @if (auth()->user()->isSuperAdmin())
                                     <option value="all" {{ old('ward_id', 'all') == 'all' ? 'selected' : '' }}>
                                         {{ __('All Wards') }}</option>
                                 @endif
@@ -436,167 +433,149 @@
             </div>
         </div>
     </div>
-    @push('scripts')
-        <script>
-            window.t = @json(trans('messages'));
+    <script>
+        window.t = @json(trans('messages'));
 
-            function surveyBuilder() {
-                const t = window.t;
+        function surveyBuilder() {
+            const t = window.t;
 
-                return {
-                    sections: [],
-                    questions: [],
-                    showQuestionTypeDialog: false,
-                    currentSectionId: null,
-                    sectionSortable: null,
-                    questionSortables: {},
-                    nextSectionId: 1,
-                    nextQuestionId: 1,
-                    questionTypes: [{
-                            value: 'text',
-                            label: t.text || 'Text',
-                            description: t.text_description || 'Add heading or description'
-                        },
-                        {
-                            value: 'short_text',
-                            label: t.short_text || 'Short Text',
-                            description: t.single_line || 'Single line response'
-                        },
-                        {
-                            value: 'long_text',
-                            label: t.long_text || 'Long Text',
-                            description: t.multi_line || 'Multi-line response'
-                        },
-                        {
-                            value: 'email',
-                            label: t.email || 'Email',
-                            description: t.email_input || 'Email input'
-                        },
-                        {
-                            value: 'number',
-                            label: t.number || 'Number',
-                            description: t.numeric_input || 'Numeric input'
-                        },
-                        {
-                            value: 'date',
-                            label: t.date || 'Date',
-                            description: t.date_picker || 'Date picker'
-                        },
-                        {
-                            value: 'radio',
-                            label: t.radio || 'Multiple Choice',
-                            description: t.select_one || 'Select one option'
-                        },
-                        {
-                            value: 'checkbox',
-                            label: t.checkboxes || 'Checkboxes',
-                            description: t.select_multiple || 'Select multiple options'
-                        },
-                        {
-                            value: 'dropdown',
-                            label: t.dropdown || 'Dropdown',
-                            description: t.select_dropdown || 'Select from dropdown'
-                        },
-                        {
-                            value: 'file',
-                            label: t.file_upload || 'File Upload',
-                            description: t.file_upload || 'Upload a file'
-                        },
-                        {
-                            value: 'linear_scale',
-                            label: t.linear_scale || 'Linear Scale',
-                            description: t.linear_scale_description || 'Scale from 1 to a number'
-                        },
-                        {
-                            value: 'location',
-                            label: t.location || 'Location/GPS',
-                            description: t.location_description || 'Interactive map with coordinates'
-                        }
-                    ],
-
-                    init() {
-                        this.loadOldValues();
-
-                        this.$nextTick(() => {
-                            this.initializeSortable();
-                        });
+            return {
+                sections: [],
+                questions: [],
+                showQuestionTypeDialog: false,
+                currentSectionId: null,
+                sectionSortable: null,
+                questionSortables: {},
+                nextSectionId: 1,
+                nextQuestionId: 1,
+                questionTypes: [{
+                        value: 'text',
+                        label: t.text || 'Text',
+                        description: t.text_description || 'Add heading or description'
                     },
-                    loadOldValues() {
-                        @if (old('sections'))
-                            const oldSections = @json(old('sections'));
-                            const oldQuestions = @json(old('questions'));
+                    {
+                        value: 'short_text',
+                        label: t.short_text || 'Short Text',
+                        description: t.single_line || 'Single line response'
+                    },
+                    {
+                        value: 'long_text',
+                        label: t.long_text || 'Long Text',
+                        description: t.multi_line || 'Multi-line response'
+                    },
+                    {
+                        value: 'email',
+                        label: t.email || 'Email',
+                        description: t.email_input || 'Email input'
+                    },
+                    {
+                        value: 'number',
+                        label: t.number || 'Number',
+                        description: t.numeric_input || 'Numeric input'
+                    },
+                    {
+                        value: 'date',
+                        label: t.date || 'Date',
+                        description: t.date_picker || 'Date picker'
+                    },
+                    {
+                        value: 'radio',
+                        label: t.radio || 'Multiple Choice',
+                        description: t.select_one || 'Select one option'
+                    },
+                    {
+                        value: 'checkbox',
+                        label: t.checkboxes || 'Checkboxes',
+                        description: t.select_multiple || 'Select multiple options'
+                    },
+                    {
+                        value: 'dropdown',
+                        label: t.dropdown || 'Dropdown',
+                        description: t.select_dropdown || 'Select from dropdown'
+                    },
+                    {
+                        value: 'multiple_choice',
+                        label: t.multiple_choice || 'Multiple Choice Grid',
+                        description: t.grid_layout || 'Grid layout for multiple questions'
+                    },
+                    {
+                        value: 'linear_scale',
+                        label: t.linear_scale || 'Linear Scale',
+                        description: t.scale_description || 'Scale from low to high'
+                    },
+                    {
+                        value: 'location',
+                        label: t.location || 'Location',
+                        description: t.location_description || 'Interactive map with coordinates'
+                    }
+                ],
+
+                init() {
+                    this.loadOldValues();
+
+                    this.$nextTick(() => {
+                        this.initializeSortable();
+                    });
+                },
+                loadOldValues() {
+                    @if (old('sections'))
+                        const oldSections = @json(old('sections'));
+                        const oldQuestions = @json(old('questions'));
 
 
-                            if (oldSections) {
-                                Object.values(oldSections).forEach(section => {
-                                    this.sections.push({
-                                        id: section.id,
-                                        title: section.title || '',
-                                        description: section.description || '',
-                                        isOpen: true
-                                    });
-
-
-                                    const numericId = parseInt(section.id.replace('s', ''));
-                                    if (!isNaN(numericId) && numericId >= this.nextSectionId) {
-                                        this.nextSectionId = numericId + 1;
-                                    }
+                        if (oldSections) {
+                            Object.values(oldSections).forEach(section => {
+                                this.sections.push({
+                                    id: section.id,
+                                    title: section.title || '',
+                                    description: section.description || '',
+                                    isOpen: true
                                 });
-                            }
 
 
-                            if (oldQuestions) {
-                                Object.entries(oldQuestions).forEach(([questionId, question]) => {
-                                    const newQuestion = {
-                                        id: questionId,
-                                        sectionId: question.section_id,
-                                        type: question.type,
-                                        label: question.label || '',
-                                        description: question.description || '',
-                                        required: question.required == '1' || question.required === true
-                                    };
-
-                                    // Load linear scale settings
-                                    if (question.type === 'linear_scale') {
-                                        newQuestion.scale_from = parseInt(question.scale_from) || 1;
-                                        newQuestion.scale_to = parseInt(question.scale_to) || 5;
-                                        newQuestion.scale_label_low = question.scale_label_low || '';
-                                        newQuestion.scale_label_high = question.scale_label_high || '';
-                                    }
-
-                                    if (question.options) {
-                                        newQuestion.options = Object.values(question.options).map(opt => ({
-                                            id: opt.id,
-                                            value: opt.value || '',
-                                            label: opt.label || '',
-                                            input_type: opt.input_type || 'none',
-                                            input_placeholder: opt.input_placeholder || ''
-                                        }));
-                                    }
-
-                                    this.questions.push(newQuestion);
-
-
-                                    const numericId = parseInt(questionId.replace('q', ''));
-                                    if (!isNaN(numericId) && numericId >= this.nextQuestionId) {
-                                        this.nextQuestionId = numericId + 1;
-                                    }
-                                });
-                            }
-                        @endif
-
-
-                        @if (old('ward_id'))
-                            this.$nextTick(() => {
-                                const wardSelect = document.getElementById('ward_id');
-                                if (wardSelect) {
-                                    wardSelect.value = "{{ old('ward_id') }}";
+                                const numericId = parseInt(section.id.replace('s', ''));
+                                if (!isNaN(numericId) && numericId >= this.nextSectionId) {
+                                    this.nextSectionId = numericId + 1;
                                 }
                             });
-                        @endif
-                    },
+                        }
 
-                    initializeSortable() {
+
+                        if (oldQuestions) {
+                            Object.entries(oldQuestions).forEach(([questionId, question]) => {
+                                const newQuestion = {
+                                    id: questionId,
+                                    sectionId: question.section_id,
+                                    type: question.type,
+                                    label: question.label || '',
+                                    description: question.description || '',
+                                    required: question.required == '1' || question.required === true
+                                };
+
+                                if (question.options) {
+                                    newQuestion.options = question.options;
+                                }
+
+                                if (['linear_scale'].includes(question.type)) {
+                                    newQuestion.scale_from = question.scale_from || 1;
+                                    newQuestion.scale_to = question.scale_to || 5;
+                                    newQuestion.scale_label_low = question.scale_label_low || '';
+                                    newQuestion.scale_label_high = question.scale_label_high || '';
+                                }
+
+                                this.questions.push(newQuestion);
+
+                                const numericId = parseInt(questionId.replace('q', ''));
+                                if (!isNaN(numericId) && numericId >= this.nextQuestionId) {
+                                    this.nextQuestionId = numericId + 1;
+                                }
+                            });
+                        }
+                    @endif
+                },
+
+                initializeSortable() {
+                    try {
                         const sectionsContainer = document.getElementById('sections-container');
                         if (sectionsContainer && !this.sectionSortable) {
                             this.sectionSortable = new Sortable(sectionsContainer, {
@@ -618,63 +597,71 @@
                         this.sections.forEach(section => {
                             const questionsContainer = document.getElementById(`questions-${section.id}`);
                             if (questionsContainer && !this.questionSortables[section.id]) {
-                                this.questionSortables[section.id] = new Sortable(questionsContainer, {
-                                    animation: 150,
-                                    handle: '.question-handle',
-                                    ghostClass: 'sortable-ghost',
-                                    dragClass: 'sortable-drag',
-                                    onEnd: (evt) => {
-                                        const newOrder = Array.from(questionsContainer.children)
-                                            .map((
-                                                el) => {
-                                                const questionId = el.getAttribute(
-                                                    'data-question-id');
-                                                return this.questions.find(q => q.id ===
-                                                    questionId);
-                                            });
+                                try {
+                                    this.questionSortables[section.id] = new Sortable(questionsContainer, {
+                                        animation: 150,
+                                        handle: '.question-handle',
+                                        ghostClass: 'sortable-ghost',
+                                        dragClass: 'sortable-drag',
+                                        onEnd: (evt) => {
+                                            const newOrder = Array.from(questionsContainer.children)
+                                                .map((
+                                                    el) => {
+                                                    const questionId = el.getAttribute(
+                                                        'data-question-id');
+                                                    return this.questions.find(q => q.id ===
+                                                        questionId);
+                                                });
 
-                                        const otherQuestions = this.questions.filter(q => q
-                                            .sectionId !==
-                                            section.id);
-                                        this.questions = [...otherQuestions, ...newOrder.filter(
-                                            Boolean)];
-                                    }
-                                });
+                                            const otherQuestions = this.questions.filter(q => q
+                                                .sectionId !==
+                                                section.id);
+                                            this.questions = [...otherQuestions, ...newOrder.filter(
+                                                Boolean)];
+                                        }
+                                    });
+                                } catch (error) {
+                                    console.warn(`Could not initialize sortable for section ${section.id}:`, error);
+                                }
                             }
                         });
-                    },
+                    } catch (error) {
+                        console.error('Error in initializeSortable:', error);
+                    }
+                },
 
-                    getQuestions(sectionId) {
-                        return this.questions.filter(q => q.sectionId === sectionId);
-                    },
+                getQuestions(sectionId) {
+                    return this.questions.filter(q => q.sectionId === sectionId);
+                },
 
-                    toggleSection(sectionId) {
-                        const section = this.sections.find(s => s.id === sectionId);
-                        if (section) {
-                            section.isOpen = !section.isOpen;
+                toggleSection(sectionId) {
+                    const section = this.sections.find(s => s.id === sectionId);
+                    if (section) {
+                        section.isOpen = !section.isOpen;
+                    }
+                },
+
+                updateSection(sectionId, field, value) {
+                    const section = this.sections.find(s => s.id === sectionId);
+                    if (section) {
+                        section[field] = value;
+                    }
+                },
+
+                deleteSection(sectionId) {
+                    if (confirm(t.delete_confirm)) {
+                        this.sections = this.sections.filter(s => s.id !== sectionId);
+                        this.questions = this.questions.filter(q => q.sectionId !== sectionId);
+
+                        if (this.questionSortables[sectionId]) {
+                            this.questionSortables[sectionId].destroy();
+                            delete this.questionSortables[sectionId];
                         }
-                    },
+                    }
+                },
 
-                    updateSection(sectionId, field, value) {
-                        const section = this.sections.find(s => s.id === sectionId);
-                        if (section) {
-                            section[field] = value;
-                        }
-                    },
-
-                    deleteSection(sectionId) {
-                        if (confirm(t.delete_confirm)) {
-                            this.sections = this.sections.filter(s => s.id !== sectionId);
-                            this.questions = this.questions.filter(q => q.sectionId !== sectionId);
-
-                            if (this.questionSortables[sectionId]) {
-                                this.questionSortables[sectionId].destroy();
-                                delete this.questionSortables[sectionId];
-                            }
-                        }
-                    },
-
-                    addSection() {
+                addSection() {
+                    try {
                         const newId = 's' + this.nextSectionId++;
                         this.sections.push({
                             id: newId,
@@ -684,163 +671,189 @@
                         });
 
                         this.$nextTick(() => {
-                            this.initializeSortable();
-                        });
-                    },
-
-                    openQuestionTypeDialog(sectionId) {
-                        this.currentSectionId = sectionId;
-                        this.showQuestionTypeDialog = true;
-                    },
-
-                    addQuestion(type) {
-                        const newId = 'q' + this.nextQuestionId++;
-
-                        const newQuestion = {
-                            id: newId,
-                            sectionId: this.currentSectionId,
-                            type: type,
-                            label: '',
-                            description: '',
-                            required: false
-
-                        };
-
-                        if (['radio', 'checkbox', 'dropdown', 'multiple_choice'].includes(type)) {
-                            newQuestion.options = [{
-                                    id: 'opt1',
-                                    value: '',
-                                    label: '',
-
-                                    input_type: 'none',
-                                    input_placeholder: ''
-                                },
-                                {
-                                    id: 'opt2',
-                                    value: '',
-                                    label: '',
-
-                                    input_type: 'none',
-                                    input_placeholder: ''
-                                }
-                            ];
-                        }
-
-                        // Initialize linear scale defaults
-                        if (type === 'linear_scale') {
-                            newQuestion.scale_from = 1;
-                            newQuestion.scale_to = 5;
-                            newQuestion.scale_label_low = '';
-                            newQuestion.scale_label_high = '';
-                        }
-
-                        this.questions.push(newQuestion);
-                        this.showQuestionTypeDialog = false;
-                        this.currentSectionId = null;
-
-                        this.$nextTick(() => {
-                            this.initializeSortable();
-                        });
-                    },
-
-                    updateQuestion(questionId, field, value) {
-                        const question = this.questions.find(q => q.id === questionId);
-                        if (question) {
-                            question[field] = value;
-                        }
-                    },
-
-                    deleteQuestion(questionId) {
-
-                        const question = this.questions.find(q => q.id === questionId);
-                        const sectionId = question?.sectionId;
-
-                        const newQuestions = this.questions.filter(q => q.id !== questionId);
-                        this.questions = newQuestions;
-
-
-                        if (sectionId && this.questionSortables[sectionId]) {
-                            this.$nextTick(() => {
-                                this.questionSortables[sectionId].destroy();
-                                delete this.questionSortables[sectionId];
+                            try {
                                 this.initializeSortable();
-                            });
-                        }
+                            } catch (error) {
+                                console.error('Error initializing sortable:', error);
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Error adding section:', error);
+                        alert('Error adding section. Please try again.');
+                    }
+                },
 
-                    },
-
-                    addQuestionOption(questionId) {
-                        const question = this.questions.find(q => q.id === questionId);
-                        if (question && question.options) {
-                            const newId = 'opt' + (question.options.length + 1);
-                            question.options.push({
+                addSectionSafely() {
+                    try {
+                        this.addSection();
+                    } catch (error) {
+                        console.error('Error in addSectionSafely:', error);
+                        // Fallback: still try to add section even if there's an error
+                        try {
+                            const newId = 's' + this.nextSectionId++;
+                            this.sections.push({
                                 id: newId,
-                                value: 'option' + (question.options.length + 1),
+                                title: 'Untitled Section',
+                                description: '',
+                                isOpen: true
+                            });
+                        } catch (fallbackError) {
+                            console.error('Fallback failed:', fallbackError);
+                            alert('Could not add section. Please refresh the page and try again.');
+                        }
+                    }
+                },
+
+                openQuestionTypeDialog(sectionId) {
+                    this.currentSectionId = sectionId;
+                    this.showQuestionTypeDialog = true;
+                },
+
+                addQuestion(type) {
+                    const newId = 'q' + this.nextQuestionId++;
+
+                    const newQuestion = {
+                        id: newId,
+                        sectionId: this.currentSectionId,
+                        type: type,
+                        label: '',
+                        description: '',
+                        required: false
+
+                    };
+
+                    if (['radio', 'checkbox', 'dropdown', 'multiple_choice'].includes(type)) {
+                        newQuestion.options = [{
+                                id: 'opt1',
+                                value: '',
                                 label: '',
 
                                 input_type: 'none',
                                 input_placeholder: ''
-                            });
-                        }
-                    },
+                            },
+                            {
+                                id: 'opt2',
+                                value: '',
+                                label: '',
 
-                    updateQuestionOption(questionId, optionId, field, value) {
-                        const question = this.questions.find(q => q.id === questionId);
-                        if (question && question.options) {
-                            const option = question.options.find(o => o.id === optionId);
-                            if (option) {
-                                option[field] = value;
-                                if (field === 'label') {
-                                    option.value = value.toLowerCase().replace(/\s+/g, '_');
-                                }
+                                input_type: 'none',
+                                input_placeholder: ''
+                            }
+                        ];
+                    }
+
+                    if (['linear_scale'].includes(type)) {
+                        newQuestion.scale_from = 1;
+                        newQuestion.scale_to = 5;
+                        newQuestion.scale_label_low = '';
+                        newQuestion.scale_label_high = '';
+                    }
+
+                    this.questions.push(newQuestion);
+                    this.showQuestionTypeDialog = false;
+
+                    this.$nextTick(() => {
+                        this.initializeSortable();
+                    });
+                },
+
+                updateQuestion(questionId, field, value) {
+                    const question = this.questions.find(q => q.id === questionId);
+                    if (question) {
+                        question[field] = value;
+                    }
+                },
+
+                deleteQuestion(questionId) {
+
+                    const question = this.questions.find(q => q.id === questionId);
+                    const sectionId = question?.sectionId;
+
+                    const newQuestions = this.questions.filter(q => q.id !== questionId);
+                    this.questions = newQuestions;
+
+
+                    if (sectionId && this.questionSortables[sectionId]) {
+                        this.$nextTick(() => {
+                            this.questionSortables[sectionId].destroy();
+                            delete this.questionSortables[sectionId];
+                            this.initializeSortable();
+                        });
+                    }
+
+                },
+
+                addQuestionOption(questionId) {
+                    const question = this.questions.find(q => q.id === questionId);
+                    if (question && question.options) {
+                        const newId = 'opt' + (question.options.length + 1);
+                        question.options.push({
+                            id: newId,
+                            value: 'option' + (question.options.length + 1),
+                            label: '',
+
+                            input_type: 'none',
+                            input_placeholder: ''
+                        });
+                    }
+                },
+
+                updateQuestionOption(questionId, optionId, field, value) {
+                    const question = this.questions.find(q => q.id === questionId);
+                    if (question && question.options) {
+                        const option = question.options.find(o => o.id === optionId);
+                        if (option) {
+                            option[field] = value;
+                            if (field === 'label') {
+                                option.value = value.toLowerCase().replace(/\s+/g, '_');
                             }
                         }
-                    },
-
-                    removeQuestionOption(questionId, optionId) {
-                        const question = this.questions.find(q => q.id === questionId);
-                        if (question && question.options) {
-                            question.options = question.options.filter(o => o.id !== optionId);
-                        }
-                    },
-                    getTypeLabel(type) {
-                        return t[type] || type;
-                    },
-                    collectFormData() {
-                        return {
-                            sections: this.sections.map(section => ({
-                                id: section.id,
-                                title: section.title,
-                                description: section.description,
-                                questions: this.getQuestions(section.id).map(question => ({
-                                    id: question.id,
-                                    type: question.type,
-                                    label: question.label,
-                                    description: question.description,
-                                    required: question.required,
-                                    options: question.options || [],
-                                    scale_from: question.scale_from,
-                                    scale_to: question.scale_to,
-                                    scale_label_low: question.scale_label_low,
-                                    scale_label_high: question.scale_label_high
-                                }))
-                            }))
-                        };
-                    },
-                    submitForm(event) {
-                        const surveyData = {
-                            sections: this.sections,
-                            questions: this.questions
-                        };
-                        this.$refs.surveyDataInput.value = JSON.stringify(surveyData);
-
-                        const wardSelect = document.getElementById('ward_id');
-                        this.$refs.wardIdInput.value = wardSelect ? wardSelect.value : '';
-
-                        event.target.submit();
                     }
+                },
+
+                removeQuestionOption(questionId, optionId) {
+                    const question = this.questions.find(q => q.id === questionId);
+                    if (question && question.options) {
+                        question.options = question.options.filter(o => o.id !== optionId);
+                    }
+                },
+                getTypeLabel(type) {
+                    return t[type] || type;
+                },
+                collectFormData() {
+                    return {
+                        sections: this.sections.map(section => ({
+                            id: section.id,
+                            title: section.title,
+                            description: section.description,
+                            questions: this.getQuestions(section.id).map(question => ({
+                                id: question.id,
+                                type: question.type,
+                                label: question.label,
+                                description: question.description,
+                                required: question.required,
+                                options: question.options || [],
+                                scale_from: question.scale_from,
+                                scale_to: question.scale_to,
+                                scale_label_low: question.scale_label_low,
+                                scale_label_high: question.scale_label_high
+                            }))
+                        }))
+                    };
+                },
+                submitForm(event) {
+                    const surveyData = {
+                        sections: this.sections,
+                        questions: this.questions
+                    };
+                    this.$refs.surveyDataInput.value = JSON.stringify(surveyData);
+
+                    const wardSelect = document.getElementById('ward_id');
+                    this.$refs.wardIdInput.value = wardSelect ? wardSelect.value : '';
+
+                    event.target.submit();
                 }
             }
-        </script>
-    @endpush
+        }
+    </script>
 </x-app-layout>

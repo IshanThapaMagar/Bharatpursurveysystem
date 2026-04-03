@@ -90,90 +90,105 @@
             </div>
         </div>
     </div>
-
-    {{--
-        IMPORTANT: Scripts are placed DIRECTLY in the page body (not in @push/@stack).
-        @push sends scripts to @stack('scripts') which renders OUTSIDE <main>.
-        Since AJAX navigation only replaces <main> content, @push scripts are
-        invisible to the AJAX script re-executor in smooth-navigation.js.
-        Placing scripts here ensures they run on both full loads and AJAX loads.
-    --}}
     <script>
-        (function () {
-            // Store chart data globally so it survives repeated AJAX calls
+        (function() {
             window.surveyReportChartData = @json($charts);
             window.surveyReportCharts = window.surveyReportCharts || {};
             window.surveyReportPinRoute = '{{ route('dashboard.survey-report.pin') }}';
 
-            // ---------------------------------------------------------------
-            // Wire up pin/unpin checkboxes and save-title buttons.
-            // Runs immediately because the DOM is already rendered at this point.
-            // ---------------------------------------------------------------
-            (function wirePinControls() {
+            function wireSurveyReportPinControls() {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
                 function savePinState(questionId, isPinned, title) {
                     fetch(window.surveyReportPinRoute, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ question_id: questionId, is_pinned: isPinned, custom_title: title })
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success && typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                toast: true,
-                                position: 'top-end',
-                                icon: 'success',
-                                title: isPinned ? 'Chart pinned to Dashboard' : 'Chart removed from Dashboard',
-                                showConfirmButton: false,
-                                timer: 3000
-                            });
-                        }
-                    })
-                    .catch(err => console.error('[Survey Report] Pin error:', err));
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                question_id: parseInt(questionId),
+                                is_pinned: isPinned === true || isPinned === 'true',
+                                custom_title: title || ''
+                            })
+                        })
+                        .then(r => {
+                            if (!r.ok) {
+                                return r.json().then(data => {
+                                    throw {
+                                        status: r.status,
+                                        data: data
+                                    };
+                                });
+                            }
+                            return r.json();
+                        })
+                        .then(data => {
+                            if (data.success && typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: isPinned ? 'Chart pinned to Dashboard' :
+                                        'Chart removed from Dashboard',
+                                    showConfirmButton: false,
+                                    timer: 3000
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.error('[Survey Report] Pin error:', err);
+                            if (err.status === 422 && err.data.errors) {
+                                const errors = Object.values(err.data.errors).flat();
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Validation Error',
+                                        text: errors.join(', '),
+                                        showConfirmButton: true
+                                    });
+                                }
+                            }
+                        });
                 }
 
                 document.querySelectorAll('.pin-chart-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', function () {
+                    checkbox.addEventListener('change', function() {
                         const qId = this.dataset.questionId;
-                        const container = this.closest('div').querySelector('.custom-title-container');
-                        const customTitleInput = container.querySelector('.custom-title-input');
+                        const container = this.closest('.bg-white').querySelector(
+                            '.custom-title-container');
+                        const customTitleInput = container ? container.querySelector(
+                            '.custom-title-input') : null;
                         if (this.checked) {
-                            container.classList.remove('hidden');
-                            savePinState(qId, true, customTitleInput.value);
+                            if (container) container.classList.remove('hidden');
+                            savePinState(qId, true, customTitleInput ? customTitleInput.value : '');
                         } else {
-                            container.classList.add('hidden');
-                            savePinState(qId, false, customTitleInput.value);
+                            if (container) container.classList.add('hidden');
+                            savePinState(qId, false, customTitleInput ? customTitleInput.value : '');
                         }
                     });
                 });
 
                 document.querySelectorAll('.save-pin-title').forEach(btn => {
-                    btn.addEventListener('click', function () {
+                    btn.addEventListener('click', function() {
                         const qId = this.dataset.questionId;
-                        const input = this.closest('.custom-title-container').querySelector('.custom-title-input');
-                        savePinState(qId, true, input.value);
+                        const input = this.closest('.custom-title-container').querySelector(
+                            '.custom-title-input');
+                        savePinState(qId, true, input ? input.value : '');
                     });
                 });
-            })();
+            }
 
-            // ---------------------------------------------------------------
-            // Chart initialisation — exposed globally so smooth-navigation.js
-            // can call window.initializeSurveyReportCharts() after AJAX loads.
-            // ---------------------------------------------------------------
+            window.wireSurveyReportPinControls = wireSurveyReportPinControls;
+
             function initializeSurveyReportCharts() {
                 if (typeof Chart === 'undefined') {
-                    // Chart.js not ready yet — retry shortly
+
                     setTimeout(initializeSurveyReportCharts, 50);
                     return;
                 }
 
-                // Destroy any previously created instances to avoid "canvas already in use" errors
                 Object.values(window.surveyReportCharts).forEach(c => {
                     if (c && typeof c.destroy === 'function') c.destroy();
                 });
@@ -192,8 +207,10 @@
 
                     const labels = data.labels.map((label, index) => {
                         if (data.chart_type === 'bar') {
-                            if (index === 0 && data.scale_label_low) return `${label} (${data.scale_label_low})`;
-                            if (index === data.labels.length - 1 && data.scale_label_high) return `${label} (${data.scale_label_high})`;
+                            if (index === 0 && data.scale_label_low)
+                                return `${label} (${data.scale_label_low})`;
+                            if (index === data.labels.length - 1 && data.scale_label_high)
+                                return `${label} (${data.scale_label_high})`;
                         }
                         return label;
                     });
@@ -207,10 +224,12 @@
                             datasets: [{
                                 label: 'Responses',
                                 data: totals,
-                                backgroundColor: data.chart_type === 'bar' ? 'rgba(79, 70, 229, 0.8)' : bgColors,
+                                backgroundColor: data.chart_type === 'bar' ?
+                                    'rgba(79, 70, 229, 0.8)' : bgColors,
                                 borderWidth: data.chart_type === 'bar' ? 0 : 2,
                                 borderColor: data.chart_type === 'bar' ? '#4f46e5' : '#ffffff',
-                                hoverBackgroundColor: data.chart_type === 'bar' ? '#4f46e5' : bgColors,
+                                hoverBackgroundColor: data.chart_type === 'bar' ? '#4f46e5' :
+                                    bgColors,
                                 borderRadius: data.chart_type === 'bar' ? 4 : 0,
                                 barThickness: data.chart_type === 'bar' ? 40 : 'flex',
                             }]
@@ -221,32 +240,70 @@
                             scales: data.chart_type === 'bar' ? {
                                 y: {
                                     beginAtZero: true,
-                                    ticks: { stepSize: 1, font: { family: "'Inter', sans-serif", size: 11 }, color: '#64748b' },
-                                    grid: { display: true, drawBorder: false, color: 'rgba(226, 232, 240, 0.6)' }
+                                    ticks: {
+                                        stepSize: 1,
+                                        font: {
+                                            family: "'Inter', sans-serif",
+                                            size: 11
+                                        },
+                                        color: '#64748b'
+                                    },
+                                    grid: {
+                                        display: true,
+                                        drawBorder: false,
+                                        color: 'rgba(226, 232, 240, 0.6)'
+                                    }
                                 },
                                 x: {
-                                    grid: { display: false },
-                                    ticks: { font: { family: "'Inter', sans-serif", size: 12, weight: '500' }, color: '#334155' }
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            family: "'Inter', sans-serif",
+                                            size: 12,
+                                            weight: '500'
+                                        },
+                                        color: '#334155'
+                                    }
                                 }
                             } : {},
                             plugins: {
                                 legend: {
                                     display: data.chart_type !== 'bar',
                                     position: window.innerWidth < 768 ? 'bottom' : 'right',
-                                    labels: { padding: 15, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 12, family: "'Inter', sans-serif", weight: '500' } }
+                                    labels: {
+                                        padding: 15,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        boxWidth: 8,
+                                        font: {
+                                            size: 12,
+                                            family: "'Inter', sans-serif",
+                                            weight: '500'
+                                        }
+                                    }
                                 },
                                 tooltip: {
                                     backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                    titleFont: { size: 14, family: "'Inter', sans-serif" },
-                                    bodyFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
+                                    titleFont: {
+                                        size: 14,
+                                        family: "'Inter', sans-serif"
+                                    },
+                                    bodyFont: {
+                                        size: 14,
+                                        family: "'Inter', sans-serif",
+                                        weight: 'bold'
+                                    },
                                     padding: 12,
                                     cornerRadius: 8,
                                     displayColors: data.chart_type !== 'bar',
                                     callbacks: {
-                                        label: function (context) {
-                                            return data.chart_type === 'bar'
-                                                ? context.parsed.y + ' responses'
-                                                : context.label + ': ' + context.parsed + ' responses';
+                                        label: function(context) {
+                                            return data.chart_type === 'bar' ?
+                                                context.parsed.y + ' responses' :
+                                                context.label + ': ' + context.parsed +
+                                                ' responses';
                                         }
                                     }
                                 }
@@ -260,10 +317,14 @@
             window.initializeSurveyReportCharts = initializeSurveyReportCharts;
 
             // Run immediately (DOM is already rendered; no need for DOMContentLoaded)
+            wireSurveyReportPinControls();
             initializeSurveyReportCharts();
 
             // Also listen for the reinitialize-charts event fired by smooth-navigation
-            window.addEventListener('reinitialize-charts', initializeSurveyReportCharts);
+            window.addEventListener('reinitialize-charts', function() {
+                wireSurveyReportPinControls();
+                initializeSurveyReportCharts();
+            });
         })();
     </script>
 </x-app-layout>

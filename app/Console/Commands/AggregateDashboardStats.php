@@ -27,15 +27,19 @@ class AggregateDashboardStats extends Command
      */
     public function handle()
     {
-        $wardOption = $this->option('ward');
+        try {
+            $startTime = now();
+            $wardOption = $this->option('ward');
 
-        if ($wardOption !== null) {
-            // Only aggregate for the specified ward (or 'all' aggregate)
-            $targets = ($wardOption === 'all') ? ['all'] : ['all', $wardOption];
-        } else {
-            $wards = DB::table('wards')->pluck('id')->toArray();
-            $targets = array_merge(['all'], $wards);
-        }
+            if ($wardOption !== null) {
+                // Only aggregate for the specified ward (or 'all' aggregate)
+                $targets = ($wardOption === 'all') ? ['all'] : ['all', $wardOption];
+            } else {
+                $wards = DB::table('wards')->pluck('id')->toArray();
+                $targets = array_merge(['all'], $wards);
+            }
+
+            $this->info(\sprintf('[%s] Starting dashboard stats aggregation for %d targets', $startTime->format('Y-m-d H:i:s'), count($targets)));
 
         foreach ($targets as $selectedWard) {
             $this->info("Aggregating stats for Ward: {$selectedWard}");
@@ -314,8 +318,40 @@ class AggregateDashboardStats extends Command
                     'total_members' => $ageStats->total_members ?? 0,
                 ]
             );
+
+            $this->info(\sprintf('  ✓ Aggregated: Ward %s', $selectedWard));
         }
 
-        $this->info('Dashboard statistics aggregated successfully.');
+        // Invalidate all dashboard caches for fresh data display
+        $this->invalidateDashboardCaches($targets);
+
+        $duration = now()->diffInSeconds($startTime);
+        $this->info(\sprintf('[%s] ✓ Dashboard stats aggregated successfully in %d seconds', now()->format('Y-m-d H:i:s'), $duration));
+
+        } catch (\Exception $e) {
+            $this->error(\sprintf('[%s] ✗ Error during aggregation: %s', now()->format('Y-m-d H:i:s'), $e->getMessage()));
+            \Illuminate\Support\Facades\Log::error('Dashboard aggregation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return 1;
+        }
+    }
+
+    /**
+     * Invalidate dashboard caches for all wards
+     */
+    private function invalidateDashboardCaches(array $wards): void
+    {
+        $cache = \Illuminate\Support\Facades\Cache::class;
+        
+        foreach ($wards as $ward) {
+            $cacheKey = "dashboard_charts_{$ward}";
+            $pinnedCacheKey = "dashboard_pinned_charts_{$ward}";
+            
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            \Illuminate\Support\Facades\Cache::forget($pinnedCacheKey);
+            $this->info(\sprintf('  ✓ Cache cleared: %s', $cacheKey));
+        }
     }
 }
