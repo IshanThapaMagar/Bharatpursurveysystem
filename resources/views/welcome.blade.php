@@ -222,183 +222,194 @@
                 <span class="w-1 h-5 bg-amber-500 rounded-full inline-block"></span>
                 विस्तृत तथ्याङ्क तालिका
             </h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+            {{-- Flexbox per-column: each column stacks its panels independently --}}
+            <div class="flex flex-col lg:flex-row gap-x-12 gap-y-10 items-start">
 
-                {{-- मातृभाषा --}}
-                <div class="flex flex-col">
-                    <h3
-                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
-                        मातृभाषा</h3>
-                    <div class="space-y-0 text-sm">
-                        @php
-                            $mtColors = [
-                                'bg-blue-500',
-                                'bg-emerald-500',
-                                'bg-rose-500',
-                                'bg-amber-500',
-                                'bg-indigo-500',
-                                'bg-violet-500',
-                                'bg-cyan-500',
-                                'bg-fuchsia-500',
-                                'bg-orange-500',
-                                'bg-teal-500',
-                                'bg-lime-500',
-                                'bg-pink-500',
-                            ];
-                        @endphp
-                        @forelse ($motherTongueStats as $index => $row)
-                            @php $pct = $motherTongueTotal > 0 ? number_format(($row->total / $motherTongueTotal) * 100, 2) : 0; @endphp
-                            <div
-                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-2 h-2 rounded-full {{ $mtColors[$index % count($mtColors)] }} shadow-sm flex-shrink-0">
+                {{-- LEFT COLUMN: मातृभाषा + शिक्षाको अवस्था --}}
+                <div class="flex flex-col flex-1 gap-10">
+
+                    {{-- मातृभाषा --}}
+                    <div class="flex flex-col">
+                        <h3
+                            class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                            मातृभाषा</h3>
+                        <div class="space-y-0 text-sm">
+                            @php
+                                $mtColors = [
+                                    'bg-blue-500',
+                                    'bg-emerald-500',
+                                    'bg-rose-500',
+                                    'bg-amber-500',
+                                    'bg-indigo-500',
+                                    'bg-violet-500',
+                                    'bg-cyan-500',
+                                    'bg-fuchsia-500',
+                                    'bg-orange-500',
+                                    'bg-teal-500',
+                                    'bg-lime-500',
+                                    'bg-pink-500',
+                                ];
+                            @endphp
+                            @forelse ($motherTongueStats as $index => $row)
+                                @php $pct = $motherTongueTotal > 0 ? number_format(($row->total / $motherTongueTotal) * 100, 2) : 0; @endphp
+                                <div
+                                    class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-2 h-2 rounded-full {{ $mtColors[$index % count($mtColors)] }} shadow-sm flex-shrink-0">
+                                        </div>
+                                        <span class="text-gray-700 font-medium">{{ $row->name }}</span>
                                     </div>
-                                    <span class="text-gray-700 font-medium">{{ $row->name }}</span>
-                                </div>
-                                <div class="flex items-center gap-16 text-gray-600">
-                                    <span
-                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                    <span class="w-16 text-right">{{ $pct }}%</span>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
-                        @endforelse
-                    </div>
-                </div>
-
-                {{-- जातजातीहरु --}}
-                <div class="flex flex-col">
-                    <h3
-                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
-                        जातजातीहरु</h3>
-                    <div class="space-y-0 text-sm">
-                        @php
-                            $casteColors = [
-                                'bg-indigo-500',
-                                'bg-teal-500',
-                                'bg-purple-500',
-                                'bg-orange-500',
-                                'bg-pink-500',
-                                'bg-red-500',
-                                'bg-sky-500',
-                                'bg-emerald-500',
-                                'bg-yellow-500',
-                                'bg-blue-500',
-                                'bg-gray-500',
-                                'bg-rose-500',
-                            ];
-                        @endphp
-                        @forelse ($casteStats as $index => $row)
-                            @php $pct = $casteTotal > 0 ? number_format(($row->total / $casteTotal) * 100, 2) : 0; @endphp
-                            <div
-                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-2 h-2 rounded-full {{ $casteColors[$index % count($casteColors)] }} shadow-sm flex-shrink-0">
+                                    <div class="flex items-center gap-16 text-gray-600">
+                                        <span
+                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                        <span class="w-16 text-right">{{ $pct }}%</span>
                                     </div>
-                                    <span class="text-gray-700 font-medium">{{ $row->name }}</span>
                                 </div>
-                                <div class="flex items-center gap-16 text-gray-600">
-                                    <span
-                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                    <span class="w-16 text-right">{{ $pct }}%</span>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
-                        @endforelse
+                            @empty
+                                <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
+                            @endforelse
+                        </div>
                     </div>
-                </div>
 
-                {{-- शिक्षाको अवस्था --}}
-                <div class="flex flex-col">
-                    <h3
-                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
-                        शिक्षाको अवस्था</h3>
-                    <div class="space-y-0 text-sm">
-                        @php
-                            $eduColors = [
-                                'bg-amber-500',
-                                'bg-blue-500',
-                                'bg-green-500',
-                                'bg-orange-500',
-                                'bg-red-500',
-                                'bg-violet-500',
-                                'bg-cyan-500',
-                                'bg-indigo-500',
-                                'bg-emerald-500',
-                                'bg-rose-500',
-                            ];
-                        @endphp
-                        @forelse ($educationStats as $index => $row)
-                            @php $pct = $educationTotal > 0 ? number_format(($row->total / $educationTotal) * 100, 2) : 0; @endphp
-                            <div
-                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-2 h-2 rounded-full {{ $eduColors[$index % count($eduColors)] }} shadow-sm flex-shrink-0">
+                    {{-- शिक्षाको अवस्था --}}
+                    <div class="flex flex-col">
+                        <h3
+                            class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                            शिक्षाको अवस्था</h3>
+                        <div class="space-y-0 text-sm">
+                            @php
+                                $eduColors = [
+                                    'bg-amber-500',
+                                    'bg-blue-500',
+                                    'bg-green-500',
+                                    'bg-orange-500',
+                                    'bg-red-500',
+                                    'bg-violet-500',
+                                    'bg-cyan-500',
+                                    'bg-indigo-500',
+                                    'bg-emerald-500',
+                                    'bg-rose-500',
+                                ];
+                            @endphp
+                            @forelse ($educationStats as $index => $row)
+                                @php $pct = $educationTotal > 0 ? number_format(($row->total / $educationTotal) * 100, 2) : 0; @endphp
+                                <div
+                                    class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-2 h-2 rounded-full {{ $eduColors[$index % count($eduColors)] }} shadow-sm flex-shrink-0">
+                                        </div>
+                                        <span class="text-gray-700 font-medium">{{ $row->label }}</span>
                                     </div>
-                                    <span class="text-gray-700 font-medium">{{ $row->label }}</span>
-                                </div>
-                                <div class="flex items-center gap-16 text-gray-600">
-                                    <span
-                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                    <span class="w-16 text-right">{{ $pct }}%</span>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
-                        @endforelse
-                    </div>
-                </div>
-
-                {{-- धर्म --}}
-                <div class="flex flex-col">
-                    <h3
-                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
-                        धर्म (जनसंख्या के आधारमा)</h3>
-                    <div class="space-y-0 text-sm">
-                        @php
-                            $relColors = [
-                                'bg-rose-500',
-                                'bg-sky-500',
-                                'bg-emerald-500',
-                                'bg-amber-500',
-                                'bg-indigo-500',
-                                'bg-violet-500',
-                                'bg-cyan-500',
-                                'bg-fuchsia-500',
-                                'bg-orange-500',
-                                'bg-teal-500',
-                                'bg-lime-500',
-                                'bg-pink-500',
-                            ];
-                        @endphp
-                        @forelse ($religionStats as $index => $row)
-                            @php $pct = $religionTotal > 0 ? number_format(($row->total / $religionTotal) * 100, 2) : 0; @endphp
-                            <div
-                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-2 h-2 rounded-full {{ $relColors[$index % count($relColors)] }} shadow-sm flex-shrink-0">
+                                    <div class="flex items-center gap-16 text-gray-600">
+                                        <span
+                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                        <span class="w-16 text-right">{{ $pct }}%</span>
                                     </div>
-                                    <span class="text-gray-700 font-medium">{{ $row->label }}</span>
                                 </div>
-                                <div class="flex items-center gap-16 text-gray-600">
-                                    <span
-                                        class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                    <span class="w-16 text-right">{{ $pct }}%</span>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
-                        @endforelse
+                            @empty
+                                <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
+                            @endforelse
+                        </div>
                     </div>
-                </div>
 
-            </div>
+                </div>{{-- end LEFT COLUMN --}}
+
+                {{-- RIGHT COLUMN: जातजातीहरु + धर्म --}}
+                <div class="flex flex-col flex-1 gap-10">
+
+                    {{-- जातजातीहरु --}}
+                    <div class="flex flex-col">
+                        <h3
+                            class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                            जातजातीहरु</h3>
+                        <div class="space-y-0 text-sm">
+                            @php
+                                $casteColors = [
+                                    'bg-indigo-500',
+                                    'bg-teal-500',
+                                    'bg-purple-500',
+                                    'bg-orange-500',
+                                    'bg-pink-500',
+                                    'bg-red-500',
+                                    'bg-sky-500',
+                                    'bg-emerald-500',
+                                    'bg-yellow-500',
+                                    'bg-blue-500',
+                                    'bg-gray-500',
+                                    'bg-rose-500',
+                                ];
+                            @endphp
+                            @forelse ($casteStats as $index => $row)
+                                @php $pct = $casteTotal > 0 ? number_format(($row->total / $casteTotal) * 100, 2) : 0; @endphp
+                                <div
+                                    class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-2 h-2 rounded-full {{ $casteColors[$index % count($casteColors)] }} shadow-sm flex-shrink-0">
+                                        </div>
+                                        <span class="text-gray-700 font-medium">{{ $row->name }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-16 text-gray-600">
+                                        <span
+                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                        <span class="w-16 text-right">{{ $pct }}%</span>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    {{-- धर्म --}}
+                    <div class="flex flex-col">
+                        <h3
+                            class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                            धर्म (जनसंख्या के आधारमा)</h3>
+                        <div class="space-y-0 text-sm">
+                            @php
+                                $relColors = [
+                                    'bg-rose-500',
+                                    'bg-sky-500',
+                                    'bg-emerald-500',
+                                    'bg-amber-500',
+                                    'bg-indigo-500',
+                                    'bg-violet-500',
+                                    'bg-cyan-500',
+                                    'bg-fuchsia-500',
+                                    'bg-orange-500',
+                                    'bg-teal-500',
+                                    'bg-lime-500',
+                                    'bg-pink-500',
+                                ];
+                            @endphp
+                            @forelse ($religionStats as $index => $row)
+                                @php $pct = $religionTotal > 0 ? number_format(($row->total / $religionTotal) * 100, 2) : 0; @endphp
+                                <div
+                                    class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-2 h-2 rounded-full {{ $relColors[$index % count($relColors)] }} shadow-sm flex-shrink-0">
+                                        </div>
+                                        <span class="text-gray-700 font-medium">{{ $row->label }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-16 text-gray-600">
+                                        <span
+                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
+                                        <span class="w-16 text-right">{{ $pct }}%</span>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
+                            @endforelse
+                        </div>
+                    </div>
+
+                </div>{{-- end RIGHT COLUMN --}}
+
+            </div>{{-- end flex row --}}
         </section>
 
         {{-- ===== Pinned Survey Analytics ===== --}}
