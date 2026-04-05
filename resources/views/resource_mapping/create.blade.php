@@ -80,9 +80,16 @@
                             <select name="tole_id" id="tole_id" required
                                 class="block w-full rounded-sm border-gray-200 bg-gray-50/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-sm">
                                 <option value="">{{ __('Select Tole') }}</option>
-                                @if (isset($resourceMapping) && $resourceMapping->ward)
-                                    <!-- Options will be populated by JS or on edit -->
-                                @endif
+                                @php
+                                    $currentWardId = old('ward_id', $resourceMapping->ward_id ?? null);
+                                    $toles = $currentWardId ? \App\Models\Tole::where('ward_id', $currentWardId)->get() : [];
+                                    $currentToleId = old('tole_id', $resourceMapping->tole_id ?? null);
+                                @endphp
+                                @foreach($toles as $tole)
+                                    <option value="{{ $tole->id }}" {{ $currentToleId == $tole->id ? 'selected' : '' }}>
+                                        {{ $tole->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
