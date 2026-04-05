@@ -656,9 +656,18 @@
 
                 const chartsData = window.welcomeChartData.chartsData;
                 const chartColors = [
-                    '#4f46e5', '#ec4899', '#0ea5e9', '#f59e0b',
-                    '#10b981', '#8b5cf6', '#f43f5e', '#14b8a6',
-                    '#eab308', '#6366f1', '#f97316', '#d946ef'
+                    '#6366a6', 
+                    '#d16b9f', 
+                    '#4fa3c4', 
+                    '#d4a94f', 
+                    '#4fbf9f', 
+                    '#8a6fbf', 
+                    '#d46a7a', 
+                    '#4fb3ad', 
+                    '#c9b458',
+                    '#6c72c9', 
+                    '#d48a4f',
+                    '#c96ad4'  
                 ];
 
                 Object.entries(chartsData).forEach(([questionId, data]) => {
