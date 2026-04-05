@@ -52,4 +52,43 @@ class AdministrationController extends Controller
 
         return redirect()->route('palika.index')->with('success', 'Admin added successfully.');
     }
+
+    public function editAdmin(PalikaAdmin $admin)
+    {
+        $designations = PalikaDesignation::with('translations')->get();
+        // Skip current admin designation in used designations array
+        $usedDesignations = PalikaAdmin::where('id', '!=', $admin->id)->pluck('designation_id')->toArray();
+        
+        return view("palika.editAdmin", compact('admin', 'designations', 'usedDesignations'));
+    }
+
+    public function updateAdmin(Request $request, PalikaAdmin $admin)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'designation_id' => 'required|exists:palika_designations,id|unique:palika_admins,designation_id,' . $admin->id,
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $photoPath = $admin->photo;
+        if ($request->hasFile('photo')) {
+            // Delete old photo
+            if ($photoPath && Storage::disk('public')->exists($photoPath)) {
+                Storage::disk('public')->delete($photoPath);
+            }
+            $photoPath = $request->file('photo')->store('palika_admins', 'public');
+        }
+
+        $admin->update([
+            'name' => $request->name,
+            'designation_id' => $request->designation_id,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'photo' => $photoPath,
+        ]);
+
+        return redirect()->route('palika.index')->with('success', 'Admin updated successfully.');
+    }
 }

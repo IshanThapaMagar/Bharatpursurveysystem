@@ -71,6 +71,12 @@ class ResourceMappingController extends Controller
         return redirect()->route('resource-mapping.index')->with('success', 'Resource mapping created successfully.');
     }
 
+    public function show(ResourceMapping $resourceMapping)
+    {
+        $resourceMapping->load(['ward', 'tole', 'toleDevelopmentOfficeType', 'poleTypes', 'roadTypes']);
+        return view('resource_mapping.show', compact('resourceMapping'));
+    }
+
     public function edit(ResourceMapping $resourceMapping)
     {
         $resourceMapping->load(['poleTypes', 'roadTypes']);

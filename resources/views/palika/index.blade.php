@@ -86,13 +86,18 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         @foreach ($admins as $admin)
                             <div
-                                class="bg-gray-50 border border-gray-100 flex flex-col items-start shadow-sm hover:shadow-md transition-all overflow-hidden group">
+                                class="bg-gray-50 border border-gray-100 flex flex-col items-start shadow-sm hover:shadow-md transition-all overflow-hidden group w-full max-w-[280px] mx-auto">
                                 <!-- Full Width Photo Area -->
-                                <div class="w-full relative shrink-0">
+                                <div class="w-full relative shrink-0 overflow-hidden bg-gray-100">
+                                    <a href="{{ route('palika.admin.edit', $admin->id) }}" class="absolute top-2 right-2 bg-white/90 hover:bg-blue-600 text-gray-600 hover:text-white p-1.5 rounded shadow-sm transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm z-10" title="{{ __('Edit') }}">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </a>
                                     @if ($admin->photo)
                                         <img src="{{ Storage::disk('public')->url($admin->photo) }}"
                                             alt="{{ $admin->name }}"
-                                            class="h-[200px] w-auto object-cover transition-transform duration-300 group-hover:scale-105 mx-auto">
+                                            class="h-[200px] w-full object-cover transition-transform duration-300 group-hover:scale-105">
                                     @else
                                         <div class="h-[200px] w-full bg-gray-200 flex items-center justify-center">
                                             <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"

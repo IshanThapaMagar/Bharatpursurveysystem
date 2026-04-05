@@ -55,6 +55,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/palika', [AdministrationController::class , 'index'])->name('palika.index');
     Route::get('/palika/admin/create', [AdministrationController::class , 'createAdmin'])->name('palika.admin.create');
     Route::post('/palika/admin/store', [AdministrationController::class , 'storeAdmin'])->name('palika.admin.store');
+    Route::get('/palika/admin/{admin}/edit', [AdministrationController::class, 'editAdmin'])->name('palika.admin.edit');
+    Route::put('/palika/admin/{admin}', [AdministrationController::class, 'updateAdmin'])->name('palika.admin.update');
     Route::resource('wards', \App\Http\Controllers\WardController::class);
     Route::resource('resource-mapping', ResourceMappingController::class);
 
