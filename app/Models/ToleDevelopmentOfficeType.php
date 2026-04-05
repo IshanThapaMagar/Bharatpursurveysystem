@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ToleDevelopmentOfficeType extends Model
 {
+    protected $with = ["translations"];
+
     protected $fillable = ['slug'];
 
     public function translations()

@@ -17,6 +17,7 @@
     'householder',
     'self_relationship_id',
     'householderExists',
+    'occupations',
 ])
 <x-app-layout>
     <div class="py-24">
@@ -26,7 +27,7 @@
                     <x-housemember.addhousememberdetailform :genders="$genders" :religions="$religions" :bloodGroups="$bloodGroups"
                         :disabilities="$disabilities" :districts="$districts" :educationLevels="$educationLevels" :governmentSupportTypes="$governmentSupportTypes" :healthStatuses="$healthStatuses"
                         :institutionTypes="$institutionTypes" :maritalStatuses="$maritalStatuses" :motherTongueProficiencies="$motherTongueProficiencies" :relationships="$relationships" :specialSkills="$specialSkills"
-                        :poolingPlaces="$poolingPlaces" :householder_id="$householder_id" :householder="$householder" :self_relationship_id="$self_relationship_id" :householderExists="$householderExists" />
+                        :poolingPlaces="$poolingPlaces" :occupations="$occupations" :householder_id="$householder_id" :householder="$householder" :self_relationship_id="$self_relationship_id" :householderExists="$householderExists" />
 
                 </div>
             </div>

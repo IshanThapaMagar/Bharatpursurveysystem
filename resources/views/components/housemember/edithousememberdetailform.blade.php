@@ -14,6 +14,7 @@
     'relationships',
     'specialSkills',
     'poolingPlaces',
+    'occupations',
     'self_relationship_id' => null,
     'householderExists' => false,
 ])
@@ -290,10 +291,16 @@
             <!-- Occupation -->
             <div class="flex flex-col">
                 <label class="text-sm font-medium text-gray-700 mb-1">{{ __('Occupation/Employment') }}</label>
-                <input type="text" name="occupation"
-                    value="{{ old('occupation', $member->occupation) }}"
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="{{ __('Enter occupation') }}">
+                <select class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    name="occupation_id">
+                    <option value="">{{ __('Select occupation') }}</option>
+                    @foreach ($occupations as $occupation)
+                        <option value="{{ $occupation->id }}"
+                            {{ old('occupation_id', $member->occupation_id) == $occupation->id ? 'selected' : '' }}>
+                            {{ $occupation->translations->first()?->name ?? '---' }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             <!-- Health Status -->

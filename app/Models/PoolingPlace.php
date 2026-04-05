@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class PoolingPlace extends Model
 {
+    protected $with = ["translations"];
+
     protected $fillable = [];
 
     public function translations()
@@ -16,7 +18,7 @@ class PoolingPlace extends Model
     public function getNameAttribute()
     {
         $locale = app()->getLocale();
-        $translation = $this->translations()->where('locale', $locale)->first();
+        $translation = $this->translations->where('locale', $locale)->first();
         return $translation ? $translation->name : null;
     }
 }

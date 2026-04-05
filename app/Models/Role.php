@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
+    protected $with = ["translations"];
+
     protected $fillable = ['slug'];
 
     public function translations()
@@ -16,7 +18,7 @@ class Role extends Model
     public function getNameAttribute()
     {
         $locale = app()->getLocale();
-        $translation = $this->translations()->where('locale', $locale)->first();
+        $translation = $this->translations->where('locale', $locale)->first();
         return $translation ? $translation->name : $this->slug;
     }
 

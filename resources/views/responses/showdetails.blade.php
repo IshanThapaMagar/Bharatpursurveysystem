@@ -143,7 +143,7 @@
                                         </td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->educationLevel?->name ?? '-' }}
                                         </td>
-                                        <td class="px-2 py-1.5 border-r">{{ $member->occupation ?? '-' }}</td>
+                                        <td class="px-2 py-1.5 border-r">{{ $member->occupation?->name ?? '-' }}</td>
                                         <td class="px-2 py-1.5 border-r text-center">
                                             {{ $member->has_voterId ? 'छ' : 'छैन' }}</td>
                                         <td class="px-2 py-1.5 border-r">{{ $member->healthStatus?->name ?? '-' }}

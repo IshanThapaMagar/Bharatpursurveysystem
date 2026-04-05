@@ -20,6 +20,7 @@ use App\Models\PoolingPlace;
 use App\Models\HouseMember;
 use App\Models\HouseHolder;
 use App\Models\RelationshipTranslation;
+use App\Models\Occupation;
 use App\Models\Response;
 use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
 use Illuminate\Support\Facades\Artisan;
@@ -113,6 +114,10 @@ class HouseMemberController extends Controller
             $query->where('locale', $locale)->select('id', 'pooling_place_id', 'name');
         }])->get(['id']);
 
+        $occupations = Occupation::with(['translations' => function ($query) use ($locale) {
+            $query->where('locale', $locale)->select('id', 'occupation_id', 'name');
+        }])->get(['id']);
+
         return view('housedescription.createhousemember', compact(
             'genders',
             'religions',
@@ -128,6 +133,7 @@ class HouseMemberController extends Controller
             'relationships',
             'specialSkills',
             'poolingPlaces',
+            'occupations',
             'householder_id',
             'householder',
             'self_relationship_id',
@@ -154,7 +160,7 @@ class HouseMemberController extends Controller
             'special_skill_id' => 'nullable|exists:special_skills,id',
             'government_support_type_id' => 'nullable|exists:government_support_types,id',
             'district_id' => 'nullable|exists:districts,id',
-            'occupation' => 'nullable|string',
+            'occupation_id' => 'nullable|exists:occupations,id',
             'health_status_id' => 'nullable|exists:health_statuses,id',
             'blood_group_id' => 'nullable|exists:blood_groups,id',
             'citizenship_number' => 'nullable|string',
@@ -304,6 +310,10 @@ class HouseMemberController extends Controller
             $query->where('locale', $locale)->select('id', 'pooling_place_id', 'name');
         }])->get(['id']);
 
+        $occupations = Occupation::with(['translations' => function ($query) use ($locale) {
+            $query->where('locale', $locale)->select('id', 'occupation_id', 'name');
+        }])->get(['id']);
+
         return view('housedescription.edithousemember', compact(
             'member',
             'genders',
@@ -320,6 +330,7 @@ class HouseMemberController extends Controller
             'relationships',
             'specialSkills',
             'poolingPlaces',
+            'occupations',
             'self_relationship_id',
             'householderExists'
         ));
@@ -351,7 +362,7 @@ class HouseMemberController extends Controller
             'special_skill_id'           => 'nullable|exists:special_skills,id',
             'government_support_type_id' => 'nullable|exists:government_support_types,id',
             'district_id'                => 'nullable|exists:districts,id',
-            'occupation'                 => 'nullable|string',
+            'occupation_id'              => 'nullable|exists:occupations,id',
             'health_status_id'           => 'nullable|exists:health_statuses,id',
             'blood_group_id'             => 'nullable|exists:blood_groups,id',
             'citizenship_number'         => 'nullable|string',

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WardDesignation extends Model
 {
+    protected $with = ["translations"];
+
     protected $fillable = [];
 
     public function translations(): HasMany

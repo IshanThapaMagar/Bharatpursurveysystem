@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class PalikaDesignation extends Model
 {
+    protected $with = ["translations"];
+
     protected $fillable = [];
 
     public function translations()

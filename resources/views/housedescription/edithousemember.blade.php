@@ -14,6 +14,7 @@
     'relationships',
     'specialSkills',
     'poolingPlaces',
+    'occupations',
     'self_relationship_id',
     'householderExists',
 ])
@@ -38,6 +39,7 @@
                         :relationships="$relationships"
                         :specialSkills="$specialSkills"
                         :poolingPlaces="$poolingPlaces"
+                        :occupations="$occupations"
                         :self_relationship_id="$self_relationship_id"
                         :householderExists="$householderExists" />
                 </div>

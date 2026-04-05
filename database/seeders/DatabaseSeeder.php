@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             WardDesignationSeeder::class,
             ResourceMappingLookupSeeder::class,
             PlaceTypeSeeder::class,
+            OccupationSeeder::class,
 
         ]);
     }

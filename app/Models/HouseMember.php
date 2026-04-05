@@ -6,6 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class HouseMember extends Model
 {
+
+
+    protected $with = [
+        'relationship',
+        'gender',
+        'maritalStatus',
+        'educationLevel',
+        'institutionType',
+        'healthStatus',
+        'district',
+        'bloodGroup',
+        'disability',
+        'governmentSupportType',
+        'occupation',
+        'nativeSpeakingLevel',
+        'specialSkill',
+        'religion',
+    ];
+
     protected $fillable = [
         'house_holder_id',
         'full_name',
@@ -22,7 +41,7 @@ class HouseMember extends Model
         'special_skill_id',
         'government_support_type_id',
         'district_id',
-        'occupation',
+        'occupation_id',
         'health_status_id',
         'blood_group_id',
         'citizenship_number',
@@ -57,6 +76,11 @@ class HouseMember extends Model
     public function maritalStatus()
     {
         return $this->belongsTo(MaritalStatus::class);
+    }
+
+    public function occupation()
+    {
+        return $this->belongsTo(Occupation::class);
     }
 
     public function institutionType()
@@ -107,5 +131,10 @@ class HouseMember extends Model
     public function nativeSpeakingLevel()
     {
         return $this->belongsTo(MotherTongueProficiency::class, 'native_speaking_level');
+    }
+
+    public function poolingPlace()
+    {
+        return $this->belongsTo(PoolingPlace::class);
     }
 }

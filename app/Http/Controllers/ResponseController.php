@@ -82,22 +82,7 @@ class ResponseController extends Controller
             'householder.caste',
             'householder.motherTongue',
             'householder.tole',
-            'householder.members' => function ($query) {
-                $query->with([
-                    'relationship.translations',
-                    'gender.translations',
-                    'maritalStatus.translations',
-                    'educationLevel.translations',
-                    'institutionType.translations',
-                    'healthStatus.translations',
-                    'district.translations',
-                    'bloodGroup.translations',
-                    'disability.translations',
-                    'governmentSupportType.translations',
-                    'nativeSpeakingLevel.translations',
-                ]);
-            },
-            'answers.questionOption.question.surveySection',
+            'householder.members',
             'answers.questionOption.optionChoice',
             'answers.unitOfMeasure',
         ])->findOrFail($id);
@@ -109,74 +94,20 @@ class ResponseController extends Controller
 
         $household = $response->householder;
 
-        $answerMap = [];
-        foreach ($response->answers as $answer) {
-            $questionId = $answer->question_id;
-            
-          
-            if (!$questionId && $answer->questionOption) {
-                $questionId = $answer->questionOption->question_id;
-            }
-
-            if (!$questionId) {
-                continue;
-            }
-
-            $value = null;
-
-            if ($answer->answer_text !== null) {
-                $text = $answer->answer_text;
-
-                if (str_starts_with($text, '{') && str_contains($text, '"type":"location"')) {
-                    $loc = json_decode($text, true);
-                    if ($loc && isset($loc['latitude'], $loc['longitude'])) {
-                        $value = "Lat: {$loc['latitude']}, Long: {$loc['longitude']}";
-                    } else {
-                        $value = $text;
-                    }
-                } 
-  
-                elseif (str_starts_with($text, 'survey-responses/')) {
-                    $url = asset('storage/' . $text);
-                    $filename = basename($text);
-                    $value = "<a href=\"{$url}\" target=\"_blank\" class=\"text-blue-600 hover:underline\">View File</a>";
-                }
-                else {
-                    $value = $text;
-                }
-            } elseif ($answer->answer_numeric !== null) {
-                $unit  = $answer->unitOfMeasure?->name ?? '';
-                $value = $answer->answer_numeric . ($unit ? ' ' . $unit : '');
-            } elseif ($answer->questionOption?->optionChoice) {
-                $value = $answer->questionOption->optionChoice->choice_text;
-            }
-
-            if ($answer->custom_input_value) {
-                $value = $value ? "$value ({$answer->custom_input_value})" : $answer->custom_input_value;
-            }
-
-            $value = $value ?? '—';
-
-            if (isset($answerMap[$questionId])) {
-                $answerMap[$questionId] .= ', ' . $value;
-            } else {
-                $answerMap[$questionId] = $value;
-            }
-        }
-
+        $answerMap = $this->resolveShowAnswerMap($response->answers);
 
         $sections = SurveySection::with([
             'questions' => fn ($q) => $q->ordered()->with('inputType'),
         ])
         ->forWard($response->ward_id)
         ->ordered()
-        ->get()
-        ->map(function ($section) use ($answerMap) {
-            $section->questions->each(function ($question) use ($answerMap) {
+        ->get();
+
+        foreach ($sections as $section) {
+            foreach ($section->questions as $question) {
                 $question->resolved_answer = $answerMap[$question->id] ?? null;
-            });
-            return $section;
-        });
+            }
+        }
 
         $noAnswersFound = $response->answers->isEmpty();
 
@@ -522,5 +453,55 @@ class ResponseController extends Controller
             'success' => true,
             'message' => 'Response deleted successfully.'
         ]);
+    }
+
+    private function resolveShowAnswerMap($answers): array
+    {
+        $answerMap = [];
+        foreach ($answers as $answer) {
+            $questionId = $answer->question_id;
+
+            if (!$questionId && $answer->questionOption) {
+                $questionId = $answer->questionOption->question_id;
+            }
+
+            if (!$questionId) continue;
+
+            $value = null;
+
+            if ($answer->answer_text !== null) {
+                $text = $answer->answer_text;
+
+                if (str_starts_with($text, '{') && str_contains($text, '"type":"location"')) {
+                    $loc = json_decode($text, true);
+                    $value = ($loc && isset($loc['latitude'], $loc['longitude']))
+                        ? "Lat: {$loc['latitude']}, Long: {$loc['longitude']}"
+                        : $text;
+                } elseif (str_starts_with($text, 'survey-responses/')) {
+                    $url = asset('storage/' . $text);
+                    $value = "<a href=\"{$url}\" target=\"_blank\" class=\"text-blue-600 hover:underline\">View File</a>";
+                } else {
+                    $value = $text;
+                }
+            } elseif ($answer->answer_numeric !== null) {
+                $unit  = $answer->unitOfMeasure?->name ?? '';
+                $value = $answer->answer_numeric . ($unit ? ' ' . $unit : '');
+            } elseif ($answer->questionOption?->optionChoice) {
+                $value = $answer->questionOption->optionChoice->choice_text;
+            }
+
+            if ($answer->custom_input_value) {
+                $value = $value ? "$value ({$answer->custom_input_value})" : $answer->custom_input_value;
+            }
+
+            $value = $value ?? '—';
+
+            if (isset($answerMap[$questionId])) {
+                $answerMap[$questionId] .= ', ' . $value;
+            } else {
+                $answerMap[$questionId] = $value;
+            }
+        }
+        return $answerMap;
     }
 }
