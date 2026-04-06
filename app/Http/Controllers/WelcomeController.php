@@ -42,8 +42,8 @@ class WelcomeController extends Controller
 
         $ageGroups = [
             [
-                'label' => __('Infant (0-5)'),
-                'range' => '(०-५)',
+                'label' => __('Infant'),
+                'range' => '0-5',
                 'count' => $ageStats->group1,
                 'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group1 / $ageStats->total_members) * 100, 2) : 0,
                 'color' => 'bg-rose-500',
@@ -51,8 +51,8 @@ class WelcomeController extends Controller
                 'border_color' => 'border-rose-200',
             ],
             [
-                'label' => __('Children (6-16)'),
-                'range' => '(६-१६)',
+                'label' => __('Children'),
+                'range' => '6-16',
                 'count' => $ageStats->group2,
                 'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group2 / $ageStats->total_members) * 100, 2) : 0,
                 'color' => 'bg-blue-500',
@@ -60,8 +60,8 @@ class WelcomeController extends Controller
                 'border_color' => 'border-blue-200',
             ],
             [
-                'label' => __('Youth (17-32)'),
-                'range' => '(१७-३२)',
+                'label' => __('Youth'),
+                'range' => '17-32',
                 'count' => $ageStats->group3,
                 'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group3 / $ageStats->total_members) * 100, 2) : 0,
                 'color' => 'bg-amber-500',
@@ -69,8 +69,8 @@ class WelcomeController extends Controller
                 'border_color' => 'border-amber-200',
             ],
             [
-                'label' => __('Adult (33-54)'),
-                'range' => '(३३-५४)',
+                'label' => __('Adult'),
+                'range' => '33-54',
                 'count' => $ageStats->group4,
                 'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group4 / $ageStats->total_members) * 100, 2) : 0,
                 'color' => 'bg-emerald-500',
@@ -78,8 +78,8 @@ class WelcomeController extends Controller
                 'border_color' => 'border-emerald-200',
             ],
             [
-                'label' => __('Elderly (55-65)'),
-                'range' => '(५५-६५)',
+                'label' => __('Elderly'),
+                'range' => '55-65',
                 'count' => $ageStats->group5,
                 'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group5 / $ageStats->total_members) * 100, 2) : 0,
                 'color' => 'bg-violet-500',
@@ -87,8 +87,8 @@ class WelcomeController extends Controller
                 'border_color' => 'border-violet-200',
             ],
             [
-                'label' => __('Senior Citizen (65+)'),
-                'range' => '(६५ - माथि)',
+                'label' => __('Senior Citizen'),
+                'range' => '65+',
                 'count' => $ageStats->group6,
                 'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group6 / $ageStats->total_members) * 100, 2) : 0,
                 'color' => 'bg-cyan-500',

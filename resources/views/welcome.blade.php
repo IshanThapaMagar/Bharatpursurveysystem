@@ -98,14 +98,32 @@
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                        {{ $group['label'] }}</h4>
+                                        {{ $group['label'] }}
+                                        @if (app()->getLocale() === 'np')
+                                            ({{ \App\Helpers\NepaliHelper::toNepaliNumber($group['range']) }})
+                                        @else
+                                            ({{ $group['range'] }})
+                                        @endif
+                                    </h4>
                                 </div>
-                                <span class="text-2xl font-bold text-gray-800">{{ $group['percentage'] }}%</span>
+                                <span class="text-2xl font-bold text-gray-800">
+                                    @if (app()->getLocale() === 'np')
+                                        {{ \App\Helpers\NepaliHelper::toNepaliPercentage($group['percentage']) }}
+                                    @else
+                                        {{ $group['percentage'] }}%
+                                    @endif
+                                </span>
                             </div>
                             <div class="mb-2">
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="text-xs font-medium text-gray-600">{{ __('Population Count') }}</span>
-                                    <span class="text-sm font-bold text-gray-800">{{ $group['count'] }}</span>
+                                    <span class="text-sm font-bold text-gray-800">
+                                        @if (app()->getLocale() === 'np')
+                                            {{ \App\Helpers\NepaliHelper::toNepaliNumber($group['count']) }}
+                                        @else
+                                            {{ $group['count'] }}
+                                        @endif
+                                    </span>
                                 </div>
                                 <div class="w-full bg-white rounded-full h-2.5 overflow-hidden">
                                     <div class="h-2.5 rounded-full {{ $group['color'] }}"
@@ -148,12 +166,24 @@
                                     <h4 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">
                                         {{ $group['label'] }}</h4>
                                 </div>
-                                <span class="text-2xl font-bold text-gray-800">{{ $group['percentage'] }}%</span>
+                                <span class="text-2xl font-bold text-gray-800">
+                                    @if (app()->getLocale() === 'np')
+                                        {{ \App\Helpers\NepaliHelper::toNepaliPercentage($group['percentage']) }}
+                                    @else
+                                        {{ $group['percentage'] }}%
+                                    @endif
+                                </span>
                             </div>
                             <div class="mb-2">
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="text-xs font-medium text-gray-600">{{ __('Total Count') }}</span>
-                                    <span class="text-sm font-bold text-gray-800">{{ $group['count'] }}</span>
+                                    <span class="text-sm font-bold text-gray-800">
+                                        @if (app()->getLocale() === 'np')
+                                            {{ \App\Helpers\NepaliHelper::toNepaliNumber($group['count']) }}
+                                        @else
+                                            {{ $group['count'] }}
+                                        @endif
+                                    </span>
                                 </div>
                                 <div class="w-full bg-white rounded-full h-2.5 overflow-hidden">
                                     <div class="h-2.5 rounded-full {{ $group['color'] }}"
@@ -204,13 +234,24 @@
                     <div
                         class="bg-white border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow duration-300 rounded-sm">
                         <h4 class="text-sm font-semibold text-gray-700">{{ $group['label'] }}</h4>
-                        <span class="text-2xl font-bold text-gray-900">{{ $group['count'] }}</span>
+                        <span class="text-2xl font-bold text-gray-900">
+                            @if (app()->getLocale() === 'np')
+                                {{ \App\Helpers\NepaliHelper::toNepaliNumber($group['count']) }}
+                            @else
+                                {{ $group['count'] }}
+                            @endif
+                        </span>
                         <div class="w-full bg-gray-200 h-2 rounded-sm overflow-hidden">
                             <div class="{{ $group['color'] }} h-2 rounded-sm"
                                 style="width: {{ $group['percentage'] }}%"></div>
                         </div>
-                        <span
-                            class="text-xs text-gray-600 text-right">{{ number_format($group['percentage'], 2) }}%</span>
+                        <span class="text-xs text-gray-600 text-right">
+                            @if (app()->getLocale() === 'np')
+                                {{ \App\Helpers\NepaliHelper::toNepaliPercentage($group['percentage'], 2) }}
+                            @else
+                                {{ number_format($group['percentage'], 2) }}%
+                            @endif
+                        </span>
                     </div>
                 @endforeach
             </div>
@@ -261,9 +302,20 @@
                                         <span class="text-gray-700 font-medium">{{ $row->name }}</span>
                                     </div>
                                     <div class="flex items-center gap-16 text-gray-600">
-                                        <span
-                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                        <span class="w-16 text-right">{{ $pct }}%</span>
+                                        <span class="font-semibold text-gray-900 w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliNumber($row->total) }}
+                                            @else
+                                                {{ $row->total }}
+                                            @endif
+                                        </span>
+                                        <span class="w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliPercentage($pct) }}
+                                            @else
+                                                {{ $pct }}%
+                                            @endif
+                                        </span>
                                     </div>
                                 </div>
                             @empty
@@ -303,9 +355,20 @@
                                         <span class="text-gray-700 font-medium">{{ $row->label }}</span>
                                     </div>
                                     <div class="flex items-center gap-16 text-gray-600">
-                                        <span
-                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                        <span class="w-16 text-right">{{ $pct }}%</span>
+                                        <span class="font-semibold text-gray-900 w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliNumber($row->total) }}
+                                            @else
+                                                {{ $row->total }}
+                                            @endif
+                                        </span>
+                                        <span class="w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliPercentage($pct) }}
+                                            @else
+                                                {{ $pct }}%
+                                            @endif
+                                        </span>
                                     </div>
                                 </div>
                             @empty
@@ -352,9 +415,20 @@
                                         <span class="text-gray-700 font-medium">{{ $row->name }}</span>
                                     </div>
                                     <div class="flex items-center gap-16 text-gray-600">
-                                        <span
-                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                        <span class="w-16 text-right">{{ $pct }}%</span>
+                                        <span class="font-semibold text-gray-900 w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliNumber($row->total) }}
+                                            @else
+                                                {{ $row->total }}
+                                            @endif
+                                        </span>
+                                        <span class="w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliPercentage($pct) }}
+                                            @else
+                                                {{ $pct }}%
+                                            @endif
+                                        </span>
                                     </div>
                                 </div>
                             @empty
@@ -396,9 +470,20 @@
                                         <span class="text-gray-700 font-medium">{{ $row->label }}</span>
                                     </div>
                                     <div class="flex items-center gap-16 text-gray-600">
-                                        <span
-                                            class="font-semibold text-gray-900 w-16 text-right">{{ $row->total }}</span>
-                                        <span class="w-16 text-right">{{ $pct }}%</span>
+                                        <span class="font-semibold text-gray-900 w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliNumber($row->total) }}
+                                            @else
+                                                {{ $row->total }}
+                                            @endif
+                                        </span>
+                                        <span class="w-16 text-right">
+                                            @if (app()->getLocale() === 'np')
+                                                {{ \App\Helpers\NepaliHelper::toNepaliPercentage($pct) }}
+                                            @else
+                                                {{ $pct }}%
+                                            @endif
+                                        </span>
                                     </div>
                                 </div>
                             @empty
@@ -656,18 +741,18 @@
 
                 const chartsData = window.welcomeChartData.chartsData;
                 const chartColors = [
-                    '#6366a6', 
-                    '#d16b9f', 
-                    '#4fa3c4', 
-                    '#d4a94f', 
-                    '#4fbf9f', 
-                    '#8a6fbf', 
-                    '#d46a7a', 
-                    '#4fb3ad', 
+                    '#6366a6',
+                    '#d16b9f',
+                    '#4fa3c4',
+                    '#d4a94f',
+                    '#4fbf9f',
+                    '#8a6fbf',
+                    '#d46a7a',
+                    '#4fb3ad',
                     '#c9b458',
-                    '#6c72c9', 
+                    '#6c72c9',
                     '#d48a4f',
-                    '#c96ad4'  
+                    '#c96ad4'
                 ];
 
                 Object.entries(chartsData).forEach(([questionId, data]) => {
