@@ -1,4 +1,20 @@
 <x-app-layout>
+    @push('styles')
+        <style>
+            .table-height {
+                height: 390px;
+                overflow: hidden;
+            }
+
+            .table-height-container {
+                position: relative;
+            }
+
+            .toggle-table-height-btn {
+                transition: all 0.3s ease;
+            }
+        </style>
+    @endpush
     <div class="py-24">
         <div class="px-4 sm:px-6 lg:px-8 max-w-[100%]">
             <div class="bg-white overflow-hidden shadow-sm rounded-sm">
@@ -218,7 +234,7 @@
                     </div>
 
 
-                    {{-- Flexbox per-column: each column stacks its panels independently --}}
+
                     <div class="flex flex-col lg:flex-row gap-x-12 gap-y-10 mt-12 mb-16 items-start">
 
                         {{-- LEFT COLUMN: मातृभाषा + शिक्षाको अवस्था --}}
@@ -280,7 +296,7 @@
                             </div>
 
                             {{-- शिक्षाको अवस्था --}}
-                            <div class="flex flex-col">
+                            <div class="flex flex-col table-height-container table-height">
                                 <h3
                                     class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
                                     शिक्षाको अवस्था</h3>
@@ -331,6 +347,10 @@
                                     @endforelse
                                 </div>
                             </div>
+                            <button
+                                class="toggle-table-height-btn w-[50px] mt-2 px-3 py-1.5 text-black text-xs font-semibold rounded  transition-colors z-10 focus:outline-none rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300">
+                                ▼
+                            </button>
 
                         </div>{{-- end LEFT COLUMN --}}
 
@@ -449,7 +469,7 @@
 
                         </div>{{-- end RIGHT COLUMN --}}
 
-                    </div>{{-- end flex row --}}
+                    </div>
 
                     @if (isset($chartsData) && count($chartsData) > 0)
                         <div class="mb-12">
@@ -781,6 +801,35 @@
         window.addEventListener('reinitialize-charts', initializeDashboardCharts);
 
         window.initializeDashboardCharts = initializeDashboardCharts;
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Toggle table-height class on button click
+            $('.toggle-table-height-btn').on('click', function(e) {
+                e.preventDefault();
+                const $container = $(this).prev('.table-height-container');
+
+                // Toggle the table-height class
+                $container.toggleClass('table-height');
+
+                // Update button text based on state
+                if ($container.hasClass('table-height')) {
+                    $(this).text('▼');
+                    $(this).removeClass(
+                        'rounded-sm border border-rose-200 bg-rose-100 hover:shadow-md transition-shadow duration-300 overflow-hidden'
+                        ).addClass(
+                        'rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300'
+                        );
+                } else {
+                    $(this).text('▲');
+                    $(this).removeClass(
+                        'rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300'
+                        ).addClass(
+                        'rounded-sm border border-rose-200 bg-rose-100 hover:shadow-md transition-shadow duration-300'
+                        );
+                }
+            });
+        });
     </script>
 
 </x-app-layout>

@@ -11,13 +11,31 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts & Styles -->
-    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @endif
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+
+
 
     <style>
         [x-cloak] {
             display: none !important;
+        }
+
+        .table-height {
+            height: 390px;
+            overflow: hidden;
+        }
+
+        .table-height-container {
+            position: relative;
+        }
+
+        .toggle-table-height-btn {
+            transition: all 0.3s ease;
         }
     </style>
 </head>
@@ -325,7 +343,7 @@
                     </div>
 
                     {{-- शिक्षाको अवस्था --}}
-                    <div class="flex flex-col">
+                    <div class="flex flex-col table-height-container table-height">
                         <h3
                             class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
                             शिक्षाको अवस्था</h3>
@@ -377,9 +395,13 @@
                         </div>
                     </div>
 
+                    <button
+                        class="toggle-table-height-btn w-[50px] mt-2 px-3 py-1.5 text-black text-xs font-semibold rounded  transition-colors z-10 focus:outline-none rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300">
+                        ▼
+                    </button>
+
                 </div>{{-- end LEFT COLUMN --}}
 
-                {{-- RIGHT COLUMN: जातजातीहरु + धर्म --}}
                 <div class="flex flex-col flex-1 gap-10">
 
                     {{-- जातजातीहरु --}}
@@ -492,7 +514,7 @@
                         </div>
                     </div>
 
-                </div>{{-- end RIGHT COLUMN --}}
+                </div>
 
             </div>{{-- end flex row --}}
         </section>
@@ -804,6 +826,30 @@
 
             window.addEventListener('reinitialize-charts', initializeWelcomeCharts);
         })();
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Toggle table-height class on button click
+            $('.toggle-table-height-btn').on('click', function(e) {
+                e.preventDefault();
+                const $container = $(this).prev('.table-height-container');
+
+                // Toggle the table-height class
+                $container.toggleClass('table-height');
+
+                // Update button text based on state
+                if ($container.hasClass('table-height')) {
+                    $(this).text('▼');
+                    $(this).removeClass('rounded-sm border border-rose-200 bg-rose-100 hover:shadow-md transition-shadow duration-300 overflow-hidden').addClass(
+                        'rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300');
+                } else {
+                    $(this).text('▲');
+                    $(this).removeClass('rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300').addClass(
+                        'rounded-sm border border-rose-200 bg-rose-100 hover:shadow-md transition-shadow duration-300');
+                }
+            });
+        });
     </script>
 
 
