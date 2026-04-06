@@ -83,12 +83,12 @@
   "no": "छैन",
   "Native speaker": "मातृभाषा बोल्ने",
   "S.N": "ऋ.स",
-  "Infant (0-5)": "शिशु (०-५)",
-  "Children (6-16)": "बालबालिका (६-१६)",
-  "Youth (17-32)": "युवा (१७-३२)",
-  "Adult (33-54)": "अधबैँसे (३३-५४)",
-  "Elderly (55-65)": "बृद्ध (५५-६५)",
-  "Senior Citizen (65+)": "जेष्ठ नागरिक (६५ - माथि)",
+  "Infant": "शिशु",
+  "Children": "बालबालिका",
+  "Youth": "युवा",
+  "Adult": "अधबैँसे",
+  "Elderly": "बृद्ध",
+  "Senior Citizen": "जेष्ठ नागरिक",
   "Male": "पुरुष",
   "Female": "महिला",
   "Other/LGBTQ+": "अन्य/समलिंग",
@@ -140,7 +140,10 @@
   "Add Palika Admin →": "पालिका प्रशासक थप्नुहोस् →",
   "Add New Ward": "नयाँ वडा थप्नुहोस्",
   "Add Family Member": "परिवार सदस्य थप्नुहोस्",
-  "Gender Distribution": "लैङ्गिक वितरण"
-
+  "Gender Distribution": "लैङ्गिक वितरण",
+  "Permanent Birth": "स्थायी जन्म",
+  "Temporary Resident": "बसाईसराई",
+  "Temporary Stay": "अस्थायी बसोबास",
+  "No Residence Permission": "बसाईसराईको निसा नभएको"
 
 }

@@ -64,8 +64,8 @@ class AggregateDashboardStats extends Command
 
             $ageGroups = [
                 [
-                    'label' => __('Infant (0-5)'),
-                    'range' => '(०-५)',
+                    'label' => 'Infant',
+                    'range' => '0-5',
                     'count' => $ageStats->group1,
                     'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group1 / $ageStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-rose-500',
@@ -73,8 +73,8 @@ class AggregateDashboardStats extends Command
                     'border_color' => 'border-rose-200'
                 ],
                 [
-                    'label' => __('Children (6-16)'),
-                    'range' => '(६-१६)',
+                    'label' => 'Children',
+                    'range' => '6-16',
                     'count' => $ageStats->group2,
                     'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group2 / $ageStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-blue-500',
@@ -82,8 +82,8 @@ class AggregateDashboardStats extends Command
                     'border_color' => 'border-blue-200'
                 ],
                 [
-                    'label' => __('Youth (17-32)'),
-                    'range' => '(१७-३२)',
+                    'label' => 'Youth',
+                    'range' => '17-32',
                     'count' => $ageStats->group3,
                     'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group3 / $ageStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-amber-500',
@@ -91,8 +91,8 @@ class AggregateDashboardStats extends Command
                     'border_color' => 'border-amber-200'
                 ],
                 [
-                    'label' => __('Adult (33-54)'),
-                    'range' => '(३३-५४)',
+                    'label' => 'Adult',
+                    'range' => '33-54',
                     'count' => $ageStats->group4,
                     'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group4 / $ageStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-emerald-500',
@@ -100,8 +100,8 @@ class AggregateDashboardStats extends Command
                     'border_color' => 'border-emerald-200'
                 ],
                 [
-                    'label' => __('Elderly (55-65)'),
-                    'range' => '(५५-६५)',
+                    'label' => 'Elderly',
+                    'range' => '55-65',
                     'count' => $ageStats->group5,
                     'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group5 / $ageStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-violet-500',
@@ -109,8 +109,8 @@ class AggregateDashboardStats extends Command
                     'border_color' => 'border-violet-200'
                 ],
                 [
-                    'label' => __('Senior Citizen (65+)'),
-                    'range' => '(६५ - माथि)',
+                    'label' => 'Senior Citizen',
+                    'range' => '65+',
                     'count' => $ageStats->group6,
                     'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group6 / $ageStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-cyan-500',
@@ -136,7 +136,7 @@ class AggregateDashboardStats extends Command
 
             $genderGroups = [
                 [
-                    'label' => __('Male'),
+                    'label' => 'Male',
                     'count' => $genderStats->male,
                     'percentage' => $genderStats->total_members > 0 ? round(($genderStats->male / $genderStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-blue-600',
@@ -144,7 +144,7 @@ class AggregateDashboardStats extends Command
                     'border_color' => 'border-blue-200'
                 ],
                 [
-                    'label' => __('Female'),
+                    'label' => 'Female',
                     'count' => $genderStats->female,
                     'percentage' => $genderStats->total_members > 0 ? round(($genderStats->female / $genderStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-pink-600',
@@ -152,7 +152,7 @@ class AggregateDashboardStats extends Command
                     'border_color' => 'border-pink-200'
                 ],
                 [
-                    'label' => __('Other'),
+                    'label' => 'Other',
                     'count' => $genderStats->other,
                     'percentage' => $genderStats->total_members > 0 ? round(($genderStats->other / $genderStats->total_members) * 100, 2) : 0,
                     'color' => 'bg-orange-600',
@@ -181,7 +181,7 @@ class AggregateDashboardStats extends Command
             $citizenshipGroups = [
                 [
                     'id' => 1,
-                    'label' => 'स्थायी जन्म',
+                    'label' => 'Permanent Birth',
                     'count' => $citStats->stat1,
                     'percentage' => $totalHouseholders > 0 ? number_format(($citStats->stat1 / $totalHouseholders) * 100, 2) : 0,
                     'color' => 'bg-teal-500',
@@ -190,7 +190,7 @@ class AggregateDashboardStats extends Command
                 ],
                 [
                     'id' => 2,
-                    'label' => 'बसाईसराई',
+                    'label' => 'Temporary Resident',
                     'count' => $citStats->stat2,
                     'percentage' => $totalHouseholders > 0 ? number_format(($citStats->stat2 / $totalHouseholders) * 100, 2) : 0,
                     'color' => 'bg-indigo-500',
@@ -199,7 +199,7 @@ class AggregateDashboardStats extends Command
                 ],
                 [
                     'id' => 3,
-                    'label' => 'अस्थायी बसोबास',
+                    'label' => 'Temporary Stay',
                     'count' => $citStats->stat3,
                     'percentage' => $totalHouseholders > 0 ? number_format(($citStats->stat3 / $totalHouseholders) * 100, 2) : 0,
                     'color' => 'bg-fuchsia-500',
@@ -208,7 +208,7 @@ class AggregateDashboardStats extends Command
                 ],
                 [
                     'id' => 4,
-                    'label' => 'बसाईसराईको निसा नभएको',
+                    'label' => 'No Residence Permission',
                     'count' => $citStats->stat4,
                     'percentage' => $totalHouseholders > 0 ? number_format(($citStats->stat4 / $totalHouseholders) * 100, 2) : 0,
                     'color' => 'bg-slate-500',

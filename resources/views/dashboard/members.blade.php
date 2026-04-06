@@ -41,9 +41,39 @@
                         </div>
                     </div>
 
+                    {{-- Age Group Selector --}}
+                    <div class="flex-1 min-w-[220px]">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                            उमेर समूह
+                        </label>
+                        <select id="age-group-selector"
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent shadow-sm transition bg-white">
+                            <option value="all" {{ request('range_min') === null ? 'selected' : '' }}>सबै उमेर समूह
+                            </option>
+                            <option value="0-5"
+                                {{ request('range_min') === '0' && request('range_max') === '5' ? 'selected' : '' }}>
+                                शिशु (०-५)</option>
+                            <option value="6-16"
+                                {{ request('range_min') === '6' && request('range_max') === '16' ? 'selected' : '' }}>
+                                बालक (६-१६)</option>
+                            <option value="17-32"
+                                {{ request('range_min') === '17' && request('range_max') === '32' ? 'selected' : '' }}>
+                                युवा (१७-३२)</option>
+                            <option value="33-54"
+                                {{ request('range_min') === '33' && request('range_max') === '54' ? 'selected' : '' }}>
+                                वयस्क (३३-५४)</option>
+                            <option value="55-65"
+                                {{ request('range_min') === '55' && request('range_max') === '65' ? 'selected' : '' }}>
+                                वृद्ध (५५-६५)</option>
+                            <option value="65+"
+                                {{ request('range_min') === '65' && request('range_max') === '120' ? 'selected' : '' }}>
+                                ज्येष्ठ नागरिक (६५ - माथि)</option>
+                        </select>
+                    </div>
+
                     <div class="flex-1 min-w-[280px]">
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                            उमेर:
+                            उमेर सीमा:
                             <span id="age-min-display" class="text-indigo-600">0</span>
                             –
                             <span id="age-max-display" class="text-indigo-600">120</span>
@@ -63,7 +93,7 @@
                                 step="1"
                                 class="age-thumb absolute w-full appearance-none bg-transparent pointer-events-none" />
                         </div>
-                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <div id="slider-labels" class="flex justify-between text-xs text-gray-400 mt-1">
                             <span>0</span><span>30</span><span>60</span><span>90</span><span>120</span>
                         </div>
                     </div>
@@ -226,6 +256,14 @@
         #age-max {
             z-index: 5;
         }
+
+        /* Styling for disabled age group selector */
+        #age-group-selector:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
     </style>
 
     <script>
@@ -237,18 +275,97 @@
             const maxDisplay = document.getElementById('age-max-display');
             const rangeBar = document.getElementById('slider-range');
             const searchInput = document.getElementById('search-input');
+            const ageGroupSelector = document.getElementById('age-group-selector');
             const noResults = document.getElementById('no-results');
             const visibleSpan = document.getElementById('visible-count');
             const resetBtn = document.getElementById('reset-filters');
+            const sliderLabels = document.getElementById('slider-labels');
             const rows = Array.from(document.querySelectorAll('.member-row'));
+
+            // ── Age Group Definitions ────────────────────────────────────────────
+            const ageGroups = {
+                'all': {
+                    label: 'सबै',
+                    min: 0,
+                    max: 120
+                },
+                '0-5': {
+                    label: 'शिशु (०-५)',
+                    min: 0,
+                    max: 5
+                },
+                '6-16': {
+                    label: 'बालक (६-१६)',
+                    min: 6,
+                    max: 16
+                },
+                '17-32': {
+                    label: 'युवा (१७-३२)',
+                    min: 17,
+                    max: 32
+                },
+                '33-54': {
+                    label: 'वयस्क (३३-५४)',
+                    min: 33,
+                    max: 54
+                },
+                '55-65': {
+                    label: 'वृद्ध (५५-६५)',
+                    min: 55,
+                    max: 65
+                },
+                '65+': {
+                    label: 'ज्येष्ठ नागरिक (६५ - माथि)',
+                    min: 65,
+                    max: 120
+                }
+            };
+
+            // ── Generate slider labels based on range ────────────────────────────
+            function generateSliderLabels(min, max) {
+                const range = max - min;
+                const step = range / 4;
+                let labels = [min.toString()];
+                for (let i = 1; i < 4; i++) {
+                    labels.push(Math.round(min + (step * i)).toString());
+                }
+                labels.push(max.toString());
+                return labels;
+            }
+
+            // ── Update slider range based on age group ───────────────────────────
+            function updateAgeGroupRange() {
+                const selectedGroup = ageGroupSelector.value;
+                const group = ageGroups[selectedGroup];
+
+                minInput.min = group.min;
+                minInput.max = group.max;
+                maxInput.min = group.min;
+                maxInput.max = group.max;
+
+                minInput.value = group.min;
+                maxInput.value = group.max;
+
+                // Update slider labels
+                const labels = generateSliderLabels(group.min, group.max);
+                sliderLabels.innerHTML = labels.map(label => `<span>${label}</span>`).join('');
+
+                updateSliderUI();
+                applyFilters();
+            }
+
+            // ── Age group selector change ────────────────────────────────────────
+            ageGroupSelector.addEventListener('change', updateAgeGroupRange);
 
             // ── Slider range highlight ──────────────────────────────────────────
             function updateSliderUI() {
                 const min = parseInt(minInput.value);
                 const max = parseInt(maxInput.value);
+                const sliderMin = parseInt(minInput.min);
                 const sliderMax = parseInt(minInput.max);
-                const leftPct = (min / sliderMax) * 100;
-                const rightPct = (max / sliderMax) * 100;
+                const range = sliderMax - sliderMin;
+                const leftPct = ((min - sliderMin) / range) * 100;
+                const rightPct = ((max - sliderMin) / range) * 100;
                 rangeBar.style.left = leftPct + '%';
                 rangeBar.style.width = (rightPct - leftPct) + '%';
                 minDisplay.textContent = min;
@@ -318,15 +435,75 @@
 
             // ── Reset ───────────────────────────────────────────────────────────
             resetBtn.addEventListener('click', function() {
-                minInput.value = 0;
-                maxInput.value = 120;
-                searchInput.value = '';
-                updateSliderUI();
-                applyFilters();
+                const urlParams = new URLSearchParams(window.location.search);
+                const filterType = urlParams.get('filter_type');
+                const rangeMin = urlParams.get('range_min');
+                const rangeMax = urlParams.get('range_max');
+
+                // Validate if range_min and range_max match a valid age group
+                let isValidAgeGroup = false;
+                if (filterType === 'age_group' && rangeMin !== null && rangeMax !== null) {
+                    for (const [key, group] of Object.entries(ageGroups)) {
+                        if (group.min === parseInt(rangeMin) && group.max === parseInt(rangeMax)) {
+                            isValidAgeGroup = true;
+                            break;
+                        }
+                    }
+                }
+
+                // If filtering by valid age_group, only reset search and slider within group range
+                if (filterType === 'age_group' && isValidAgeGroup) {
+                    searchInput.value = '';
+                    const selectedGroup = ageGroupSelector.value;
+                    const group = ageGroups[selectedGroup];
+                    minInput.value = group.min;
+                    maxInput.value = group.max;
+                    updateSliderUI();
+                    applyFilters();
+                } else {
+                    // Full reset: all filters
+                    ageGroupSelector.value = 'all';
+                    searchInput.value = '';
+                    updateAgeGroupRange();
+                }
             });
 
             // ── Boot ────────────────────────────────────────────────────────────
-            updateSliderUI();
+            // Initialize from pre-selected age group and disable if filter_type=age_group
+            function initializeSlider() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const filterType = urlParams.get('filter_type');
+                const rangeMin = urlParams.get('range_min');
+                const rangeMax = urlParams.get('range_max');
+
+                const selectedValue = ageGroupSelector.value;
+
+                // Validate if range_min and range_max match a valid age group
+                let isValidAgeGroup = false;
+                if (filterType === 'age_group' && rangeMin !== null && rangeMax !== null) {
+                    for (const [key, group] of Object.entries(ageGroups)) {
+                        if (group.min === parseInt(rangeMin) && group.max === parseInt(rangeMax)) {
+                            isValidAgeGroup = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Only disable the dropdown if it's a valid age group filter
+                if (filterType === 'age_group' && isValidAgeGroup) {
+                    ageGroupSelector.disabled = true;
+                    ageGroupSelector.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+
+                if (selectedValue !== 'all') {
+                    updateAgeGroupRange();
+                } else {
+                    updateSliderUI();
+                    applyFilters();
+                }
+            }
+
+            initializeSlider();
 
             // Handle AJAX re-init
             window.addEventListener('reinitialize-forms', function() {
