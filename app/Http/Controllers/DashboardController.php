@@ -267,6 +267,8 @@ class DashboardController extends Controller
             $query->where('hm.education_level_id', (int) $request->input('id', 0));
         } elseif ($filterType === 'religion') {
             $query->where('hm.religion_id', (int) $request->input('id', 0));
+        } elseif ($filterType === 'citizenship') {
+            $query->where('hh.citizenship_permanent_address_id', (int) $request->input('id', 0));
         }
 
         $members = $query->orderBy('hm.full_name')->get();
