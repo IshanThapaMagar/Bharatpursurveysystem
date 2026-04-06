@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ward extends Model
 {
-    protected $fillable = ['ward_no', 'name', 'location', 'description', 'contact_number', 'building_photo'];
+    protected $fillable = ['ward_no', 'name', 'location', 'description', 'contact_number', 'email', 'building_photo', 'latitude', 'longitude'];
+
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+    ];
 
     public function surveySections(): HasMany
     {

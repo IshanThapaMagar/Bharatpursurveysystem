@@ -11,6 +11,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        if (!session()->has('locale')) {
+            app()->setLocale('np');
+        }
+
         $authUser = auth()->user();
         if ($authUser->isSuperAdmin()) {
             $wards = DB::table('wards')->orderBy('ward_no')->get();
@@ -66,8 +70,25 @@ class DashboardController extends Controller
         $stats = \App\Models\DashboardStatistic::where('ward_id', (string)$selectedWard)->first();
 
         $ageGroups = $stats ? ($stats->age_groups ?? []) : [];
+        // Apply translations to age groups
+        $ageGroups = collect($ageGroups)->map(function($group) {
+            $group['label'] = __($group['label'] ?? '');
+            return $group;
+        })->toArray();
+
         $genderGroups = $stats ? ($stats->gender_groups ?? []) : [];
+        // Apply translations to gender groups
+        $genderGroups = collect($genderGroups)->map(function($group) {
+            $group['label'] = __($group['label'] ?? '');
+            return $group;
+        })->toArray();
+
         $citizenshipGroups = $stats ? ($stats->citizenship_groups ?? []) : [];
+        // Apply translations to citizenship groups
+        $citizenshipGroups = collect($citizenshipGroups)->map(function($group) {
+            $group['label'] = __($group['label'] ?? '');
+            return $group;
+        })->toArray();
         
         $motherTongueStats = $stats && $stats->mother_tongue_stats 
             ? collect($stats->mother_tongue_stats)->map(fn($item) => (object)$item) 
@@ -476,7 +497,7 @@ class DashboardController extends Controller
             $wardDisplay = ($wardNoDisplay === 'All Wards') ? 'All Wards' : 'Ward No: ' . $wardNoDisplay;
             fputcsv($file, [$wardDisplay]);
             fputcsv($file, ['Report generated on: ' . date('Y-m-d H:i')]);
-            fputcsv($file, []); // Empty row as separator
+            fputcsv($file, []);
 
             fputcsv($file, ['Category', 'Label', 'Count', 'Percentage (%)']);
 

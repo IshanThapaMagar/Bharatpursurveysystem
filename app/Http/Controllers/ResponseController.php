@@ -12,6 +12,7 @@ use App\Models\MotherTongue;
 use App\Models\CitizenshipPermanentAddress;
 use App\Models\HouseHolder;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use App\Services\DashboardCacheService;
 
 class ResponseController extends Controller
@@ -248,10 +249,10 @@ class ResponseController extends Controller
 
         $household = $response->householder;
 
-        // Lookup data for householder form dropdowns
-        $castes                 = Caste::orderBy('name')->get(['id', 'name']);
-        $motherTongues          = MotherTongue::orderBy('name')->get(['id', 'name']);
-        $citizenshipAddresses   = CitizenshipPermanentAddress::orderBy('name')->get(['id', 'name']);
+        // Lookup data for householder form dropdowns - CACHED for performance
+        $castes                 = Cache::remember('lookup.castes', 86400, fn () => Caste::orderBy('name')->get(['id', 'name']));
+        $motherTongues          = Cache::remember('lookup.mother_tongues', 86400, fn () => MotherTongue::orderBy('name')->get(['id', 'name']));
+        $citizenshipAddresses   = Cache::remember('lookup.citizenship_addresses', 86400, fn () => CitizenshipPermanentAddress::orderBy('name')->get(['id', 'name']));
         $toles                  = Tole::where('ward_id', $response->ward_id)->orderBy('name')->get(['id', 'name']);
 
         return view('responses.edit', compact(

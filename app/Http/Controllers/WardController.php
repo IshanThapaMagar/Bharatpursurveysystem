@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ward;
 use App\Models\WardDesignation;
 use App\Models\WardMember;
+use App\Services\SurveyDuplicationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -32,16 +33,23 @@ class WardController extends Controller
             'location' => 'required|string|max:255',
             'description' => 'nullable|string',
             'contact_number' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'building_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'members' => 'required|array',
             'members.*.name' => 'required|string|max:255',
+            'members.*.email' => 'nullable|email|max:255',
+            'members.*.phone_number' => 'nullable|string|max:20',
             'members.*.ward_designation_id' => 'required|exists:ward_designations,id',
             'members.*.photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $this->validateMemberCounts($request->members);
 
-        DB::transaction(function () use ($request) {
+        $newWardId = null;
+
+        DB::transaction(function () use ($request, &$newWardId) {
             $buildingPhotoPath = $request->file('building_photo')->store('ward_buildings', 'public');
 
             $ward = Ward::create([
@@ -50,9 +58,13 @@ class WardController extends Controller
                 'location' => $request->location,
                 'description' => $request->description,
                 'contact_number' => $request->contact_number,
+                'email' => $request->email,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'building_photo' => $buildingPhotoPath,
             ]);
 
+            $newWardId = $ward->id;
 
             $designationIds = collect($request->members)->pluck('ward_designation_id')->unique();
             $designations = WardDesignation::with('translations')->whereIn('id', $designationIds)->get()->keyBy('id');
@@ -70,12 +82,18 @@ class WardController extends Controller
                     'ward_id' => $ward->id,
                     'ward_designation_id' => $memberData['ward_designation_id'],
                     'name' => $memberData['name'],
+                    'email' => $memberData['email'] ?? null,
+                    'phone_number' => $memberData['phone_number'] ?? null,
                     'photo' => $photoPath,
                 ]);
             }
         });
 
-        return redirect()->route('palika.index')->with('success', 'Ward added successfully.');
+        // Automatically assign existing surveys to the newly created ward
+        $surveyService = new SurveyDuplicationService();
+        $surveyService->assignExistingSurveysToNewWard($newWardId);
+
+        return redirect()->route('wards.show', $newWardId)->with('success', 'Ward added successfully.');
     }
 
     public function update(Request $request, Ward $ward)
@@ -86,9 +104,14 @@ class WardController extends Controller
             'location' => 'required|string|max:255',
             'description' => 'nullable|string',
             'contact_number' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'building_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'members' => 'required|array',
             'members.*.name' => 'required|string|max:255',
+            'members.*.email' => 'nullable|email|max:255',
+            'members.*.phone_number' => 'nullable|string|max:20',
             'members.*.ward_designation_id' => 'required|exists:ward_designations,id',
             'members.*.photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -96,7 +119,7 @@ class WardController extends Controller
         $this->validateMemberCounts($request->members);
 
         DB::transaction(function () use ($request, $ward) {
-            $data = $request->only(['ward_no', 'name', 'location', 'description', 'contact_number']);
+            $data = $request->only(['ward_no', 'name', 'location', 'description', 'contact_number', 'email', 'latitude', 'longitude']);
 
             if ($request->hasFile('building_photo')) {
                 if ($ward->building_photo) {
@@ -137,6 +160,8 @@ class WardController extends Controller
                     $member->update([
                         'ward_designation_id' => $memberData['ward_designation_id'],
                         'name' => $memberData['name'],
+                        'email' => $memberData['email'] ?? null,
+                        'phone_number' => $memberData['phone_number'] ?? null,
                         'photo' => $photoPath,
                     ]);
                     $processedIds[] = $memberId;
@@ -145,6 +170,8 @@ class WardController extends Controller
                         'ward_id' => $ward->id,
                         'ward_designation_id' => $memberData['ward_designation_id'],
                         'name' => $memberData['name'],
+                        'email' => $memberData['email'] ?? null,
+                        'phone_number' => $memberData['phone_number'] ?? null,
                         'photo' => $photoPath,
                     ]);
                     $processedIds[] = $newMember->id;
@@ -162,7 +189,13 @@ class WardController extends Controller
             }
         });
 
-        return redirect()->route('palika.index')->with('success', 'Ward updated successfully.');
+        return redirect()->route('wards.show', $ward)->with('success', 'Ward updated successfully');
+    }
+
+    public function show(Ward $ward)
+    {
+        $ward->load(['members.designation.translations', 'surveySections']);
+        return view('palika.wardShow', compact('ward'));
     }
 
     public function destroy(Ward $ward)

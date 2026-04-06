@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WardMember extends Model
 {
-    protected $fillable = ['ward_id', 'ward_designation_id', 'name', 'photo'];
+    protected $fillable = ['ward_id', 'ward_designation_id', 'name', 'email', 'phone_number', 'photo'];
 
     public function ward(): BelongsTo
     {

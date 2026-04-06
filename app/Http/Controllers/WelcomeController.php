@@ -9,7 +9,7 @@ class WelcomeController extends Controller
 {
     public function index(Request $request)
     {
-        // Default to Nepali on the public welcome page unless the user has already chosen a language
+
         if (!session()->has('locale')) {
             app()->setLocale('np');
         }
@@ -42,62 +42,61 @@ class WelcomeController extends Controller
 
         $ageGroups = [
             [
-                'label'        => __('Infant (0-5)'),
-                'range'        => '(०-५)',
-                'count'        => $ageStats->group1,
-                'percentage'   => $ageStats->total_members > 0 ? round(($ageStats->group1 / $ageStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-rose-500',
-                'light_color'  => 'bg-rose-100',
+                'label' => __('Infant (0-5)'),
+                'range' => '(०-५)',
+                'count' => $ageStats->group1,
+                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group1 / $ageStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-rose-500',
+                'light_color' => 'bg-rose-100',
                 'border_color' => 'border-rose-200',
             ],
             [
-                'label'        => __('Children (6-16)'),
-                'range'        => '(६-१६)',
-                'count'        => $ageStats->group2,
-                'percentage'   => $ageStats->total_members > 0 ? round(($ageStats->group2 / $ageStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-blue-500',
-                'light_color'  => 'bg-blue-100',
+                'label' => __('Children (6-16)'),
+                'range' => '(६-१६)',
+                'count' => $ageStats->group2,
+                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group2 / $ageStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-blue-500',
+                'light_color' => 'bg-blue-100',
                 'border_color' => 'border-blue-200',
             ],
             [
-                'label'        => __('Youth (17-32)'),
-                'range'        => '(१७-३२)',
-                'count'        => $ageStats->group3,
-                'percentage'   => $ageStats->total_members > 0 ? round(($ageStats->group3 / $ageStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-amber-500',
-                'light_color'  => 'bg-amber-100',
+                'label' => __('Youth (17-32)'),
+                'range' => '(१७-३२)',
+                'count' => $ageStats->group3,
+                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group3 / $ageStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-amber-500',
+                'light_color' => 'bg-amber-100',
                 'border_color' => 'border-amber-200',
             ],
             [
-                'label'        => __('Adult (33-54)'),
-                'range'        => '(३३-५४)',
-                'count'        => $ageStats->group4,
-                'percentage'   => $ageStats->total_members > 0 ? round(($ageStats->group4 / $ageStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-emerald-500',
-                'light_color'  => 'bg-emerald-100',
+                'label' => __('Adult (33-54)'),
+                'range' => '(३३-५४)',
+                'count' => $ageStats->group4,
+                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group4 / $ageStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-emerald-500',
+                'light_color' => 'bg-emerald-100',
                 'border_color' => 'border-emerald-200',
             ],
             [
-                'label'        => __('Elderly (55-65)'),
-                'range'        => '(५५-६५)',
-                'count'        => $ageStats->group5,
-                'percentage'   => $ageStats->total_members > 0 ? round(($ageStats->group5 / $ageStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-violet-500',
-                'light_color'  => 'bg-violet-100',
+                'label' => __('Elderly (55-65)'),
+                'range' => '(५५-६५)',
+                'count' => $ageStats->group5,
+                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group5 / $ageStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-violet-500',
+                'light_color' => 'bg-violet-100',
                 'border_color' => 'border-violet-200',
             ],
             [
-                'label'        => __('Senior Citizen (65+)'),
-                'range'        => '(६५ - माथि)',
-                'count'        => $ageStats->group6,
-                'percentage'   => $ageStats->total_members > 0 ? round(($ageStats->group6 / $ageStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-cyan-500',
-                'light_color'  => 'bg-cyan-100',
+                'label' => __('Senior Citizen (65+)'),
+                'range' => '(६५ - माथि)',
+                'count' => $ageStats->group6,
+                'percentage' => $ageStats->total_members > 0 ? round(($ageStats->group6 / $ageStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-cyan-500',
+                'light_color' => 'bg-cyan-100',
                 'border_color' => 'border-cyan-200',
             ],
         ];
 
-        // Gender stats
         $genderStats = DB::table('house_members as hm')
             ->join('house_holders as hh', 'hh.id', '=', 'hm.house_holder_id')
             ->join('responses as r', 'r.householder_id', '=', 'hh.id')
@@ -114,27 +113,27 @@ class WelcomeController extends Controller
 
         $genderGroups = [
             [
-                'label'        => __('Male'),
-                'count'        => $genderStats->male,
-                'percentage'   => $genderStats->total_members > 0 ? round(($genderStats->male / $genderStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-blue-600',
-                'light_color'  => 'bg-blue-50',
+                'label' => __('Male'),
+                'count' => $genderStats->male,
+                'percentage' => $genderStats->total_members > 0 ? round(($genderStats->male / $genderStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-blue-600',
+                'light_color' => 'bg-blue-50',
                 'border_color' => 'border-blue-200',
             ],
             [
-                'label'        => __('Female'),
-                'count'        => $genderStats->female,
-                'percentage'   => $genderStats->total_members > 0 ? round(($genderStats->female / $genderStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-pink-600',
-                'light_color'  => 'bg-pink-50',
+                'label' => __('Female'),
+                'count' => $genderStats->female,
+                'percentage' => $genderStats->total_members > 0 ? round(($genderStats->female / $genderStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-pink-600',
+                'light_color' => 'bg-pink-50',
                 'border_color' => 'border-pink-200',
             ],
             [
-                'label'        => __('Other'),
-                'count'        => $genderStats->other,
-                'percentage'   => $genderStats->total_members > 0 ? round(($genderStats->other / $genderStats->total_members) * 100, 2) : 0,
-                'color'        => 'bg-orange-600',
-                'light_color'  => 'bg-orange-50',
+                'label' => __('Other/LGBTQ+'),
+                'count' => $genderStats->other,
+                'percentage' => $genderStats->total_members > 0 ? round(($genderStats->other / $genderStats->total_members) * 100, 2) : 0,
+                'color' => 'bg-orange-600',
+                'light_color' => 'bg-orange-50',
                 'border_color' => 'border-orange-200',
             ],
         ];
@@ -155,9 +154,9 @@ class WelcomeController extends Controller
             ->first();
 
         $citizenshipGroups = [
-            ['id' => 1, 'label' => 'स्थायी जन्म',          'count' => $citStats->stat1, 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat1 / $citStats->total_householders) * 100, 2) : 0, 'color' => 'bg-teal-500'],
-            ['id' => 2, 'label' => 'बसाईसराई',              'count' => $citStats->stat2, 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat2 / $citStats->total_householders) * 100, 2) : 0, 'color' => 'bg-indigo-500'],
-            ['id' => 3, 'label' => 'अस्थायी बसोबास',        'count' => $citStats->stat3, 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat3 / $citStats->total_householders) * 100, 2) : 0, 'color' => 'bg-fuchsia-500'],
+            ['id' => 1, 'label' => 'स्थायी जन्म', 'count' => $citStats->stat1, 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat1 / $citStats->total_householders) * 100, 2) : 0, 'color' => 'bg-teal-500'],
+            ['id' => 2, 'label' => 'बसाईसराई', 'count' => $citStats->stat2, 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat2 / $citStats->total_householders) * 100, 2) : 0, 'color' => 'bg-indigo-500'],
+            ['id' => 3, 'label' => 'अस्थायी बसोबास', 'count' => $citStats->stat3, 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat3 / $citStats->total_householders) * 100, 2) : 0, 'color' => 'bg-fuchsia-500'],
             ['id' => 4, 'label' => 'बसाईसराईको निसा नभएको', 'count' => $citStats->stat4, 'percentage' => $citStats->total_householders > 0 ? number_format(($citStats->stat4 / $citStats->total_householders) * 100, 2) : 0, 'color' => 'bg-slate-500'],
         ];
 
@@ -205,7 +204,7 @@ class WelcomeController extends Controller
         $educationStats = DB::table('education_levels as el')
             ->leftJoin('education_level_translations as elt', function ($join) {
                 $join->on('elt.education_level_id', '=', 'el.id')
-                     ->where('elt.locale', '=', 'np');
+                    ->where('elt.locale', '=', 'np');
             })
             ->leftJoin('house_members as hm', function ($join) use ($selectedWard) {
                 $join->on('hm.education_level_id', '=', 'el.id')
@@ -232,7 +231,7 @@ class WelcomeController extends Controller
         $religionStats = DB::table('religions as rel')
             ->leftJoin('religion_translations as relt', function ($join) {
                 $join->on('relt.religion_id', '=', 'rel.id')
-                     ->where('relt.locale', '=', 'np');
+                    ->where('relt.locale', '=', 'np');
             })
             ->leftJoin('house_members as hm', function ($join) use ($selectedWard) {
                 $join->on('hm.religion_id', '=', 'rel.id')
@@ -279,7 +278,7 @@ class WelcomeController extends Controller
                 })
                 ->where(function ($query) use ($pinned) {
                     $query->where('a.question_id', $pinned->question_id)
-                          ->orWhere('qo.question_id', $pinned->question_id);
+                        ->orWhere('qo.question_id', $pinned->question_id);
                 })
                 ->select('a.question_option_id', 'a.custom_input_value')
                 ->get();
@@ -289,7 +288,7 @@ class WelcomeController extends Controller
                 $label = '';
                 if ($answer->question_option_id && $options->has($answer->question_option_id)) {
                     $option = $options->get($answer->question_option_id);
-                    $label  = $option->choice_text;
+                    $label = $option->choice_text;
                     if (!empty(trim((string) $answer->custom_input_value))) {
                         $label .= ' (' . trim((string) $answer->custom_input_value) . ')';
                     }
@@ -297,15 +296,17 @@ class WelcomeController extends Controller
                     $label = trim((string) $answer->custom_input_value);
                 }
 
-                if (empty($label)) continue;
+                if (empty($label))
+                    continue;
 
-                if (!isset($dataCounts[$label])) $dataCounts[$label] = 0;
+                if (!isset($dataCounts[$label]))
+                    $dataCounts[$label] = 0;
                 $dataCounts[$label]++;
             }
 
             if (!empty($dataCounts)) {
                 $chartsData[$pinned->question_id] = [
-                    'title'  => $pinned->custom_title ?? DB::table('questions')->where('id', $pinned->question_id)->value('question_text'),
+                    'title' => $pinned->custom_title ?? DB::table('questions')->where('id', $pinned->question_id)->value('question_text'),
                     'labels' => array_keys($dataCounts),
                     'totals' => array_values($dataCounts),
                 ];
@@ -313,13 +314,21 @@ class WelcomeController extends Controller
         }
 
         return view('welcome', compact(
-            'wards', 'selectedWard',
-            'ageGroups', 'genderGroups', 'citizenshipGroups',
-            'motherTongueStats', 'motherTongueTotal',
-            'casteStats', 'casteTotal',
-            'educationStats', 'educationTotal',
-            'religionStats', 'religionTotal',
-            'totalPopulation', 'totalHouseholds',
+            'wards',
+            'selectedWard',
+            'ageGroups',
+            'genderGroups',
+            'citizenshipGroups',
+            'motherTongueStats',
+            'motherTongueTotal',
+            'casteStats',
+            'casteTotal',
+            'educationStats',
+            'educationTotal',
+            'religionStats',
+            'religionTotal',
+            'totalPopulation',
+            'totalHouseholds',
             'chartsData'
         ));
     }
