@@ -8,6 +8,7 @@ import Sortable from 'sortablejs';
 import DataTable from 'datatables.net-dt';
 
 
+
 window.Alpine = Alpine;
 window.$ = jQuery;
 window.jQuery = jQuery;

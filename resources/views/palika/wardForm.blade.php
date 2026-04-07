@@ -62,7 +62,7 @@
                             <label
                                 class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{{ __('Ward Name') }}
                                 <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" value="{{ old('name', $ward->name ?? '') }}" required
+                            <input type="text" name="name" id="ward_name" value="{{ old('name', $ward->name ?? '') }}" required
                                 class="block w-full rounded- border-gray-200 bg-gray-50/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-sm transition-all">
                         </div>
 
@@ -70,7 +70,7 @@
                             <label
                                 class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{{ __('Location') }}
                                 <span class="text-red-500">*</span></label>
-                            <input type="text" name="location" value="{{ old('location', $ward->location ?? '') }}"
+                            <input type="text" name="location" id="ward_location" value="{{ old('location', $ward->location ?? '') }}"
                                 required
                                 class="block w-full rounded-sm border-gray-200 bg-gray-50/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-sm transition-all">
                         </div>
@@ -94,7 +94,7 @@
                         <div class="lg:col-span-2">
                             <label
                                 class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{{ __('Description') }}</label>
-                            <textarea name="description" rows="2"
+                            <textarea name="description" id="ward_description" rows="2"
                                 class="block w-full rounded- border-gray-200 bg-gray-50/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-sm transition-all placeholder:text-gray-300">{{ old('description', $ward->description ?? '') }}</textarea>
                         </div>
 
@@ -281,6 +281,27 @@
         </div>
 
         @push('scripts')
+            <!-- Custom Transliteration using Google Input Tools API -->
+            <script src="{{ asset('js/transliteration.js') }}"></script>
+            <script type="text/javascript">
+                document.addEventListener('DOMContentLoaded', function() {
+                    const appLocale = '{{ app()->getLocale() }}';
+                    const isNpLocale = (appLocale === 'np');
+                    
+                    // Initialize the global transliteration logic
+                    if (typeof window.initTransliteration === 'function') {
+                        window.initTransliteration(isNpLocale);
+                    }
+                    
+                    // Initialize static fields
+                    const staticIds = ['ward_name', 'ward_location', 'ward_description'];
+                    staticIds.forEach(id => {
+                        if (typeof window.enableTransliteration === 'function') {
+                            window.enableTransliteration(id);
+                        }
+                    });
+                });
+            </script>
             <script>
                 const wardDesignations = @json($wardDesignations);
                 const chairpersonId = wardDesignations.find(d =>
@@ -329,7 +350,7 @@
                     const desigOptions = wardDesignations.map(d => {
                         const translation = d.translations.find(t => t.locale === '{{ app()->getLocale() }}') || d
                             .translations[0];
-                        // Disable Chairperson and Member options if not locked (for new staff members)
+
                         const isPrimary = (d.id == chairpersonId || d.id == memberDesignationId);
                         const isDisabled = !isLocked && isPrimary ? 'disabled' : '';
                         const style = !isLocked && isPrimary ? 'style="display:none"' : '';
@@ -341,7 +362,7 @@
                         <input type="hidden" name="members[${currentIndex}][id]" value="${id}">
                         <input type="hidden" name="members[${currentIndex}][existing_photo]" value="${photoUrl ? photoUrl.replace('/storage/', '') : ''}">
                         
-                        <!-- Mini Photo (Left) -->
+                    
                         <div class="relative shrink-0">
                             <label for="member_photo_${currentIndex}" class="block h-12 w-12 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center overflow-hidden cursor-pointer hover:border-blue-400 transition-all group/photo">
                                 <img id="member-photo-preview-${currentIndex}" 
@@ -362,7 +383,7 @@
                                    accept="image/*" class="hidden" onchange="previewMemberPhoto(this, ${currentIndex})">
                         </div>
 
-                        <!-- Stacked Inputs (Responsive Grow) -->
+                       
                         <div class="flex-1 flex flex-col gap-1.5 min-w-0">
                             <div class="w-full">
                                 <select name="members[${currentIndex}][ward_designation_id]" required ${isLocked ? 'disabled' : ''}
@@ -372,8 +393,8 @@
                                 </select>
                                 ${isLocked ? `<input type="hidden" name="members[${currentIndex}][ward_designation_id]" value="${selectedDesignationId}">` : ''}
                             </div>
-                            <div class="w-full">
-                                <input type="text" name="members[${currentIndex}][name]" value="${name}" required
+                            <div class="w-full relative">
+                                <input type="text" id="member_name_${currentIndex}" name="members[${currentIndex}][name]" value="${name}" required
                                     class="block w-full rounded- border-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs bg-white py-1 px-2.5 transition-all"
                                     placeholder="{{ __('Full Name...') }}">
                             </div>
@@ -387,7 +408,6 @@
                             </div>
                         </div>
 
-                        <!-- Remove CTA -->
                         <div class="shrink-0 flex items-center justify-end">
                             ${!isLocked ? `
                                                         <button type="button" onclick="this.closest('.group').remove()" 
@@ -404,6 +424,9 @@
                         </div>
                     `;
                     container.appendChild(row);
+                    if (typeof window.enableTransliteration === 'function') {
+                        window.enableTransliteration(`member_name_${currentIndex}`);
+                    }
                     memberIndex++;
                 }
 

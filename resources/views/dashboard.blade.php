@@ -296,63 +296,67 @@
                             </div>
 
                             {{-- शिक्षाको अवस्था --}}
-                            <div class="flex flex-col table-height-container table-height">
-                                <h3
-                                    class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
-                                    शिक्षाको अवस्था</h3>
-                                <div class="space-y-0 text-sm">
-                                    @php
-                                        $eduColors = [
-                                            'bg-amber-500',
-                                            'bg-blue-500',
-                                            'bg-green-500',
-                                            'bg-orange-500',
-                                            'bg-red-500',
-                                            'bg-violet-500',
-                                            'bg-cyan-500',
-                                            'bg-indigo-500',
-                                            'bg-emerald-500',
-                                            'bg-rose-500',
-                                        ];
-                                    @endphp
-                                    @forelse ($educationStats as $index => $row)
-                                        @php $pct = $educationTotal > 0 ? number_format(($row->total / $educationTotal) * 100, 2) : 0; @endphp
-                                        <a href="{{ route('dashboard.members', ['filter_type' => 'education', 'id' => $row->id, 'ward' => $selectedWard, 'label' => $row->label]) }}"
-                                            class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
-                                            <div class="flex items-center gap-3">
-                                                <div
-                                                    class="w-2 h-2 rounded-full {{ $eduColors[$index % count($eduColors)] }} shadow-sm">
+                            <div class="flex flex-col">
+                                <div class="flex flex-col table-height-container table-height">
+                                    <h3
+                                        class="text-sm font-bold text-gray-800 border-b-2 border-gray-100 pb-2 mb-4 uppercase tracking-wider">
+                                        शिक्षाको अवस्था</h3>
+                                    <div class="space-y-0 text-sm">
+                                        @php
+                                            $eduColors = [
+                                                'bg-amber-500',
+                                                'bg-blue-500',
+                                                'bg-green-500',
+                                                'bg-orange-500',
+                                                'bg-red-500',
+                                                'bg-violet-500',
+                                                'bg-cyan-500',
+                                                'bg-indigo-500',
+                                                'bg-emerald-500',
+                                                'bg-rose-500',
+                                            ];
+                                        @endphp
+                                        @forelse ($educationStats as $index => $row)
+                                            @php $pct = $educationTotal > 0 ? number_format(($row->total / $educationTotal) * 100, 2) : 0; @endphp
+                                            <a href="{{ route('dashboard.members', ['filter_type' => 'education', 'id' => $row->id, 'ward' => $selectedWard, 'label' => $row->label]) }}"
+                                                class="flex items-center justify-between py-3 border-b border-gray-50 group hover:bg-gray-50 transition-colors duration-150 px-2 rounded-lg">
+                                                <div class="flex items-center gap-3">
+                                                    <div
+                                                        class="w-2 h-2 rounded-full {{ $eduColors[$index % count($eduColors)] }} shadow-sm">
+                                                    </div>
+                                                    <span class="text-gray-700 font-medium">{{ $row->label }}</span>
                                                 </div>
-                                                <span class="text-gray-700 font-medium">{{ $row->label }}</span>
-                                            </div>
-                                            <div class="flex items-center gap-16 text-gray-600">
-                                                <span class="font-semibold text-gray-900 w-16 text-right">
-                                                    @if (app()->getLocale() === 'np')
-                                                        {{ \App\Helpers\NepaliHelper::toNepaliNumber($row->total) }}
-                                                    @else
-                                                        {{ $row->total }}
-                                                    @endif
-                                                </span>
-                                                <span class="w-16 text-right">
-                                                    @if (app()->getLocale() === 'np')
-                                                        {{ \App\Helpers\NepaliHelper::toNepaliPercentage($pct) }}
-                                                    @else
-                                                        {{ $pct }}%
-                                                    @endif
-                                                </span>
-                                            </div>
-                                        </a>
-                                    @empty
-                                        <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
-                                    @endforelse
+                                                <div class="flex items-center gap-16 text-gray-600">
+                                                    <span class="font-semibold text-gray-900 w-16 text-right">
+                                                        @if (app()->getLocale() === 'np')
+                                                            {{ \App\Helpers\NepaliHelper::toNepaliNumber($row->total) }}
+                                                        @else
+                                                            {{ $row->total }}
+                                                        @endif
+                                                    </span>
+                                                    <span class="w-16 text-right">
+                                                        @if (app()->getLocale() === 'np')
+                                                            {{ \App\Helpers\NepaliHelper::toNepaliPercentage($pct) }}
+                                                        @else
+                                                            {{ $pct }}%
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                            </a>
+                                        @empty
+                                            <p class="text-gray-400 italic text-center py-4">डेटा उपलब्ध छैन</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+                                <div class="flex mt-2">
+                                    <button
+                                        class="toggle-table-height-btn h-8 w-8 flex items-center justify-center text-black text-xs font-semibold border border-emerald-200 bg-emerald-100 hover:bg-emerald-200 hover:shadow-md rounded-sm transition-all duration-200 focus:outline-none">
+                                        ▼
+                                    </button>   
                                 </div>
                             </div>
-                            <button
-                                class="toggle-table-height-btn w-[50px] mt-2 px-3 py-1.5 text-black text-xs font-semibold rounded  transition-colors z-10 focus:outline-none rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300">
-                                ▼
-                            </button>
 
-                        </div>{{-- end LEFT COLUMN --}}
+                        </div>
 
                         {{-- RIGHT COLUMN: जातजातीहरु + धर्म --}}
                         <div class="flex flex-col flex-1 gap-10">
@@ -807,7 +811,9 @@
             // Toggle table-height class on button click
             $('.toggle-table-height-btn').on('click', function(e) {
                 e.preventDefault();
-                const $container = $(this).prev('.table-height-container');
+                
+                // Find the nearest table-height-container regardless of direct DOM sibling structure
+                const $container = $(this).closest('.flex-col').find('.table-height-container');
 
                 // Toggle the table-height class
                 $container.toggleClass('table-height');
@@ -815,18 +821,12 @@
                 // Update button text based on state
                 if ($container.hasClass('table-height')) {
                     $(this).text('▼');
-                    $(this).removeClass(
-                        'rounded-sm border border-rose-200 bg-rose-100 hover:shadow-md transition-shadow duration-300 overflow-hidden'
-                        ).addClass(
-                        'rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300'
-                        );
+                    $(this).removeClass('border-rose-200 bg-rose-100 hover:bg-rose-200 text-rose-700')
+                           .addClass('border-emerald-200 bg-emerald-100 hover:bg-emerald-200 text-black');
                 } else {
                     $(this).text('▲');
-                    $(this).removeClass(
-                        'rounded-sm border border-emerald-200 bg-emerald-100 hover:shadow-md transition-shadow duration-300'
-                        ).addClass(
-                        'rounded-sm border border-rose-200 bg-rose-100 hover:shadow-md transition-shadow duration-300'
-                        );
+                    $(this).removeClass('border-emerald-200 bg-emerald-100 hover:bg-emerald-200 text-black')
+                           .addClass('border-rose-200 bg-rose-100 hover:bg-rose-200 text-rose-700');
                 }
             });
         });
