@@ -12,13 +12,8 @@ use Illuminate\Http\Request;
 class SurveyBuilderController extends Controller
 {
     public function __construct(private readonly SurveyBuilderService $surveyService)
-    {
-        // Authorization is handled explicitly inside each action via SurveyPolicy.
-    }
+    {}
 
-    // -------------------------------------------------------------------------
-    // Index
-    // -------------------------------------------------------------------------
 
     public function index(Request $request)
     {
@@ -36,10 +31,6 @@ class SurveyBuilderController extends Controller
 
         return view('surveybuilder.managesections', compact('sections', 'wards', 'selectedWardId'));
     }
-
-    // -------------------------------------------------------------------------
-    // Create / Store
-    // -------------------------------------------------------------------------
 
     public function create()
     {
@@ -87,10 +78,6 @@ class SurveyBuilderController extends Controller
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Edit / Update
-    // -------------------------------------------------------------------------
-
     
     public function edit(int $id)
     {
@@ -101,6 +88,7 @@ class SurveyBuilderController extends Controller
         ['formattedSections' => $formattedSections, 'formattedQuestions' => $formattedQuestions] = $this->surveyService->formatSectionForBuilder($section);
         return view('surveybuilder.editsurveyquestion', compact('wards', 'ward_id', 'formattedSections', 'formattedQuestions', 'section'));
     }
+
     public function update(UpdateSurveyRequest $request, int $id)
     {
         $section = SurveySection::findOrFail($id);
@@ -124,10 +112,6 @@ class SurveyBuilderController extends Controller
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Destroy
-    // -------------------------------------------------------------------------
-
     public function destroy(int $id)
     {
         $section = SurveySection::findOrFail($id);
@@ -149,9 +133,6 @@ class SurveyBuilderController extends Controller
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Reorder (AJAX)
-    // -------------------------------------------------------------------------
 
     public function reorder(Request $request)
     {
@@ -168,12 +149,4 @@ class SurveyBuilderController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // -------------------------------------------------------------------------
-    // show() — not in use, kept for resource completeness
-    // -------------------------------------------------------------------------
-
-    public function show(string $id)
-    {
-        //
-    }
 }

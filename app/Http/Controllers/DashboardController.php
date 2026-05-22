@@ -155,12 +155,22 @@ class DashboardController extends Controller
                     $answers = $answersByQuestion[$qId] ?? [];
 
                     $dataCounts = [];
+                    $customSums = []; // Track sum of custom input values per label
                     foreach ($answers as $answer) {
                         $label = '';
+                        $hasCustomType = false;
                         if ($answer->question_option_id && $options->has($answer->question_option_id)) {
                             $option = $options->get($answer->question_option_id);
                             $label = $option->choice_text;
-                            if (!empty(trim((string)$answer->custom_input_value))) {
+                            if (!empty($option->custom_input_type)) {
+                                
+                                $hasCustomType = true;
+                                $customVal = trim((string)$answer->custom_input_value);
+                                if (is_numeric($customVal)) {
+                                    if (!isset($customSums[$label])) $customSums[$label] = 0;
+                                    $customSums[$label] += (float)$customVal;
+                                }
+                            } elseif (!empty(trim((string)$answer->custom_input_value))) {
                                 $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
                             }
                         } elseif (!empty(trim((string)$answer->custom_input_value))) {
@@ -171,12 +181,25 @@ class DashboardController extends Controller
                         if (!isset($dataCounts[$label])) $dataCounts[$label] = 0;
                         $dataCounts[$label]++;
                     }
+
                     
-                    if (!empty($dataCounts)) {
+                    $finalCounts = [];
+                    foreach ($dataCounts as $label => $count) {
+                        $finalLabel = $label;
+                        if (isset($customSums[$label]) && $customSums[$label] > 0) {
+                            $sumDisplay = (floor($customSums[$label]) == $customSums[$label]) 
+                                ? (int)$customSums[$label] 
+                                : $customSums[$label];
+                            $finalLabel = $label . ' (' . $sumDisplay . ')';
+                        }
+                        $finalCounts[$finalLabel] = $count;
+                    }
+                    
+                    if (!empty($finalCounts)) {
                         $data[$qId] = [
                             'title' => $pinned->custom_title ?? $questionTitles[$qId] ?? 'Unknown',
-                            'labels' => array_keys($dataCounts),
-                            'totals' => array_values($dataCounts),
+                            'labels' => array_keys($finalCounts),
+                            'totals' => array_values($finalCounts),
                         ];
                     }
                 }
@@ -303,8 +326,13 @@ class DashboardController extends Controller
 
         $questionIds = $questions->pluck('id')->toArray();
         $cacheKey = "survey_report_charts_v2_{$selectedWard}";
+
+        // Bust cache when "Update Report" button is clicked
+        if ($request->has('refresh')) {
+            Cache::forget($cacheKey);
+        }
         
-        $charts = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function() use ($questions, $questionIds, $selectedWard) {
+        $charts = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(5), function() use ($questions, $questionIds, $selectedWard) {
             $chartsData = [];
             if (empty($questionIds)) return $chartsData;
 
@@ -363,12 +391,21 @@ class DashboardController extends Controller
                 } else {
                     $options = $allOptions->get($question->id) ?? collect();
 
+                    $customSums = []; // Track sum of custom input values per label
                     foreach ($answers as $answer) {
                         $label = '';
                         if ($answer->question_option_id && $options->has($answer->question_option_id)) {
                             $option = $options->get($answer->question_option_id);
                             $label = $option->choice_text;
-                            if (!empty(trim((string)$answer->custom_input_value))) {
+                            if (!empty($option->custom_input_type)) {
+                                // Option has a custom_input_type (e.g., number) — group by base choice_text
+                                // and accumulate the custom values as a sum
+                                $customVal = trim((string)$answer->custom_input_value);
+                                if (is_numeric($customVal)) {
+                                    if (!isset($customSums[$label])) $customSums[$label] = 0;
+                                    $customSums[$label] += (float)$customVal;
+                                }
+                            } elseif (!empty(trim((string)$answer->custom_input_value))) {
                                 $label .= ' (' . trim((string)$answer->custom_input_value) . ')';
                             }
                         } elseif (!empty(trim((string)$answer->custom_input_value))) {
@@ -383,8 +420,21 @@ class DashboardController extends Controller
                         $dataCounts[$label]++;
                     }
 
-                    $labels = array_keys($dataCounts);
-                    $totals = array_values($dataCounts);
+                    // Append summed custom values to labels (e.g., "Yes" becomes "Yes (35)")
+                    $finalCounts = [];
+                    foreach ($dataCounts as $label => $count) {
+                        $finalLabel = $label;
+                        if (isset($customSums[$label]) && $customSums[$label] > 0) {
+                            $sumDisplay = (floor($customSums[$label]) == $customSums[$label]) 
+                                ? (int)$customSums[$label] 
+                                : $customSums[$label];
+                            $finalLabel = $label . ' (' . $sumDisplay . ')';
+                        }
+                        $finalCounts[$finalLabel] = $count;
+                    }
+
+                    $labels = array_keys($finalCounts);
+                    $totals = array_values($finalCounts);
                 }
 
                 if (!empty($labels)) {

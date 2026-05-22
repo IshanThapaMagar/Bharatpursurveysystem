@@ -17,7 +17,7 @@ class SurveyPolicy
     }
 
     /**
-     * A user may view/edit/delete a section only if they own that ward,
+     * A user may view/edit/delete a section only if they are from that ward,
      * or are a SuperAdmin.
      */
     public function modifySection(User $user, SurveySection $section): bool

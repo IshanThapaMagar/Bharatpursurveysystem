@@ -16,10 +16,6 @@ use Illuminate\Support\Facades\Log;
 
 class SurveyBuilderService
 {
-    // -------------------------------------------------------------------------
-    // Queries / read helpers
-    // -------------------------------------------------------------------------
-
     /**
      * Return the wards the given user is allowed to see.
      */
@@ -120,10 +116,6 @@ class SurveyBuilderService
         ];
     }
 
-    // -------------------------------------------------------------------------
-    // Write operations
-    // -------------------------------------------------------------------------
-
     /**
      * Reorder sections. Skips sections that don't belong to the user's ward
      * (unless the user is a SuperAdmin).
@@ -203,11 +195,7 @@ class SurveyBuilderService
         }
     }
 
-    /**
-     * Cascade-delete a section and all its questions / option groups / choices.
-     *
-     * @throws \Exception
-     */
+
     public function deleteSection(SurveySection $section): void
     {
         DB::beginTransaction();
@@ -225,15 +213,7 @@ class SurveyBuilderService
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers (single responsibility, reused by create & update)
-    // -------------------------------------------------------------------------
 
-    /**
-     * Persist an array of section data rows for a given ward.
-     *
-     * @return array<string, int>  Map of frontend section id → DB id.
-     */
     private function persistSections(array $sections, int $wardId): array
     {
         $sectionMap = [];

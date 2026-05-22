@@ -15,6 +15,7 @@
                         </select>
                     </div>
                     <div>
+                        <input type="hidden" name="refresh" value="1">
                         <button type="submit"
                             class="bg-indigo-600 text-white font-medium px-6 py-3 rounded-lg shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all duration-300">
                             {{ __('Update Report') }}
