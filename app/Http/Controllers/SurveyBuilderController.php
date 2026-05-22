@@ -2,578 +2,178 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSurveyRequest;
+use App\Http\Requests\UpdateSurveyRequest;
 use App\Models\SurveySection;
-use App\Models\Question;
-use App\Models\OptionGroup;
-use App\Models\OptionChoice;
-use App\Models\QuestionOption;
-use App\Models\InputType;
-use Illuminate\Http\Request;
 use App\Models\Ward;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
+use App\Services\SurveyBuilderService;
+use Illuminate\Http\Request;
 
 class SurveyBuilderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(private readonly SurveyBuilderService $surveyService)
+    {
+        // Authorization is handled explicitly inside each action via SurveyPolicy.
+    }
+
+    // -------------------------------------------------------------------------
+    // Index
+    // -------------------------------------------------------------------------
+
     public function index(Request $request)
     {
-        $authUser = auth()->user();
-        if ($authUser->isDataCollector()) {
-            abort(403);
-        }
+        $this->authorize('manage', SurveySection::class);
 
-        try {
-            if ($authUser->isSuperAdmin()) {
-                $wards = Ward::select('id', 'ward_no')->get();
-            } else {
-                $wards = Ward::where('id', $authUser->ward_id)->select('id', 'ward_no')->get();
-            }
+        $authUser = $request->user();
+        $wards    = $this->surveyService->getAccessibleWards($authUser);
 
-            $sections = collect();
-        
-            $validated = $request->validate([
-                'ward_id' => 'nullable|integer|exists:wards,id',
-            ]);
+        $validated      = $request->validate(['ward_id' => 'nullable|integer|exists:wards,id']);
+        $selectedWardId = $this->surveyService->resolveWardId($authUser, $validated['ward_id'] ?? null);
 
-            $selectedWardId = $validated['ward_id'] ?? null;
+        $sections = $selectedWardId
+            ? $this->surveyService->getSectionsForWard($selectedWardId)
+            : collect();
 
-            // If Ward Admin, force their ward_id
-            if (!$authUser->isSuperAdmin()) {
-                $selectedWardId = $authUser->ward_id;
-            }
-
-            if (!empty($selectedWardId)) {
-                $sections = SurveySection::where('ward_id', $selectedWardId)
-                    ->select('id', 'title', 'order_index') 
-                    ->orderBy('order_index', 'asc')       
-                    ->get();
-            }
-
-            return view('surveybuilder.managesections', compact('sections', 'wards', 'selectedWardId'));
-
-        } catch (\Illuminate\Validation\ValidationException $ve) {
-
-            return redirect()->back()->withErrors($ve->errors())->withInput();
-        } catch (\Exception $e) {
-             
-            return redirect()->back()->with('error', 'Something went wrong while fetching sections.');
-        }
+        return view('surveybuilder.managesections', compact('sections', 'wards', 'selectedWardId'));
     }
 
+    // -------------------------------------------------------------------------
+    // Create / Store
+    // -------------------------------------------------------------------------
 
-    public function reorder(Request $request)
-    {
-        $authUser = auth()->user();
-        if ($authUser->isDataCollector()) {
-            abort(403);
-        }
-
-        foreach ($request->order as $item) {
-            $section = SurveySection::findOrFail($item['id']);
-            
-            // Security check
-            if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
-                continue; // Skip or abort
-            }
-
-            $section->update(['order_index' => $item['order_index']]);
-        }
-
-        return response()->json(['success' => true]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        $authUser = auth()->user();
-        if ($authUser->isDataCollector()) {
-            abort(403);
-        }
+        $this->authorize('manage', SurveySection::class);
 
-        if ($authUser->isSuperAdmin()) {
-            $wards = Ward::select('id','ward_no')->get();
-        } else {
-            $wards = Ward::where('id', $authUser->ward_id)->select('id','ward_no')->get();
-        }
+        $wards = $this->surveyService->getAccessibleWards(auth()->user());
 
-        return view('surveybuilder.createsurveyquestion',compact('wards'));
+        return view('surveybuilder.createsurveyquestion', compact('wards'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreSurveyRequest $request)
     {
-        $authUser = auth()->user();
-        if ($authUser->isDataCollector()) {
-            abort(403);
-        }
+        $authUser = $request->user();
 
-        $validator = Validator::make($request->all(), [
-            'ward_id' => 'required',
-            'survey_data' => 'required|json',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()    
-                            ->withErrors($validator) 
-                            ->withInput();          
-        }
-
-        // Ward Admin restriction
-        if (!$authUser->isSuperAdmin()) {
-            if ($request->ward_id === 'all' || $request->ward_id != $authUser->ward_id) {
-                return redirect()->back()->with('error', 'Unauthorized ward selection.')->withInput();
+        // Ward Admins may never submit "all" or a foreign ward.
+        if (! $authUser->isSuperAdmin()) {
+            $wardId = $request->input('ward_id');
+            if ($wardId === 'all' || $wardId != $authUser->ward_id) {
+                return redirect()->back()
+                    ->with('error', 'Unauthorized ward selection.')
+                    ->withInput();
             }
         }
 
-        $surveyData = json_decode($request->input('survey_data'), true);
-
-        if (!isset($surveyData['sections']) || !isset($surveyData['questions'])) {
-            return redirect()->back()
-                ->with('error', 'Invalid survey data format')
-                ->withInput();
-        }
-
-        $dataValidator = Validator::make($surveyData, [
-            'sections' => 'required|array|min:1',
-            'sections.*.title' => 'required|string|max:255',
-            'sections.*.description' => 'nullable|string',
-            'questions' => 'required|array|min:1',
-            'questions.*.label' => 'required|string',
-            'questions.*.type' => 'required|string',
-            'questions.*.sectionId' => 'required|string',
-            'questions.*.required' => 'nullable|boolean',
-            'questions.*.description' => 'nullable|string',
-            'questions.*.options' => 'array',
-            'questions.*.options.*.label' => 'required_with:questions.*.options|string',
-            'questions.*.options.*.input_type' => 'nullable|string|in:none,text,number',
-            'questions.*.options.*.input_placeholder' => 'nullable|string|max:255',
-            'questions.*.scale_from' => 'nullable|integer',
-            'questions.*.scale_to' => 'nullable|integer|gte:questions.*.scale_from',
-            'questions.*.scale_label_low' => 'nullable|string|max:255',
-            'questions.*.scale_label_high' => 'nullable|string|max:255',
-        ], [], [
-            'sections.*.title' => 'Section title',
-            'sections.*.description' => 'Section description',
-            'questions.*.label' => 'Question text',
-            'questions.*.type' => 'Question type',
-            'questions.*.sectionId' => 'Section',
-            'questions.*.required' => 'Required field',
-            'questions.*.description' => 'Question description',
-            'questions.*.options.*.label' => 'Option label',
-            'questions.*.options.*.input_type' => 'Option input type',
-            'questions.*.options.*.input_placeholder' => 'Option input placeholder',
-        ]);
-
-        if ($dataValidator->fails()) {
-            return redirect()->back()
-                ->withErrors($dataValidator)
-                ->withInput();
-        }
+        $wardIds = $request->input('ward_id') === 'all'
+            ? Ward::pluck('id')->toArray()
+            : [$request->input('ward_id')];
 
         try {
-            DB::beginTransaction();
-
-            $wardIds = [];
-            if ($request->ward_id === 'all') {
-                $wardIds = Ward::pluck('id')->toArray();
-            } else {
-                $wardIds = [$request->ward_id];
-            }
-
-            foreach ($wardIds as $ward_id) {
-                $sectionMap = [];
-                $questionMap = [];
-
-                foreach ($surveyData['sections'] as $index => $sectionData) {
-                    $section = SurveySection::create([
-                        'title' => $sectionData['title'],
-                        'description' => $sectionData['description'] ?? null,
-                        'ward_id' => $ward_id,
-                        'order_index' => $index + 1,
-                    ]);
-
-                    $sectionMap[$sectionData['id']] = $section->id;
-                }
-
-                $questionIndex = 0;
-                foreach ($surveyData['questions'] as $questionKey => $questionData) {
-                    $questionIndex++;
-
-                    $inputType = InputType::firstOrCreate(
-                        ['input_type_name' => $questionData['type']]
-                    );
-
-                    $optionGroupId = null;
-
-                    if (isset($questionData['options']) && !empty($questionData['options'])) {
-                        $optionGroup = OptionGroup::create([
-                            'option_group_name' => $questionData['label'] . ' Options - Ward ' . $ward_id
-                        ]);
-                        
-                        $optionGroupId = $optionGroup->id;
-
-                        foreach ($questionData['options'] as $optionData) {
-                            OptionChoice::create([
-                                'option_group_id' => $optionGroup->id,
-                                'choice_text' => $optionData['label'],
-                                'custom_input_type' => $optionData['input_type'] ?? 'none',
-                                'custom_input_placeholder' => $optionData['input_placeholder'] ?? null,
-                            ]);
-                        }
-                    }
-
-                    $question = Question::create([
-                        'survey_section_id' => $sectionMap[$questionData['sectionId']],
-                        'question_text' => $questionData['label'],
-                        'question_subtext' => $questionData['description'] ?? null,
-                        'answer_required' => ($questionData['required'] ?? false) === true || ($questionData['required'] ?? false) == '1',
-                        'input_type_id' => $inputType->id,
-                        'option_group_id' => $optionGroupId,
-                        'allow_multiple_option_answers' => in_array($questionData['type'], ['checkbox']),
-                        'order_index' => $questionIndex,
-                        'scale_from' => $questionData['scale_from'] ?? null,
-                        'scale_to' => $questionData['scale_to'] ?? null,
-                        'scale_label_low' => $questionData['scale_label_low'] ?? null,
-                        'scale_label_high' => $questionData['scale_label_high'] ?? null,
-                    ]);
-
-                    $questionMap[$questionData['id']] = $question->id;
-
-                    if ($optionGroupId) {
-                        $optionChoices = OptionChoice::where('option_group_id', $optionGroupId)->get();
-                        
-                        foreach ($optionChoices as $optionChoice) {
-                            QuestionOption::create([
-                                'question_id' => $question->id,
-                                'option_choice_id' => $optionChoice->id
-                            ]);
-                        }
-                    }
-                }
-            }
-
-            DB::commit();
-
-            $message = $request->ward_id === 'all' 
-                ? 'Survey created successfully for all wards' 
-                : 'Survey created successfully';
-
-            return redirect()->back()
-                            ->with('success', $message);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            Log::error('Survey creation failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            $this->surveyService->createSurvey($wardIds, [
+                'sections'  => $request->input('sections'),
+                'questions' => $request->input('questions'),
             ]);
 
+            $message = $request->input('ward_id') === 'all'
+                ? 'Survey created successfully for all wards'
+                : 'Survey created successfully';
+
+            return redirect()->back()->with('success', $message);
+
+        } catch (\Exception) {
             return redirect()->back()
                 ->with('error', 'Failed to create survey. Please try again.')
                 ->withInput();
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    // -------------------------------------------------------------------------
+    // Edit / Update
+    // -------------------------------------------------------------------------
+
+    
+    public function edit(int $id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-public function edit($id)
-{
-    try {
-        $authUser = auth()->user();
-        if ($authUser->isDataCollector()) {
-            abort(403);
-        }
-
-        $section = SurveySection::with([
-            'questions.inputType',
-            'questions.optionGroup.optionChoices',
-            'questions.questionOptions.optionChoice'
-        ])->findOrFail($id);
-
-        if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
-            abort(403);
-        }
-
+        $section = $this->surveyService->getSectionForEdit($id);
+        $this->authorize('modifySection', $section);
         $ward_id = $section->ward_id;
-        
-        if ($authUser->isSuperAdmin()) {
-            $wards = Ward::select('id', 'ward_no')->get();
-        } else {
-            $wards = Ward::where('id', $authUser->ward_id)->select('id', 'ward_no')->get();
-        }
-
-        $formattedSections = collect([
-            [
-                'id' => 's' . $section->id,
-                'title' => $section->title,
-                'description' => $section->description ?? '',
-                'database_id' => $section->id,
-            ]
-        ]);
-
-        $formattedQuestions = $section->questions->sortBy('order_index')->map(function($question) use ($section) {
-            $formattedQuestion = [
-                'id' => 'q' . $question->id,
-                'sectionId' => 's' . $section->id,
-                'type' => $question->inputType?->input_type_name ?? 'unknown',
-                'label' => $question->question_text,
-                'description' => $question->question_subtext ?? '',
-                'required' => $question->answer_required,
-                'database_id' => $question->id,
-                'scale_from' => $question->scale_from,
-                'scale_to' => $question->scale_to,
-                'scale_label_low' => $question->scale_label_low,
-                'scale_label_high' => $question->scale_label_high,
-            ];
-
-            if ($question->optionGroup?->optionChoices?->isNotEmpty()) {
-                $formattedQuestion['options'] = $question->optionGroup->optionChoices->map(function($choice) {
-                    return [
-                        'id' => 'opt' . $choice->id,
-                        'label' => $choice->choice_text,
-                        'value' => strtolower(str_replace(' ', '_', $choice->choice_text)),
-                        'input_type' => $choice->custom_input_type ?? 'none',
-                        'input_placeholder' => $choice->custom_input_placeholder ?? '',
-                        'database_id' => $choice->id
-                    ];
-                })->values()->toArray();
-            }
-
-            return $formattedQuestion;
-        })->values();
-
+        $wards = $this->surveyService->getAccessibleWards(auth()->user());
+        ['formattedSections' => $formattedSections, 'formattedQuestions' => $formattedQuestions] = $this->surveyService->formatSectionForBuilder($section);
         return view('surveybuilder.editsurveyquestion', compact('wards', 'ward_id', 'formattedSections', 'formattedQuestions', 'section'));
-
-    } catch (\Exception $e) {
-        return redirect()->route('surveyform.index')
-            ->with('error', 'Failed to load survey for editing.');
     }
-}
-
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function update(UpdateSurveyRequest $request, int $id)
     {
-        $authUser = auth()->user();
-        if ($authUser->isDataCollector()) {
-            abort(403);
-        }
-
         $section = SurveySection::findOrFail($id);
-        if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
-            abort(403);
-        }
 
-        $validator = Validator::make($request->all(), [
-            'ward_id' => 'required|exists:wards,id',
-            'survey_data' => 'required|json',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-        
-        $surveyData = json_decode($request->input('survey_data'), true);
-
-        if (!isset($surveyData['sections']) || !isset($surveyData['questions'])) {
-            return redirect()->back()
-                ->with('error', 'Invalid survey data format')
-                ->withInput();
-        }
-
-        
-        $dataValidator = Validator::make($surveyData, [
-            'sections' => 'required|array|min:1',
-            'sections.*.title' => 'required|string|max:255',
-            'sections.*.description' => 'nullable|string',
-            'questions' => 'required|array|min:1',
-            'questions.*.label' => 'required|string',
-            'questions.*.type' => 'required|string',
-            'questions.*.sectionId' => 'required|string',
-            'questions.*.required' => 'nullable|boolean',
-            'questions.*.description' => 'nullable|string',
-            'questions.*.options' => 'array',
-            'questions.*.options.*.label' => 'required_with:questions.*.options|string',
-            'questions.*.options.*.input_type' => 'nullable|string|in:none,text,number',
-            'questions.*.options.*.input_placeholder' => 'nullable|string|max:255',
-            'questions.*.scale_from' => 'nullable|integer',
-            'questions.*.scale_to' => 'nullable|integer|gte:questions.*.scale_from',
-            'questions.*.scale_label_low' => 'nullable|string|max:255',
-            'questions.*.scale_label_high' => 'nullable|string|max:255',
-        ], [], [
-            'sections.*.title' => 'Section title',
-            'sections.*.description' => 'Section description',
-            'questions.*.label' => 'Question text',
-            'questions.*.type' => 'Question type',
-            'questions.*.sectionId' => 'Section',
-            'questions.*.required' => 'Required field',
-            'questions.*.description' => 'Question description',
-            'questions.*.options.*.label' => 'Option label',
-            'questions.*.options.*.input_type' => 'Option input type',
-            'questions.*.options.*.input_placeholder' => 'Option input placeholder',
-        ]);
-
-        if ($dataValidator->fails()) {
-            return redirect()->back()
-                ->withErrors($dataValidator)
-                ->withInput();
-        }
+        $this->authorize('modifySection', $section);
 
         try {
-            DB::beginTransaction();
+            $this->surveyService->updateSurvey($section, [
+                'sections'  => $request->input('sections'),
+                'questions' => $request->input('questions'),
+            ], (int) $request->input('ward_id'));
 
-            $section = SurveySection::findOrFail($id);
-            $ward_id = $request->ward_id;
-
-            $existingQuestions = Question::where('survey_section_id', $section->id)->get();
-            
-            foreach ($existingQuestions as $existingQuestion) {
-                if ($existingQuestion->option_group_id) {
-                    QuestionOption::where('question_id', $existingQuestion->id)->delete();                 
-                    OptionChoice::where('option_group_id', $existingQuestion->option_group_id)->delete();
-                    OptionGroup::where('id', $existingQuestion->option_group_id)->delete();
-                }
-            }
-
-            Question::where('survey_section_id', $section->id)->delete();
-
-            $sectionData = $surveyData['sections'][0]; 
-            $section->update([
-                'title' => $sectionData['title'],
-                'description' => $sectionData['description'] ?? null,
-            ]);
-
-        
-            $questionIndex = 0;
-            foreach ($surveyData['questions'] as $questionData) {
-                $questionIndex++;
-
-                $inputType = InputType::firstOrCreate(
-                    ['input_type_name' => $questionData['type']]
-                );
-
-                $optionGroupId = null;
-
-                if (isset($questionData['options']) && !empty($questionData['options'])) {
-                    $optionGroup = OptionGroup::create([
-                        'option_group_name' => $questionData['label'] . ' Options'
-                    ]);
-                    
-                    $optionGroupId = $optionGroup->id;
-
-                    foreach ($questionData['options'] as $optionData) {
-                        OptionChoice::create([
-                            'option_group_id' => $optionGroup->id,
-                            'choice_text' => $optionData['label'],
-                            'custom_input_type' => $optionData['input_type'] ?? 'none',
-                            'custom_input_placeholder' => $optionData['input_placeholder'] ?? null,
-                        ]);
-                    }
-                }
-
-                $question = Question::create([
-                    'survey_section_id' => $section->id,
-                    'question_text' => $questionData['label'],
-                    'question_subtext' => $questionData['description'] ?? null,
-                    'answer_required' => ($questionData['required'] ?? false) === true || ($questionData['required'] ?? false) == '1',
-                    'input_type_id' => $inputType->id,
-                    'option_group_id' => $optionGroupId,
-                    'allow_multiple_option_answers' => in_array($questionData['type'], ['checkbox']),
-                    'order_index' => $questionIndex,
-                    'scale_from' => $questionData['scale_from'] ?? null,
-                    'scale_to' => $questionData['scale_to'] ?? null,
-                    'scale_label_low' => $questionData['scale_label_low'] ?? null,
-                    'scale_label_high' => $questionData['scale_label_high'] ?? null,
-                ]);
-                if ($optionGroupId) {
-                    $optionChoices = OptionChoice::where('option_group_id', $optionGroupId)->get();
-                    
-                    foreach ($optionChoices as $optionChoice) {
-                        QuestionOption::create([
-                            'question_id' => $question->id,
-                            'option_choice_id' => $optionChoice->id
-                        ]);
-                    }
-                }
-            }
-            DB::commit();
-            return redirect()->route('surveyform.index', ['ward_id' => $ward_id])
+            return redirect()
+                ->route('surveyform.index', ['ward_id' => $request->input('ward_id')])
                 ->with('success', 'Section updated successfully');
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+        } catch (\Exception) {
             return redirect()->back()
                 ->with('error', 'Failed to update section. Please try again.')
                 ->withInput();
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Destroy
+    // -------------------------------------------------------------------------
 
-
-    public function destroy(string $id)
+    public function destroy(int $id)
     {
-        $authUser = auth()->user();
-        if ($authUser->isDataCollector()) {
-            abort(403);
-        }
+        $section = SurveySection::findOrFail($id);
+
+        $this->authorize('modifySection', $section);
+
+        $wardId = $section->ward_id;
 
         try {
-            DB::beginTransaction();
+            $this->surveyService->deleteSection($section);
 
-            $section = SurveySection::findOrFail($id);
-
-            // Security check: Ward Admins can only delete sections for their ward
-            if (!$authUser->isSuperAdmin() && $section->ward_id != $authUser->ward_id) {
-                abort(403);
-            }
-
-            $ward_id = $section->ward_id;
-
-            // Cascading delete: questions and their options
-            $questions = Question::where('survey_section_id', $section->id)->get();
-            
-            foreach ($questions as $question) {
-                if ($question->option_group_id) {
-                    QuestionOption::where('question_id', $question->id)->delete();                 
-                    OptionChoice::where('option_group_id', $question->option_group_id)->delete();
-                    OptionGroup::where('id', $question->option_group_id)->delete();
-                }
-                $question->delete();
-            }
-
-            $section->delete();
-
-            DB::commit();
-
-            return redirect()->route('surveyform.index', ['ward_id' => $ward_id])
+            return redirect()
+                ->route('surveyform.index', ['ward_id' => $wardId])
                 ->with('success', 'Section and its questions deleted successfully');
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Section deletion failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to delete section. Please try again.');
+        } catch (\Exception) {
+            return redirect()->back()
+                ->with('error', 'Failed to delete section. Please try again.');
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Reorder (AJAX)
+    // -------------------------------------------------------------------------
+
+    public function reorder(Request $request)
+    {
+        $this->authorize('manage', SurveySection::class);
+
+        $validated = $request->validate([
+            'order'               => 'required|array',
+            'order.*.id'          => 'required|integer|exists:survey_sections,id',
+            'order.*.order_index' => 'required|integer|min:1',
+        ]);
+
+        $this->surveyService->reorderSections($request->user(), $validated['order']);
+
+        return response()->json(['success' => true]);
+    }
+
+    // -------------------------------------------------------------------------
+    // show() — not in use, kept for resource completeness
+    // -------------------------------------------------------------------------
+
+    public function show(string $id)
+    {
+        //
     }
 }
